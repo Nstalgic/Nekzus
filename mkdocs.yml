@@ -78,18 +78,9 @@ markdown_extensions:
 plugins:
   - search
   - kroki:
-      ServerURL: https://kroki.io
-      EnableBlockDiag: true
-      EnableBpmn: true
-      EnableExcalidraw: true
-      EnableMermaid: true
-      EnableDiagramsnet: false
-      Enablec4plantuml: true
-      EnablePlantuml: true
-      EnableStructurizr: true
-      EnableD2: true
-      HttpMethod: POST
-      FileTypes:
+      server_url: https://kroki.io
+      http_method: POST
+      file_types:
         - svg
   - minify:
       minify_html: true
