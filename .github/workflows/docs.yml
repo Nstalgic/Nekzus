@@ -51,8 +51,10 @@ jobs:
 
       - name: Install dependencies
         run: |
+          pip install "mkdocs<2"
           pip install mkdocs-material
           pip install mkdocs-minify-plugin
+          pip install mkdocs-kroki-plugin
 
       - name: Build documentation
         run: mkdocs build --strict

@@ -8,7 +8,7 @@ A secure API gateway and reverse proxy for local network services with auto-disc
 
 ## How It Works
 
-Nekzus sits between your clients (browsers, mobile apps) and your backend services. It automatically discovers services running in Docker, Kubernetes, or on your local network via mDNS, then proposes them for approval before routing traffic. All requests pass through the gateway where they are authenticated (JWT or API key), proxied to the correct backend, and monitored for health. The web dashboard gives you full visibility and control over routes, devices, containers, and certificates.
+Nekzus sits between your clients (browsers, mobile apps) and your backend services. It automatically discovers services running in Docker and Kubernetes, then proposes them for approval before routing traffic. mDNS/Bonjour discovery is scaffolded and planned for a future release. All requests pass through the gateway where they are authenticated (JWT or API key), proxied to the correct backend, and monitored for health. The web dashboard gives you full visibility and control over routes, devices, containers, and certificates.
 
 ```
 Clients ──▶ Nekzus Gateway ──▶ Backend Services
@@ -52,7 +52,7 @@ This spins up Nekzus alongside example services so you can explore the dashboard
 ### Service Discovery
 - **Docker** - Auto-discover containers via labels with multi-network support
 - **Kubernetes** - Pod/service discovery with Istio, Helm chart recognition
-- **mDNS/Bonjour** - Network service discovery
+- **mDNS/Bonjour** - Network service discovery (planned — scaffolded but not yet functional)
 - **Proposal System** - Review and approve discovered services before routing
 
 ### Authentication & Security
@@ -76,9 +76,9 @@ This spins up Nekzus alongside example services so you can explore the dashboard
 - **Notifications** - Push notifications to paired devices
 
 ### Web Dashboard
-- **8 Themes** - Default, Neubrutalism, Neumorphism, Cyberpunk, Bauhaus, Retro, Glass, Material
+- **15 Themes** - Default, Obsidian Dark, Nord Frost, Carbon Neutral, Classic Green, Cyan, Amber, Gruvbox, Gruvbox Light, Tokyo Night, Tokyo Night Storm, Catppuccin Mocha, Pipboy, Pipboy Green, Retro
 - **Full Management** - Routes, devices, discovery, containers, certificates, backups
-- **Route Tester** - Debug API routes with request/response inspection
+- **Webhook Tester** - Test webhook endpoints with request/response inspection
 - **Responsive** - Desktop, tablet, and mobile support
 
 ## Quick Start
@@ -213,12 +213,14 @@ discovery:
 
 Features: Istio detection, namespace label inheritance, Helm chart recognition, ingress discovery.
 
-### mDNS
+### mDNS (Planned)
+
+> **Note:** mDNS discovery is scaffolded but not yet functional. The configuration is accepted but no services will be discovered until a library such as `github.com/hashicorp/mdns` or `github.com/grandcat/zeroconf` is integrated.
 
 ```yaml
 discovery:
   mdns:
-    enabled: true
+    enabled: false
     services: ["_http._tcp", "_https._tcp"]
 ```
 
