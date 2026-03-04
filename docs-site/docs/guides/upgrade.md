@@ -60,7 +60,7 @@ Always create a full backup before upgrading. This is your safety net for rollba
 
 ```bash
 # Stop the container gracefully
-docker compose stop nexus
+docker compose stop nekzus
 
 # Create timestamped backup directory
 BACKUP_DIR="./backups/$(date +%Y%m%d_%H%M%S)"
@@ -195,7 +195,7 @@ docker compose pull
 docker compose up -d
 
 # Verify upgrade
-docker compose logs -f nexus
+docker compose logs -f nekzus
 ```
 
 </TabItem>
@@ -231,7 +231,7 @@ For major version upgrades (e.g., v1.x to v2.x), follow these additional steps:
 
 ```bash
 # 1. Stop the current container
-docker compose stop nexus
+docker compose stop nekzus
 
 # 2. Create a full backup (see Pre-Upgrade Checklist)
 BACKUP_DIR="./backups/major-upgrade-$(date +%Y%m%d)"
@@ -252,7 +252,7 @@ docker compose pull
 docker compose up -d
 
 # 7. Monitor logs for migration status
-docker compose logs -f nexus | head -100
+docker compose logs -f nekzus | head -100
 
 # 8. Verify all routes and apps are accessible
 curl -s https://localhost:8443/api/v1/healthz
@@ -264,7 +264,7 @@ For production environments, pin to specific versions instead of `latest`:
 
 ```yaml title="docker-compose.yml"
 services:
-  nexus:
+  nekzus:
     image: ghcr.io/nstalgic/nekzus:v1.2.3  # Pin to specific version
     # ... rest of configuration
 ```
@@ -645,7 +645,7 @@ If an upgrade fails, follow these rollback procedures.
 
 ```bash
 # Stop current container
-docker compose stop nexus
+docker compose stop nekzus
 
 # Edit docker-compose.yml to use previous version
 # Change: image: ghcr.io/nstalgic/nekzus:latest
@@ -655,7 +655,7 @@ docker compose stop nexus
 docker compose up -d
 
 # Verify rollback
-docker compose logs nexus | head -20
+docker compose logs nekzus | head -20
 ```
 
 </TabItem>
@@ -704,7 +704,7 @@ If only the database needs rollback:
 
 ```bash
 # Stop service
-docker compose stop nexus  # or: sudo systemctl stop nekzus
+docker compose stop nekzus  # or: sudo systemctl stop nekzus
 
 # Restore database from backup
 cp ./backups/20240101_120000/nexus.db ./data/nexus.db
@@ -811,13 +811,13 @@ ws.onerror = (e) => console.error('Error:', e);
 
 ```bash
 # Check for errors in logs
-docker compose logs nexus 2>&1 | grep -i error
+docker compose logs nekzus 2>&1 | grep -i error
 
 # Check for migration completion
-docker compose logs nexus 2>&1 | grep -i migration
+docker compose logs nekzus 2>&1 | grep -i migration
 
 # Check for warnings
-docker compose logs nexus 2>&1 | grep -i warning
+docker compose logs nekzus 2>&1 | grep -i warning
 ```
 
 ---

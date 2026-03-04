@@ -98,7 +98,7 @@ The health check:
 Specifies the address to check when running with `--health`. Use this when the server is running on a non-default port or remote host.
 
 ```bash title="Check remote server health"
-nekzus --health --health-addr https://nexus.local:8443
+nekzus --health --health-addr https://nekzus.local:8443
 ```
 
 ---
@@ -154,7 +154,7 @@ export NEKZUS_TLS_KEY="/etc/nekzus/key.pem"
 export NEKZUS_JWT_SECRET="your-strong-secret-min-32-characters"
 export NEKZUS_BOOTSTRAP_TOKEN="your-bootstrap-token"
 export NEKZUS_DATABASE_PATH="/var/lib/nekzus/nexus.db"
-export NEKZUS_BASE_URL="https://nexus.example.com"
+export NEKZUS_BASE_URL="https://nekzus.example.com"
 nekzus --config /etc/nekzus/config.yaml
 ```
 
@@ -262,7 +262,7 @@ Use in Docker health check or Kubernetes liveness probe:
 
 ```yaml title="docker-compose.yml"
 services:
-  nexus:
+  nekzus:
     image: nstalgic/nekzus:latest
     healthcheck:
       test: ["/app/nekzus", "--health"]

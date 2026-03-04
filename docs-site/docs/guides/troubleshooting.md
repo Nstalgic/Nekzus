@@ -436,7 +436,7 @@ mDNS discovery is not fully implemented in the current version. The worker start
 
 **Solution:**
 
-1. Verify network connectivity between Nexus and cluster:
+1. Verify network connectivity between Nekzus and cluster:
 
     ```bash
     # From Nexus container
@@ -444,7 +444,7 @@ mDNS discovery is not fully implemented in the current version. The worker start
     docker exec nekzus curl http://myservice.default.svc.cluster.local:8080
     ```
 
-2. Ensure Nexus can resolve Kubernetes DNS:
+2. Ensure Nekzus can resolve Kubernetes DNS:
 
     ```yaml
     # docker-compose.yml
@@ -501,7 +501,7 @@ auth:
 
 1. **JWT secret mismatch:** Secret changed after token was issued
 2. **Token corruption:** Token was modified or truncated
-3. **Wrong issuer/audience:** Token from different Nexus instance
+3. **Wrong issuer/audience:** Token from different Nekzus instance
 
 **Solution:**
 
@@ -575,7 +575,7 @@ The device was explicitly revoked by an administrator.
 
 
 <details>
-<summary>Mobile app cannot reach Nexus server</summary>
+<summary>Mobile app cannot reach Nekzus server</summary>
 
 
 **Symptoms:**
@@ -1324,7 +1324,7 @@ If you cannot resolve your issue using this guide:
     docker inspect nekzus
 
     # Recent logs
-    docker logs nekzus --tail 200 > nexus-logs.txt 2>&1
+    docker logs nekzus --tail 200 > nekzus-logs.txt 2>&1
 
     # Health check
     curl -k https://localhost:8443/api/v1/health

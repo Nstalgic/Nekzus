@@ -1,15 +1,15 @@
 # Production Docker Compose Configuration
 #
 # This setup uses Caddy as a reverse proxy to handle TLS termination.
-# Nexus serves HTTP internally, Caddy exposes HTTPS to the outside world.
+# Nekzus serves HTTP internally, Caddy exposes HTTPS to the outside world.
 #
 # Usage:
 #   docker compose up -d
-#   docker compose logs -f nexus
+#   docker compose logs -f nekzus
 #   docker compose down
 
 services:
-  nexus:
+  nekzus:
     build:
       context: .
       dockerfile: Dockerfile

@@ -17,7 +17,7 @@
 #   - /apps/logs/     - Log Generator (for log streaming demo)
 
 services:
-  nexus:
+  nekzus:
     build:
       context: ..
       dockerfile: Dockerfile

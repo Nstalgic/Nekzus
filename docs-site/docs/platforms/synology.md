@@ -131,7 +131,7 @@ Container Manager supports Docker Compose projects:
 
 ```yaml
 services:
-  nexus:
+  nekzus:
     image: nstalgic/nekzus:latest
     container_name: nekzus
     environment:
@@ -328,7 +328,7 @@ Create `/volume1/docker/nekzus/docker-compose.yml`:
 
 ```yaml
 services:
-  nexus:
+  nekzus:
     image: nstalgic/nekzus:latest
     container_name: nekzus
     environment:
@@ -482,7 +482,7 @@ For direct network access (required for mDNS discovery):
 
 ```yaml
 services:
-  nexus:
+  nekzus:
     network_mode: host
 ```
 
@@ -499,7 +499,7 @@ For communication with other containers:
 
 ```yaml
 services:
-  nexus:
+  nekzus:
     networks:
       - nekzus-network
 
@@ -619,7 +619,7 @@ Use Synology's built-in reverse proxy for HTTPS access:
 |-------|-------|
 | Description | Nekzus |
 | Source Protocol | HTTPS |
-| Source Hostname | nexus.local (or your domain) |
+| Source Hostname | nekzus.local (or your domain) |
 | Source Port | 443 |
 | Destination Protocol | HTTP |
 | Destination Hostname | localhost |
@@ -668,7 +668,7 @@ Configure Nekzus to handle TLS directly:
 
 ```yaml
 services:
-  nexus:
+  nekzus:
     ports:
       - "8443:8443"
     volumes:
@@ -1059,7 +1059,7 @@ For production stability, pin to a specific version:
 
 ```yaml
 services:
-  nexus:
+  nekzus:
     image: nstalgic/nekzus:v1.2.3  # Specific version
 ```
 

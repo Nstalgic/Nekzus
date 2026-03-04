@@ -76,8 +76,8 @@ func (m *MockDockerClient) ContainerLogs(ctx context.Context, containerID string
 
 func TestGetCertVolumeName(t *testing.T) {
 	name := GetCertVolumeName()
-	if name != "nexus-certs" {
-		t.Errorf("Expected volume name 'nexus-certs', got: %s", name)
+	if name != "nekzus-certs" {
+		t.Errorf("Expected volume name 'nekzus-certs', got: %s", name)
 	}
 }
 
@@ -89,8 +89,8 @@ func TestEnsureCertVolume_CreateNew(t *testing.T) {
 			return volume.ListResponse{Volumes: []*volume.Volume{}}, nil
 		},
 		VolumeCreateFunc: func(ctx context.Context, options volume.CreateOptions) (volume.Volume, error) {
-			if options.Name != "nexus-certs" {
-				t.Errorf("Expected volume name 'nexus-certs', got: %s", options.Name)
+			if options.Name != "nekzus-certs" {
+				t.Errorf("Expected volume name 'nekzus-certs', got: %s", options.Name)
 			}
 			created = true
 			return volume.Volume{Name: options.Name}, nil
@@ -116,7 +116,7 @@ func TestEnsureCertVolume_AlreadyExists(t *testing.T) {
 			// Volume already exists
 			return volume.ListResponse{
 				Volumes: []*volume.Volume{
-					{Name: "nexus-certs"},
+					{Name: "nekzus-certs"},
 				},
 			}, nil
 		},
@@ -303,8 +303,8 @@ func TestWriteCertsToVolume_EmptyCerts(t *testing.T) {
 func TestGetCertMountConfig(t *testing.T) {
 	mount := GetCertMountConfig()
 
-	if mount.Source != "nexus-certs" {
-		t.Errorf("Expected source 'nexus-certs', got: %s", mount.Source)
+	if mount.Source != "nekzus-certs" {
+		t.Errorf("Expected source 'nekzus-certs', got: %s", mount.Source)
 	}
 
 	if mount.Target != "/certs" {
@@ -345,7 +345,7 @@ func TestVolumeExists(t *testing.T) {
 	}{
 		{
 			name:     "Volume exists",
-			volumes:  []*volume.Volume{{Name: "nexus-certs"}},
+			volumes:  []*volume.Volume{{Name: "nekzus-certs"}},
 			expected: true,
 		},
 		{
@@ -362,7 +362,7 @@ func TestVolumeExists(t *testing.T) {
 			name: "Multiple volumes, target exists",
 			volumes: []*volume.Volume{
 				{Name: "vol1"},
-				{Name: "nexus-certs"},
+				{Name: "nekzus-certs"},
 				{Name: "vol2"},
 			},
 			expected: true,
@@ -414,7 +414,7 @@ func TestGetComposeVolumeSpec(t *testing.T) {
 	spec := GetComposeVolumeSpec()
 
 	// Should be in format: volume_name:/path:ro
-	expected := "nexus-certs:/certs:ro"
+	expected := "nekzus-certs:/certs:ro"
 	if spec != expected {
 		t.Errorf("Expected spec '%s', got: %s", expected, spec)
 	}

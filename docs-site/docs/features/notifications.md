@@ -583,7 +583,7 @@ Send deployment notifications from your CI/CD pipeline:
 
 ```bash
 # In your deployment script
-curl -X POST https://nexus.local:8443/api/v1/webhooks/activity \
+curl -X POST https://nekzus.local:8443/api/v1/webhooks/activity \
   -H "X-API-Key: ${NEKZUS_API_KEY}" \
   -H "Content-Type: application/json" \
   -d '{
@@ -600,7 +600,7 @@ Forward alerts from your monitoring system:
 
 ```bash
 # Prometheus Alertmanager webhook receiver
-curl -X POST https://nexus.local:8443/api/v1/webhooks/notify \
+curl -X POST https://nekzus.local:8443/api/v1/webhooks/notify \
   -H "X-API-Key: ${NEKZUS_API_KEY}" \
   -H "Content-Type: application/json" \
   -d '{
@@ -621,7 +621,7 @@ Notify specific devices when backups complete:
 
 ```bash
 # Send to specific admin devices
-curl -X POST https://nexus.local:8443/api/v1/webhooks/activity \
+curl -X POST https://nekzus.local:8443/api/v1/webhooks/activity \
   -H "X-API-Key: ${NEKZUS_API_KEY}" \
   -H "Content-Type: application/json" \
   -d '{
@@ -649,7 +649,7 @@ async function sendNotification(message, options = {}) {
 
   try {
     const response = await axios.post(
-      'https://nexus.local:8443/api/v1/webhooks/activity',
+      'https://nekzus.local:8443/api/v1/webhooks/activity',
       payload,
       {
         headers: {
@@ -691,7 +691,7 @@ def send_notification(message, icon='Bell', icon_class='', details='', device_id
     }
 
     response = requests.post(
-        'https://nexus.local:8443/api/v1/webhooks/activity',
+        'https://nekzus.local:8443/api/v1/webhooks/activity',
         json=payload,
         headers={
             'X-API-Key': os.environ['NEKZUS_API_KEY'],
@@ -742,7 +742,7 @@ func sendNotification(payload ActivityPayload) error {
 
     req, err := http.NewRequest(
         "POST",
-        "https://nexus.local:8443/api/v1/webhooks/activity",
+        "https://nekzus.local:8443/api/v1/webhooks/activity",
         bytes.NewReader(body),
     )
     if err != nil {

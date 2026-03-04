@@ -1123,14 +1123,14 @@ func TestCreateContainerConfig_WithCertVolume(t *testing.T) {
 	// Verify cert volume is mounted
 	foundCertMount := false
 	for _, m := range hostConfig.Mounts {
-		if m.Source == "nexus-certs" && m.Target == "/certs" && m.ReadOnly {
+		if m.Source == "nekzus-certs" && m.Target == "/certs" && m.ReadOnly {
 			foundCertMount = true
 			break
 		}
 	}
 
 	if !foundCertMount {
-		t.Error("Expected nexus-certs volume to be mounted at /certs (read-only)")
+		t.Error("Expected nekzus-certs volume to be mounted at /certs (read-only)")
 	}
 
 	// Verify cert environment variables are set

@@ -735,7 +735,7 @@ Run with:
 ```yaml title="config.yaml"
 server:
   addr: ":8443"
-  base_url: "https://nexus.example.com:8443"
+  base_url: "https://nekzus.example.com:8443"
   tls_cert: "./certs/server-cert.pem"
   tls_key: "./certs/server-key.pem"
 

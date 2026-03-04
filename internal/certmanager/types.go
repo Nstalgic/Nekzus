@@ -156,7 +156,7 @@ type CACertificate struct {
 
 // CAOptions contains options for CA generation
 type CAOptions struct {
-	CommonName   string // Default: "Nexus CA"
+	CommonName   string // Default: "Nekzus CA"
 	Organization string // Default: "Nekzus"
 	ValidityDays int    // Default: 3650 (10 years)
 	KeyType      string // "ecdsa" or "rsa" (default: "ecdsa")
@@ -166,7 +166,7 @@ type CAOptions struct {
 // SetDefaults sets default values for CAOptions
 func (opts *CAOptions) SetDefaults() {
 	if opts.CommonName == "" {
-		opts.CommonName = "Nexus CA"
+		opts.CommonName = "Nekzus CA"
 	}
 	if opts.Organization == "" {
 		opts.Organization = "Nekzus"

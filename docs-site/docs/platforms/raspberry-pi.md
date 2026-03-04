@@ -133,7 +133,7 @@ Create `docker-compose.yml`:
 
 ```yaml title="docker-compose.yml"
 services:
-  nexus:
+  nekzus:
     image: nstalgic/nekzus:latest
     container_name: nekzus
     environment:
@@ -144,7 +144,7 @@ services:
       - "8080:8080"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - nexus-data:/app/data
+      - nekzus-data:/app/data
     restart: unless-stopped
     healthcheck:
       test: ["/app/nekzus", "--health"]
@@ -158,7 +158,7 @@ services:
           memory: 512M
 
 volumes:
-  nexus-data:
+  nekzus-data:
 ```
 
 Create the `.env` file with secure secrets:
@@ -182,7 +182,7 @@ Verify the deployment:
 docker compose ps
 
 # View logs
-docker compose logs -f nexus
+docker compose logs -f nekzus
 
 # Test health endpoint
 curl http://localhost:8080/healthz
@@ -718,7 +718,7 @@ Nekzus exposes Prometheus metrics at `/metrics`. Set up monitoring:
 
 ```yaml title="docker-compose.yml (with monitoring)"
 services:
-  nexus:
+  nekzus:
     # ... existing configuration ...
 
   prometheus:
@@ -739,7 +739,7 @@ services:
           memory: 256M
 
 volumes:
-  nexus-data:
+  nekzus-data:
   prometheus-data:
 ```
 
@@ -751,7 +751,7 @@ global:
 scrape_configs:
   - job_name: 'nekzus'
     static_configs:
-      - targets: ['nexus:8080']
+      - targets: ['nekzus:8080']
     metrics_path: /metrics
 ```
 
@@ -761,13 +761,13 @@ scrape_configs:
 
 ```bash
 # Docker logs
-docker compose logs -f nexus
+docker compose logs -f nekzus
 
 # With timestamps
-docker compose logs -f --timestamps nexus
+docker compose logs -f --timestamps nekzus
 
 # Last 100 lines
-docker compose logs --tail 100 nexus
+docker compose logs --tail 100 nekzus
 
 # systemd logs
 sudo journalctl -u nekzus -f
@@ -779,7 +779,7 @@ Docker handles log rotation automatically. Configure limits:
 
 ```yaml title="docker-compose.yml"
 services:
-  nexus:
+  nekzus:
     # ... existing configuration ...
     logging:
       driver: "json-file"
@@ -951,7 +951,7 @@ Alternatively, cross-compile on a more powerful machine.
 Check logs for the cause:
 
 ```bash
-docker compose logs nexus --tail 50
+docker compose logs nekzus --tail 50
 
 # Check container exit code
 docker inspect nekzus --format='{{.State.ExitCode}}'
@@ -1131,28 +1131,28 @@ sudo systemctl start nekzus
 
 ```bash
 # Stop the service
-docker compose stop nexus
+docker compose stop nekzus
 
 # Backup volume
-docker run --rm -v nexus-data:/data -v $(pwd):/backup alpine \
-  tar czf /backup/nexus-backup-$(date +%Y%m%d).tar.gz -C /data .
+docker run --rm -v nekzus-data:/data -v $(pwd):/backup alpine \
+  tar czf /backup/nekzus-backup-$(date +%Y%m%d).tar.gz -C /data .
 
 # Restart
-docker compose start nexus
+docker compose start nekzus
 ```
 
 #### Restore from Backup
 
 ```bash
 # Stop the service
-docker compose stop nexus
+docker compose stop nekzus
 
 # Restore volume
-docker run --rm -v nexus-data:/data -v $(pwd):/backup alpine \
-  tar xzf /backup/nexus-backup-20240101.tar.gz -C /data
+docker run --rm -v nekzus-data:/data -v $(pwd):/backup alpine \
+  tar xzf /backup/nekzus-backup-20240101.tar.gz -C /data
 
 # Restart
-docker compose start nexus
+docker compose start nekzus
 ```
 
 ---
