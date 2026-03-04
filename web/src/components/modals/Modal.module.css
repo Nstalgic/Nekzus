@@ -1,0 +1,222 @@
+/**
+ * Modal Styles (CSS Module)
+ */
+
+/* Overlay */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--spacing-4);
+  animation: modalFadeIn 0.2s ease;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Modal Content */
+.modalContent {
+  background: var(--bg-secondary);
+  border: 2px solid var(--border);
+  border-radius: 0; /* Sharp corners for terminal aesthetic */
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: modalSlideIn 0.3s ease;
+  outline: none;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Modal Sizes */
+.modalSmall {
+  width: 100%;
+  max-width: 400px;
+}
+
+.modalMedium {
+  width: 100%;
+  max-width: 600px;
+}
+
+.modalLarge {
+  width: 100%;
+  max-width: 900px;
+}
+
+/* Custom Scrollbar */
+.modalContent::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modalContent::-webkit-scrollbar-track {
+  background: var(--bg-tertiary);
+}
+
+.modalContent::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 0; /* Sharp corners for terminal aesthetic */
+}
+
+.modalContent::-webkit-scrollbar-thumb:hover {
+  background: var(--text-tertiary);
+}
+
+/* Modal Structure Components */
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-lg);
+  border-bottom: var(--border-width) solid var(--border-dim);
+  background: var(--bg-secondary);
+}
+
+.modalTitleSection {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.modalTitleSection h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-family: var(--font-mono);
+}
+
+.modalCloseButton {
+  background: transparent;
+  border: var(--border-width) solid var(--border-dim);
+  color: var(--text-secondary);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  padding: var(--spacing-xs);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+  border-radius: 0;
+  font-family: var(--font-mono);
+}
+
+.modalCloseButton:hover {
+  background: var(--bg-tertiary);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+.modalCloseButton:active {
+  transform: scale(0.95);
+}
+
+.modalCloseButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.modalBody {
+  padding: var(--spacing-lg);
+  background: var(--bg-primary);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) var(--bg-primary);
+}
+
+.modalBody::-webkit-scrollbar {
+  width: 10px;
+}
+
+.modalBody::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+  border-left: var(--border-width) solid var(--border-dim);
+}
+
+.modalBody::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 0;
+}
+
+.modalBody::-webkit-scrollbar-thumb:hover {
+  background: var(--text-primary);
+}
+
+.modalFooter {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: flex-end;
+  padding: var(--spacing-lg);
+  border-top: var(--border-width) solid var(--border-dim);
+  background: var(--bg-secondary);
+}
+
+.modalFooter .btn {
+  min-width: 120px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .modalOverlay {
+    padding: var(--spacing-2);
+  }
+
+  .modalContent {
+    max-height: 95vh;
+  }
+
+  .modalSmall,
+  .modalMedium,
+  .modalLarge {
+    max-width: 100%;
+  }
+
+  .modalHeader,
+  .modalBody,
+  .modalFooter {
+    padding: var(--spacing-md);
+  }
+
+  .modalFooter {
+    flex-direction: column-reverse;
+  }
+
+  .modalFooter .btn {
+    width: 100%;
+  }
+}
+
+/* Compact Mode Support */
+body.compact-mode .modalHeader,
+body.compact-mode .modalBody,
+body.compact-mode .modalFooter {
+  padding: var(--spacing-sm);
+}

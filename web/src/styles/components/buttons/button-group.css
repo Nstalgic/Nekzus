@@ -1,0 +1,11 @@
+/* ============================================
+   BUTTON GROUP
+   ============================================
+   Button grouping/clustering component
+   ============================================ */
+
+.button-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+}

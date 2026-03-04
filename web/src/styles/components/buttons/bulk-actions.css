@@ -1,0 +1,15 @@
+/* ============================================
+   BULK ACTIONS
+   ============================================
+   Bulk action toolbar for multi-select operations
+   ============================================ */
+
+.bulk-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    padding: var(--spacing-sm);
+    background-color: var(--bg-secondary);
+    border: var(--border-width) solid var(--border-dim);
+}

@@ -1,0 +1,64 @@
+/* ============================================
+   EMPTY & ERROR STATES
+   ============================================
+   Empty state and error state display components
+   ============================================ */
+
+.empty-state {
+    text-align: center;
+    padding: var(--spacing-xl) var(--spacing-md);
+    color: var(--text-secondary);
+    border: var(--border-width) solid var(--border-dim);
+    background-color: var(--bg-secondary);
+}
+
+.empty-state-icon {
+    font-size: 48px;
+    line-height: 1;
+    margin-bottom: var(--spacing-md);
+    opacity: 0.5;
+}
+
+.empty-state-title {
+    font-size: 14px;
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-xs);
+}
+
+.empty-state-message {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-md);
+}
+
+.empty-state-action {
+    margin-top: var(--spacing-md);
+}
+
+.error-state {
+    text-align: center;
+    padding: var(--spacing-xl) var(--spacing-md);
+    color: var(--color-error);
+    border: var(--border-width) solid var(--color-error);
+    background-color: rgba(255, 0, 0, 0.05);
+}
+
+.error-state-icon {
+    font-size: 48px;
+    line-height: 1;
+    margin-bottom: var(--spacing-md);
+}
+
+.error-state-title {
+    font-size: 14px;
+    font-weight: var(--font-weight-bold);
+    color: var(--color-error);
+    margin-bottom: var(--spacing-xs);
+}
+
+.error-state-message {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-md);
+}

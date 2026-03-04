@@ -1,0 +1,43 @@
+/* ============================================
+   MAIN CONTENT
+   ============================================
+   Terminal content area and component sections
+   ============================================ */
+
+.terminal-content {
+    padding: var(--spacing-md);
+    padding-bottom: calc(var(--spacing-md) + 50px); /* Extra space for fixed footer */
+}
+
+.logo-section {
+    text-align: left;
+    margin-top: auto;
+    padding-top: var(--spacing-sm);
+}
+
+.logo-section .text-secondary {
+    font-size: 10px;
+    margin-top: var(--spacing-xs);
+}
+
+.component-section {
+    margin-bottom: var(--spacing-lg);
+}
+
+.section-label {
+    font-size: 10px;
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-sm);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background-color: var(--bg-secondary);
+    border-left: 2px solid var(--border-color);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .terminal-content {
+        padding: var(--spacing-sm);
+    }
+}

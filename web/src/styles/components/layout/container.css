@@ -1,0 +1,11 @@
+/* ============================================
+   LAYOUT CONTAINER
+   ============================================
+   Main container component for page layout
+   ============================================ */
+
+.container {
+    max-width: 100%;
+    margin: 0;
+    background-color: var(--bg-primary);
+}

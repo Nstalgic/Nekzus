@@ -1,0 +1,114 @@
+/* ============================================
+   TABLE
+   ============================================
+   Data table component with search controls
+   ============================================ */
+
+.table-controls {
+    margin-bottom: var(--spacing-md);
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: center;
+}
+
+.search-input {
+    flex: 1;
+    max-width: 500px;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    border: var(--border-width) solid var(--border-color);
+    margin-bottom: var(--spacing-md);
+}
+
+.table th,
+.table td {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    text-align: left;
+    border: var(--border-width) solid var(--border-color);
+}
+
+.table th {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-weight: var(--font-weight-bold);
+    text-transform: uppercase;
+    font-size: 13px;
+}
+
+.table td {
+    background-color: var(--bg-primary);
+    font-size: 13px;
+}
+
+.table tbody tr:hover td {
+    background-color: var(--bg-secondary);
+}
+
+.status-running {
+    color: var(--color-success);
+}
+
+.status-stopped {
+    color: var(--color-error);
+}
+
+/* Mobile responsive - card conversion */
+@media (max-width: 768px) {
+    .table thead {
+        display: none;
+    }
+
+    .table,
+    .table tbody,
+    .table tr,
+    .table td {
+        display: block;
+        width: 100%;
+    }
+
+    .table tr {
+        margin-bottom: var(--spacing-md);
+        border: var(--border-width) solid var(--border-color);
+        padding: var(--spacing-sm);
+        background-color: var(--bg-primary);
+    }
+
+    .table td {
+        border: none;
+        padding: var(--spacing-xs) 0;
+        text-align: left;
+        position: relative;
+        padding-left: 45%;
+        min-height: 24px;
+    }
+
+    .table td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 0;
+        width: 40%;
+        padding-right: var(--spacing-sm);
+        font-weight: var(--font-weight-bold);
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        font-size: 11px;
+    }
+
+    .table td:last-child {
+        padding-top: var(--spacing-sm);
+        padding-left: 0;
+        border-top: var(--border-width) solid var(--border-dim);
+        margin-top: var(--spacing-xs);
+    }
+
+    .table td:last-child::before {
+        content: '';
+    }
+
+    .table td .btn {
+        margin: var(--spacing-xs) var(--spacing-xs) 0 0;
+    }
+}

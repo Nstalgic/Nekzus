@@ -1,0 +1,54 @@
+/* ============================================
+   NAVIGATION
+   ============================================
+   Main navigation component
+   ============================================ */
+
+.nav {
+    display: flex;
+    gap: 0;
+    flex-wrap: wrap;
+    border: var(--border-width) solid var(--border-color);
+}
+
+.nav-item {
+    padding: var(--spacing-xs) var(--spacing-md);
+    color: var(--text-secondary);
+    text-decoration: none;
+    border-right: var(--border-width) solid var(--border-color);
+    background-color: var(--bg-primary);
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+}
+
+.nav-item:last-child {
+    border-right: none;
+}
+
+.nav-item:hover {
+    color: var(--text-primary);
+    background-color: var(--bg-secondary);
+}
+
+.nav-item.active {
+    color: var(--text-primary);
+    background-color: var(--bg-secondary);
+    font-weight: var(--font-weight-bold);
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .nav {
+        flex-direction: column;
+    }
+
+    .nav-item {
+        border-right: none;
+        border-bottom: var(--border-width) solid var(--border-color);
+    }
+
+    .nav-item:last-child {
+        border-bottom: none;
+    }
+}

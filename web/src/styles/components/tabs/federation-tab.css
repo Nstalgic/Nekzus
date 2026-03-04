@@ -1,0 +1,324 @@
+/**
+ * Federation Tab Styles
+ *
+ * Styles for the federation management tab including:
+ * - Tab header with status and sync button
+ * - Stats row
+ * - Peer grid
+ * - Catalog table
+ * - Peer card
+ */
+
+/* Federation Tab Container */
+.federation-tab {
+  /* No padding - Box component already provides padding via .box-content */
+}
+
+/* Federation Status in Header */
+.federation-status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.federation-status .status-text {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+/* Stats Row */
+.federation-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  padding: var(--space-3);
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+}
+
+.stat-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-2);
+}
+
+.stat-box .stat-value {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+}
+
+.stat-box .stat-label {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Federation Sections */
+.federation-section {
+  margin-bottom: var(--space-4);
+}
+
+.federation-section .section-title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--space-3);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* Peer Grid */
+.peer-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-3);
+}
+
+/* Peer Card */
+.peer-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.peer-card:hover {
+  border-color: var(--accent-primary);
+  box-shadow: 0 2px 8px var(--shadow-color);
+}
+
+.peer-card:focus {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+.peer-card.online {
+  border-left: 3px solid var(--color-success);
+}
+
+.peer-card.offline {
+  border-left: 3px solid var(--color-warning);
+  opacity: 0.8;
+}
+
+.peer-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--space-3);
+}
+
+.peer-identity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.peer-icon {
+  font-size: var(--font-size-lg);
+}
+
+.peer-card.online .peer-icon {
+  color: var(--color-success);
+}
+
+.peer-card.offline .peer-icon {
+  color: var(--color-warning);
+}
+
+.peer-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.peer-name {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.peer-id {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+}
+
+.peer-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.peer-stat {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--font-size-sm);
+}
+
+.peer-stat .stat-label {
+  color: var(--text-secondary);
+}
+
+.peer-stat .stat-value {
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+}
+
+.peer-card-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Catalog Table */
+.catalog-table {
+  overflow-x: auto;
+}
+
+.catalog-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.catalog-table th,
+.catalog-table td {
+  padding: var(--space-2) var(--space-3);
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.catalog-table th {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: var(--bg-tertiary);
+}
+
+.catalog-table td {
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+}
+
+.catalog-table tr:hover td {
+  background: var(--bg-tertiary);
+}
+
+.service-name {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.service-icon {
+  font-size: var(--font-size-lg);
+}
+
+/* Confidence Bar */
+.confidence-bar {
+  display: inline-block;
+  width: 60px;
+  height: 6px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  vertical-align: middle;
+  margin-right: var(--space-2);
+}
+
+.confidence-fill {
+  display: block;
+  height: 100%;
+  background: var(--color-success);
+  border-radius: var(--radius-sm);
+}
+
+.confidence-value {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+}
+
+/* Peer Details Modal */
+.peer-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.peer-details .detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.peer-details .detail-row:last-child {
+  border-bottom: none;
+}
+
+.peer-details .detail-row strong {
+  color: var(--text-secondary);
+  font-weight: var(--font-weight-normal);
+}
+
+.peer-details .detail-row span {
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+}
+
+/* Empty State Small */
+.empty-state-sm {
+  padding: var(--space-4);
+  text-align: center;
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+}
+
+.empty-state-sm p {
+  margin: 0;
+}
+
+/* Code Block */
+.code-block {
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  overflow-x: auto;
+}
+
+.code-block pre {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  white-space: pre-wrap;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .federation-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .peer-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .catalog-table {
+    font-size: var(--font-size-xs);
+  }
+}

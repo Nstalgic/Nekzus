@@ -1,0 +1,35 @@
+/* ============================================
+   FOOTER
+   ============================================
+   Terminal-style footer component - Fixed to bottom
+   ============================================ */
+
+.terminal-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-sm);
+    border: var(--border-width) solid var(--border-color);
+    border-top: 2px solid var(--border-color);
+    background-color: var(--bg-primary);
+    color: var(--text-secondary);
+    font-size: 10px;
+    z-index: 50;
+}
+
+.timestamp {
+    color: var(--text-primary);
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .terminal-footer {
+        flex-direction: column;
+        gap: var(--spacing-xs);
+    }
+}

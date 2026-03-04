@@ -1,0 +1,182 @@
+/* ============================================
+   BADGES
+   ============================================
+   Badge component system with variants and sizes
+   ============================================ */
+
+.badge {
+    display: inline-block;
+    padding: 2px 6px;
+    font-size: 13px;
+    font-weight: var(--font-weight-bold);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: var(--border-width) solid var(--border-color);
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.2;
+}
+
+/* Badge Variants */
+.badge-primary {
+    border-color: var(--text-primary);
+    color: var(--text-primary);
+}
+
+.badge-secondary {
+    border-color: var(--text-secondary);
+    color: var(--text-secondary);
+}
+
+.badge-success {
+    border-color: var(--color-success);
+    color: var(--color-success);
+}
+
+.badge-error {
+    border-color: var(--color-error);
+    color: var(--color-error);
+}
+
+.badge-warning {
+    border-color: var(--color-warning);
+    color: var(--color-warning);
+}
+
+.badge-info {
+    border-color: var(--color-info);
+    color: var(--color-info);
+}
+
+/* Badge Filled Variants */
+.badge-filled {
+    background-color: var(--text-primary);
+    color: var(--bg-primary);
+}
+
+.badge-primary.badge-filled {
+    background-color: var(--text-primary);
+    color: var(--bg-primary);
+}
+
+.badge-secondary.badge-filled {
+    background-color: var(--text-secondary);
+    color: var(--bg-primary);
+}
+
+.badge-success.badge-filled {
+    background-color: var(--color-success);
+    color: var(--bg-primary);
+}
+
+.badge-error.badge-filled {
+    background-color: var(--color-error);
+    color: var(--bg-primary);
+}
+
+.badge-warning.badge-filled {
+    background-color: var(--color-warning);
+    color: var(--bg-primary);
+}
+
+.badge-info.badge-filled {
+    background-color: var(--color-info);
+    color: var(--bg-primary);
+}
+
+/* Badge Sizes */
+.badge-sm {
+    padding: 1px 4px;
+    font-size: 13px;
+}
+
+.badge-lg {
+    padding: 3px 8px;
+    font-size: 13px;
+}
+
+/* Badge with dot indicator */
+.badge-dot {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.badge-dot::before {
+    content: '●';
+    font-size: 8px;
+}
+
+/* Badge Group */
+.badge-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+    align-items: center;
+}
+
+/* Status Badge Color Coding */
+.status-badge {
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-family: var(--font-mono);
+}
+
+/* 2xx Success - Green */
+.status-2xx,
+.status-badge.status-2xx {
+    color: var(--color-success);
+    background: rgba(0, 255, 0, 0.1);
+    border: 1px solid var(--color-success);
+}
+
+/* 3xx Redirect - Cyan */
+.status-3xx,
+.status-badge.status-3xx {
+    color: var(--color-info);
+    background: rgba(0, 255, 255, 0.1);
+    border: 1px solid var(--color-info);
+}
+
+/* 4xx Client Error - Amber/Warning */
+.status-4xx,
+.status-badge.status-4xx {
+    color: var(--color-warning);
+    background: rgba(255, 191, 0, 0.1);
+    border: 1px solid var(--color-warning);
+}
+
+/* 5xx Server Error - Red */
+.status-5xx,
+.status-badge.status-5xx {
+    color: var(--color-error);
+    background: rgba(255, 0, 0, 0.1);
+    border: 1px solid var(--color-error);
+}
+
+/* HTTP Method Color Coding */
+.method-get {
+    color: var(--color-success);
+}
+
+.method-post {
+    color: var(--accent-yellow);
+}
+
+.method-put {
+    color: var(--accent-cyan);
+}
+
+.method-patch {
+    color: var(--accent-amber);
+}
+
+.method-delete {
+    color: var(--color-error);
+}
+
+.method-head,
+.method-options {
+    color: var(--text-secondary);
+}

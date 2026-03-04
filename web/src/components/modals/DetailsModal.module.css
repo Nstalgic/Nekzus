@@ -1,0 +1,180 @@
+/**
+ * DetailsModal Styles (CSS Module)
+ * Base styles for detail view modals
+ */
+
+/* Modal Overlay */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--spacing-md);
+  overflow-y: auto;
+}
+
+/* Modal Content Container */
+.modalContent {
+  position: relative;
+  width: 100%;
+  max-height: 90vh;
+}
+
+/* Modal Sizes */
+.modalSmall {
+  max-width: 500px;
+}
+
+.modalMedium {
+  max-width: 700px;
+}
+
+.modalLarge {
+  max-width: 900px;
+}
+
+/* Card */
+.detailsCard {
+  background-color: var(--bg-primary);
+  border: var(--border-width) solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  max-height: 85vh;
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: var(--spacing-lg);
+  border-bottom: var(--border-width) solid var(--border-dim);
+  gap: var(--spacing-md);
+}
+
+.headerTitleSection {
+  display: flex;
+  gap: var(--spacing-md);
+  align-items: flex-start;
+  flex: 1;
+}
+
+.headerIcon {
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.headerInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.headerTitle {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 var(--spacing-xs) 0;
+}
+
+.headerSubtitle {
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+  margin: 0 0 var(--spacing-xs) 0;
+}
+
+/* Close Button */
+.closeButton {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: var(--spacing-xs);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.closeButton:hover {
+  color: var(--text-primary);
+}
+
+/* Body */
+.body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-lg);
+}
+
+/* Custom Scrollbar for Body */
+.body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.body::-webkit-scrollbar-track {
+  background: var(--bg-tertiary);
+}
+
+.body::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+.body::-webkit-scrollbar-thumb:hover {
+  background: var(--text-tertiary);
+}
+
+/* Footer */
+.footer {
+  padding: var(--spacing-lg);
+  border-top: var(--border-width) solid var(--border-dim);
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-md);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .modalOverlay {
+    padding: 0;
+  }
+
+  .modalContent {
+    max-height: 100vh;
+  }
+
+  .modalSmall,
+  .modalMedium,
+  .modalLarge {
+    max-width: 100%;
+  }
+
+  .detailsCard {
+    max-height: 100vh;
+    border-radius: 0;
+  }
+
+  .header,
+  .body,
+  .footer {
+    padding: var(--spacing-md);
+  }
+
+  .footer {
+    flex-direction: column-reverse;
+  }
+
+  .footer button {
+    width: 100%;
+  }
+}

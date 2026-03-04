@@ -1,0 +1,21 @@
+/* ============================================
+   FORM STRUCTURE
+   ============================================
+   Basic form layout and structure
+   ============================================ */
+
+.terminal-form {
+    max-width: 600px;
+}
+
+.form-group {
+    margin-bottom: var(--spacing-md);
+}
+
+label {
+    display: block;
+    margin-bottom: var(--spacing-xs);
+    color: var(--text-primary);
+    font-size: 11px;
+    text-transform: uppercase;
+}

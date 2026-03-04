@@ -1,0 +1,17 @@
+/**
+ * Devices Tab Styles
+ *
+ * Styles for the devices management tab including:
+ * - Tab header with title and pair button
+ * - Device grid layout
+ * - Empty state
+ */
+
+/* Devices Tab Container */
+.devices-tab {
+  /* No padding - Box component already provides padding via .box-content */
+}
+
+/* Tab Header - reused from other tabs */
+
+/* Empty State - reused from other tabs */

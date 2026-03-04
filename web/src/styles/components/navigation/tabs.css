@@ -1,0 +1,155 @@
+/* ============================================
+   TABS
+   ============================================
+   Tab navigation component with badge support
+   ============================================ */
+
+.tabs {
+    display: flex;
+    gap: var(--spacing-xs);
+    border-bottom: var(--border-width) solid var(--border-color);
+    margin-bottom: var(--spacing-md);
+    padding-left: var(--spacing-xs);
+}
+
+.tab-item {
+    padding: var(--spacing-xs) var(--spacing-md);
+    padding-right: 32px; /* Reserve space for badge */
+    color: var(--text-secondary);
+    text-decoration: none;
+    background-color: var(--bg-secondary);
+    border: var(--border-width) solid var(--border-dim);
+    border-bottom: none;
+    margin-bottom: 0;
+    text-transform: uppercase;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.tab-item:hover {
+    color: var(--text-primary);
+    background-color: var(--bg-tertiary);
+}
+
+.tab-item.active {
+    color: var(--text-primary);
+    background-color: var(--bg-primary);
+    border: var(--border-width) solid var(--border-color);
+    border-bottom: var(--border-width) solid var(--bg-primary);
+    font-weight: var(--font-weight-bold);
+    z-index: 1;
+    margin-bottom: -1px;
+}
+
+.tab-item:focus-visible {
+    outline: 2px solid var(--text-white);
+    outline-offset: -2px;
+    z-index: 2;
+}
+
+/* Tab Badge / Notification Indicator */
+.tab-badge {
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: var(--font-weight-bold);
+    padding: 0 5px;
+    line-height: 1;
+    z-index: 2;
+    transition: var(--transition-fast);
+}
+
+/* Severity-based badge colors */
+.tab-badge[data-severity="info"] {
+    background: var(--color-success);
+    color: var(--bg-primary);
+    border: var(--border-width) solid var(--color-success);
+    box-shadow: 0 0 8px rgba(0, 255, 0, 0.3);
+}
+
+.tab-badge[data-severity="warning"] {
+    background: var(--color-warning);
+    color: var(--bg-primary);
+    border: var(--border-width) solid var(--color-warning);
+    box-shadow: 0 0 8px rgba(255, 191, 0, 0.4);
+}
+
+.tab-badge[data-severity="critical"] {
+    background: var(--color-error);
+    color: var(--text-white);
+    border: var(--border-width) solid var(--color-error);
+    box-shadow: 0 0 8px rgba(255, 0, 0, 0.4);
+}
+
+/* Badge state when tab is inactive */
+.tab-item:not(.active) .tab-badge[data-severity="info"] {
+    background: var(--text-secondary);
+    border-color: var(--text-secondary);
+    color: var(--bg-primary);
+    box-shadow: none;
+}
+
+.tab-item:not(.active) .tab-badge[data-severity="warning"],
+.tab-item:not(.active) .tab-badge[data-severity="critical"] {
+    /* Keep warning/critical colors even on inactive tabs */
+    opacity: 0.9;
+}
+
+/* Badge state when tab is active */
+.tab-item.active .tab-badge {
+    opacity: 0.8;
+}
+
+/* Hover enhancement */
+.tab-item:hover .tab-badge[data-severity="info"] {
+    box-shadow: 0 0 12px rgba(0, 255, 0, 0.5);
+}
+
+.tab-item:hover .tab-badge[data-severity="warning"] {
+    box-shadow: 0 0 12px rgba(255, 191, 0, 0.6);
+}
+
+.tab-item:hover .tab-badge[data-severity="critical"] {
+    box-shadow: 0 0 16px rgba(255, 0, 0, 0.8);
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+    .tab-badge[data-severity="critical"] {
+        animation: none;
+    }
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .tabs {
+        flex-wrap: wrap;
+    }
+
+    .tab-item {
+        flex: 1;
+        min-width: 120px;
+        padding-right: 28px; /* Adjusted for mobile */
+    }
+
+    .tab-badge {
+        right: 6px;
+        min-width: 18px;
+        height: 18px;
+        font-size: 10px;
+        padding: 0 4px;
+    }
+}

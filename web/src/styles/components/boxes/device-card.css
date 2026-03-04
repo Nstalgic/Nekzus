@@ -1,0 +1,131 @@
+/* ============================================
+   DEVICE CARDS
+   ============================================
+   Device management card components with status indicators
+   ============================================ */
+
+.device-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: var(--spacing-md);
+}
+
+.device-card {
+    border: var(--border-width) solid var(--border-color);
+    background-color: var(--bg-primary);
+    padding: var(--spacing-md);
+    display: flex;
+    flex-direction: column;
+}
+
+.device-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+}
+
+.device-icon-container {
+    position: relative;
+    display: inline-block;
+}
+
+.device-icon {
+    color: var(--text-primary);
+    padding: var(--spacing-xs);
+    background-color: var(--bg-secondary);
+    border: var(--border-width) solid var(--border-color);
+}
+
+.device-status-indicator {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: var(--color-success);
+    border: 2px solid var(--bg-primary);
+}
+
+.device-status-indicator.offline {
+    background-color: var(--color-error);
+}
+
+.device-status-badge {
+    font-size: 11px;
+}
+
+.device-card-body {
+    flex: 1;
+    margin-bottom: var(--spacing-md);
+}
+
+.device-name {
+    font-size: 14px;
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-xs);
+}
+
+.device-id {
+    color: var(--text-secondary);
+    font-size: 11px;
+    margin-bottom: var(--spacing-xs);
+    font-family: var(--font-mono);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.device-type {
+    color: var(--text-secondary);
+    font-size: 12px;
+    margin-bottom: var(--spacing-md);
+}
+
+.device-info {
+    background-color: var(--bg-secondary);
+    padding: var(--spacing-sm);
+    border: var(--border-width) solid var(--border-dim);
+}
+
+.device-info-item {
+    display: flex;
+    justify-content: space-between;
+    padding: var(--spacing-xs) 0;
+    border-bottom: var(--border-width) solid var(--border-dim);
+}
+
+.device-info-item:last-child {
+    border-bottom: none;
+}
+
+.device-info-label {
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.device-info-value {
+    color: var(--text-primary);
+    font-size: 13px;
+    font-weight: var(--font-weight-bold);
+}
+
+.device-card-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    padding-top: var(--spacing-md);
+    border-top: var(--border-width) solid var(--border-dim);
+}
+
+.device-card-actions .btn {
+    flex: 1;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .device-grid {
+        grid-template-columns: 1fr;
+    }
+}

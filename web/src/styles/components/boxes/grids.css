@@ -1,0 +1,90 @@
+/* ============================================
+   GRID LAYOUTS
+   ============================================
+   Grid layout systems for cards and dashboard widgets
+   ============================================ */
+
+.two-column {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-md);
+}
+
+.three-column {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: var(--spacing-md);
+}
+
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.dashboard-widget {
+    border: var(--border-width) solid var(--border-color);
+    background-color: var(--bg-primary);
+    min-height: 120px;
+    position: relative;
+    padding-top: var(--spacing-md);
+}
+
+.widget-header {
+    position: absolute;
+    top: -7px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 0 var(--spacing-sm);
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-weight: var(--font-weight-bold);
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.widget-body {
+    padding: var(--spacing-sm);
+    font-size: 13px;
+}
+
+/* Stat Value (large numbers) */
+.stat-value {
+    font-size: 32px;
+    color: var(--accent-cyan);
+    font-weight: var(--font-weight-bold);
+    text-align: center;
+    margin: var(--spacing-md) 0;
+}
+
+/* Mobile responsive */
+@media (max-width: 1200px) {
+    .dashboard-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 900px) {
+    .dashboard-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .two-column,
+    .three-column {
+        grid-template-columns: 1fr;
+    }
+
+    .card-grid,
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+}

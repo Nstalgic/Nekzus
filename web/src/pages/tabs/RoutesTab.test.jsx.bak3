@@ -1,0 +1,417 @@
+import { describe, it, expect, beforeEach } from 'vitest';
+import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { DataProvider } from '../../contexts/DataContext';
+import { RoutesTab } from './RoutesTab';
+
+/**
+ * RoutesTab Integration Test Suite
+ *
+ * Tests the complete Routes management interface including:
+ * - Table rendering with route data
+ * - Add new route workflow
+ * - Edit existing route workflow
+ * - Delete route with confirmation
+ * - Search and filter functionality
+ * - Table sorting
+ */
+
+describe('RoutesTab Integration Tests', () => {
+  /**
+   * Helper to render RoutesTab with DataProvider
+   */
+  const renderRoutesTab = () => {
+    return render(
+      <DataProvider>
+        <RoutesTab />
+      </DataProvider>
+    );
+  };
+
+  describe('Initial Rendering', () => {
+    it('should render the routes table with data', () => {
+      renderRoutesTab();
+
+      expect(screen.getByText('Routes Management')).toBeInTheDocument();
+      expect(screen.getByText(/routes configured/i)).toBeInTheDocument();
+
+      // Should have ADD NEW ROUTE button
+      expect(screen.getByRole('button', { name: /add route/i })).toBeInTheDocument();
+    });
+
+    it('should display route count in header', () => {
+      renderRoutesTab();
+
+      // Should show count (mock data has 42 routes)
+      expect(screen.getByText(/42 routes configured/i)).toBeInTheDocument();
+    });
+
+    it('should render table columns', () => {
+      renderRoutesTab();
+
+      expect(screen.getByText('Application')).toBeInTheDocument();
+      expect(screen.getByText('Path')).toBeInTheDocument();
+      expect(screen.getByText('Target')).toBeInTheDocument();
+      expect(screen.getByText('Scopes')).toBeInTheDocument();
+      expect(screen.getByText('Status')).toBeInTheDocument();
+      expect(screen.getByText('Response')).toBeInTheDocument();
+      expect(screen.getByText('Auth')).toBeInTheDocument();
+    });
+
+    it('should display route data in table rows', () => {
+      renderRoutesTab();
+
+      // Check for some known routes from mock data
+      expect(screen.getByText('Grafana')).toBeInTheDocument();
+      expect(screen.getByText('/grafana')).toBeInTheDocument();
+    });
+  });
+
+  describe('ADD NEW ROUTE Workflow', () => {
+    it('should open add route modal when ADD NEW ROUTE button is clicked', async () => {
+      const user = userEvent.setup();
+      renderRoutesTab();
+
+      const addButton = screen.getByRole('button', { name: /add route/i });
+      await user.click(addButton);
+
+      // Modal should open with ADD NEW ROUTE title
+      expect(screen.getByText('ADD NEW ROUTE')).toBeInTheDocument();
+    });
+
+    it('should close modal when cancel is clicked', async () => {
+      const user = userEvent.setup();
+      renderRoutesTab();
+
+      // Open modal
+      const addButton = screen.getByRole('button', { name: /add route/i });
+      await user.click(addButton);
+
+      expect(screen.getByText('ADD NEW ROUTE')).toBeInTheDocument();
+
+      // Click cancel
+      const cancelButton = screen.getByRole('button', { name: /cancel/i });
+      await user.click(cancelButton);
+
+      // Modal should close
+      expect(screen.queryByText('ADD NEW ROUTE')).not.toBeInTheDocument();
+    });
+
+    it('should add new route when form is submitted with valid data', async () => {
+      const user = userEvent.setup();
+      renderRoutesTab();
+
+      // Initial count
+      expect(screen.getByText(/42 routes configured/i)).toBeInTheDocument();
+
+      // Open add modal
+      await user.click(screen.getByRole('button', { name: /add route/i }));
+
+      // Fill out form
+      await user.type(screen.getByLabelText(/application name/i), 'New Test App');
+      await user.type(screen.getByLabelText(/path/i), '/newtest');
+      await user.type(screen.getByLabelText(/target url/i), 'http://localhost:7777');
+
+      // Submit
+      await user.click(screen.getByRole('button', { name: /save/i }));
+
+      // Modal should close
+      expect(screen.queryByText('ADD NEW ROUTE')).not.toBeInTheDocument();
+
+      // Count should increase
+      expect(screen.getByText(/43 routes configured/i)).toBeInTheDocument();
+
+      // New route should appear in table
+      expect(screen.getByText('New Test App')).toBeInTheDocument();
+      expect(screen.getByText('/newtest')).toBeInTheDocument();
+    });
+  });
+
+  describe('EDIT ROUTE Workflow', () => {
+    it('should open edit modal when edit button is clicked', async () => {
+      const user = userEvent.setup();
+      renderRoutesTab();
+
+      // Find the first row's edit button
+      const table = screen.getByRole('table');
+      const firstRow = within(table).getAllByRole('row')[1]; // Skip header row
+      const editButton = within(firstRow).getByRole('button', { name: /edit/i });
+
+      await user.click(editButton);
+
+      // Edit modal should open
+      expect(screen.getByText('EDIT ROUTE')).toBeInTheDocument();
+    });
+
+    it('should populate form with existing route data in edit mode', async () => {
+      const user = userEvent.setup();
+      renderRoutesTab();
+
+      // Click edit on Grafana row
+      const grafanaRow = screen.getByText('Grafana').closest('tr');
+      const editButton = within(grafanaRow).getByRole('button', { name: /edit/i });
+      await user.click(editButton);
+
+      // Form should be populated
+      expect(screen.getByLabelText(/application name/i)).toHaveValue('Grafana');
+      expect(screen.getByLabelText(/path/i)).toHaveValue('/grafana');
+    });
+
+    it('should update route when edit form is submitted', async () => {
+      const user = userEvent.setup();
+      renderRoutesTab();
+
+      // Find and click edit on first route
+      const table = screen.getByRole('table');
+      const firstRow = within(table).getAllByRole('row')[1];
+      const editButton = within(firstRow).getByRole('button', { name: /edit/i });
+      await user.click(editButton);
+
+      // Modify application name
+      const appInput = screen.getByLabelText(/application name/i);
+      await user.clear(appInput);
+      await user.type(appInput, 'Updated App Name');
+
+      // Save
+      await user.click(screen.getByRole('button', { name: /save/i }));
+
+      // Modal should close
+      expect(screen.queryByText('EDIT ROUTE')).not.toBeInTheDocument();
+
+      // Updated name should appear in table
+      expect(screen.getByText('Updated App Name')).toBeInTheDocument();
+    });
+  });
+
+  describe('Delete Route Workflow', () => {
+    it('should open confirmation modal when delete button is clicked', async () => {
+      const user = userEvent.setup();
+      renderRoutesTab();
+
+      // Find the first row's delete button
+      const table = screen.getByRole('table');
+      const firstRow = within(table).getAllByRole('row')[1];
+      const deleteButton = within(firstRow).getByRole('button', { name: /delete/i });
+
+      await user.click(deleteButton);
+
+      // Confirmation modal should open
+      expect(screen.getByText('Delete Route')).toBeInTheDocument();
+      expect(screen.getByText(/are you sure/i)).toBeInTheDocument();
+    });
+
+    it('should show route details in confirmation modal', async () => {
+      const user = userEvent.setup();
+      renderRoutesTab();
+
+      // Click delete on Grafana row
+      const grafanaRow = screen.getByText('Grafana').closest('tr');
+      const deleteButton = within(grafanaRow).getByRole('button', { name: /delete/i });
+      await user.click(deleteButton);
+
+      // Should show Grafana in message
+      expect(screen.getByText(/grafana/i)).toBeInTheDocument();
+
+      // Should show path and target in details
+      const modal = screen.getByRole('dialog');
+      expect(within(modal).getByText('/grafana')).toBeInTheDocument();
+    });
+
+    it('should not delete route when cancel is clicked', async () => {
+      const user = userEvent.setup();
+      renderRoutesTab();
+
+      const initialCount = screen.getByText(/42 routes configured/i);
+
+      // Open delete confirmation
+      const table = screen.getByRole('table');
+      const firstRow = within(table).getAllByRole('row')[1];
+      const deleteButton = within(firstRow).getByRole('button', { name: /delete/i });
+      await user.click(deleteButton);
+
+      // Click cancel
+      await user.click(screen.getByRole('button', { name: /cancel/i }));
+
+      // Modal should close
+      expect(screen.queryByText('Delete Route')).not.toBeInTheDocument();
+
+      // Count should remain same
+      expect(screen.getByText(/42 routes configured/i)).toBeInTheDocument();
+    });
+
+    it('should delete route when confirm is clicked', async () => {
+      const user = userEvent.setup();
+      renderRoutesTab();
+
+      // Initial count
+      expect(screen.getByText(/42 routes configured/i)).toBeInTheDocument();
+
+      // Get the first route application name
+      const table = screen.getByRole('table');
+      const firstRow = within(table).getAllByRole('row')[1];
+      const appCell = within(firstRow).getAllByRole('cell')[0];
+      const appName = appCell.textContent;
+
+      // Open delete confirmation
+      const deleteButton = within(firstRow).getByRole('button', { name: /delete/i });
+      await user.click(deleteButton);
+
+      // Confirm deletion
+      const confirmButton = screen.getByRole('button', { name: /confirm/i });
+      await user.click(confirmButton);
+
+      // Modal should close
+      expect(screen.queryByText('Delete Route')).not.toBeInTheDocument();
+
+      // Count should decrease
+      expect(screen.getByText(/41 routes configured/i)).toBeInTheDocument();
+
+      // Route should no longer be in table
+      expect(screen.queryByText(appName)).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Table Search', () => {
+    it('should filter routes based on search input', async () => {
+      const user = userEvent.setup();
+      renderRoutesTab();
+
+      // Should initially show all routes
+      expect(screen.getByText('Grafana')).toBeInTheDocument();
+
+      // Type in search box
+      const searchInput = screen.getByPlaceholderText(/search/i);
+      await user.type(searchInput, 'Grafana');
+
+      // Should show Grafana
+      expect(screen.getByText('Grafana')).toBeInTheDocument();
+
+      // Should filter out other routes (check that row count decreased)
+      const table = screen.getByRole('table');
+      const rows = within(table).getAllByRole('row');
+      // Fewer rows than initial (1 header + filtered results)
+      expect(rows.length).toBeLessThan(43); // 43 = 1 header + 42 routes
+    });
+
+    it('should show no results when search matches nothing', async () => {
+      const user = userEvent.setup();
+      renderRoutesTab();
+
+      const searchInput = screen.getByPlaceholderText(/search/i);
+      await user.type(searchInput, 'NonExistentApp123');
+
+      // Should show empty state or no rows (except header)
+      const table = screen.getByRole('table');
+      const rows = within(table).getAllByRole('row');
+      expect(rows.length).toBe(1); // Only header row
+    });
+
+    it('should be case-insensitive', async () => {
+      const user = userEvent.setup();
+      renderRoutesTab();
+
+      const searchInput = screen.getByPlaceholderText(/search/i);
+      await user.type(searchInput, 'grafana'); // lowercase
+
+      // Should still find Grafana
+      expect(screen.getByText('Grafana')).toBeInTheDocument();
+    });
+  });
+
+  describe('Table Sorting', () => {
+    it('should sort by application name when column header is clicked', async () => {
+      const user = userEvent.setup();
+      renderRoutesTab();
+
+      const applicationHeader = screen.getByText('Application');
+      await user.click(applicationHeader);
+
+      // Get all rows
+      const table = screen.getByRole('table');
+      const rows = within(table).getAllByRole('row');
+      const firstDataRow = rows[1]; // Skip header
+      const cells = within(firstDataRow).getAllByRole('cell');
+
+      // First row should now be alphabetically first (or last if descending)
+      expect(cells[0].textContent).toBeTruthy();
+    });
+
+    it('should toggle sort direction when clicked twice', async () => {
+      const user = userEvent.setup();
+      renderRoutesTab();
+
+      const applicationHeader = screen.getByText('Application');
+
+      // First click - sort ascending
+      await user.click(applicationHeader);
+      const table = screen.getByRole('table');
+      const rows1 = within(table).getAllByRole('row');
+      const firstApp1 = within(rows1[1]).getAllByRole('cell')[0].textContent;
+
+      // Second click - sort descending
+      await user.click(applicationHeader);
+      const rows2 = within(table).getAllByRole('row');
+      const firstApp2 = within(rows2[1]).getAllByRole('cell')[0].textContent;
+
+      // First application should be different after toggling
+      expect(firstApp1).not.toBe(firstApp2);
+    });
+  });
+
+  describe('Badge Rendering', () => {
+    it('should render scopes as badges', () => {
+      renderRoutesTab();
+
+      // Should find READ and WRITE badges
+      expect(screen.getAllByText('READ').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('WRITE').length).toBeGreaterThan(0);
+    });
+
+    it('should render status badges with appropriate variants', () => {
+      renderRoutesTab();
+
+      // Should find ACTIVE status badges
+      const activeBadges = screen.getAllByText('ACTIVE');
+      expect(activeBadges.length).toBeGreaterThan(0);
+
+      // Check that badges have proper styling
+      activeBadges.forEach(badge => {
+        expect(badge.closest('.badge')).toHaveClass('badge-success');
+      });
+    });
+
+    it('should render auth requirement badges', () => {
+      renderRoutesTab();
+
+      // Should have "Required" and "None" auth badges
+      expect(screen.getAllByText('Required').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('None').length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('Accessibility', () => {
+    it('should have proper ARIA roles', () => {
+      renderRoutesTab();
+
+      // Table should have role="table"
+      expect(screen.getByRole('table')).toBeInTheDocument();
+
+      // Buttons should have role="button"
+      expect(screen.getByRole('button', { name: /add route/i })).toBeInTheDocument();
+    });
+
+    it('should support keyboard navigation for buttons', async () => {
+      const user = userEvent.setup();
+      renderRoutesTab();
+
+      const addButton = screen.getByRole('button', { name: /add route/i });
+
+      // Tab to button and press Enter
+      addButton.focus();
+      await user.keyboard('{Enter}');
+
+      // Modal should open
+      expect(screen.getByText('ADD NEW ROUTE')).toBeInTheDocument();
+    });
+  });
+});

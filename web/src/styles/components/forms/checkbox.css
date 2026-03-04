@@ -1,0 +1,40 @@
+/* ============================================
+   CHECKBOX
+   ============================================
+   Checkbox input component
+   ============================================ */
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-xs);
+    cursor: pointer;
+    text-transform: none;
+}
+
+.checkbox {
+    width: 14px;
+    height: 14px;
+    border: var(--border-width) solid var(--border-color);
+    background-color: var(--bg-primary);
+    cursor: pointer;
+    position: relative;
+    appearance: none;
+}
+
+.checkbox:checked {
+    background-color: var(--text-primary);
+    border-color: var(--text-primary);
+}
+
+.checkbox:checked::after {
+    content: 'X';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--bg-primary);
+    font-size: 10px;
+    font-weight: var(--font-weight-bold);
+}

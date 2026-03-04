@@ -1,0 +1,81 @@
+/**
+ * Routes Tab Styles
+ *
+ * Styles for the routes management tab including:
+ * - Tab header with title and action button
+ * - Routes table container
+ * - Confirmation details styling
+ */
+
+/* Routes Tab Container */
+.routes-tab {
+  /* No padding - Box component already provides padding via .box-content */
+}
+
+/* Tab Header */
+.tab-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--spacing-lg);
+  gap: var(--spacing-md);
+}
+
+.tab-title h2 {
+  margin: 0 0 var(--spacing-xs) 0;
+  font-size: var(--text-lg);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Routes Table Container */
+.routes-table-container {
+  margin-top: var(--spacing-md);
+}
+
+/* Confirmation Details */
+.confirmation-details {
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+}
+
+.detail-row {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-xs);
+  font-size: var(--text-sm);
+}
+
+.detail-row:last-child {
+  margin-bottom: 0;
+}
+
+.detail-row strong {
+  min-width: 80px;
+  color: var(--text-secondary);
+}
+
+.detail-row code {
+  color: var(--accent-primary);
+  font-family: var(--font-mono);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .tab-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .tab-title h2 {
+    font-size: var(--text-base);
+  }
+
+  .routes-table-container {
+    margin-top: var(--spacing-sm);
+  }
+}

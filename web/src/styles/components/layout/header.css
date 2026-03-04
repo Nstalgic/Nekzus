@@ -1,0 +1,86 @@
+/* ============================================
+   HEADER - Ultra Slim
+   ============================================
+   Minimal single-line header with left brand, right controls
+   ============================================ */
+
+.terminal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-xs) var(--spacing-lg) var(--spacing-xs) var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+    border-bottom: var(--border-width) solid var(--border-dim);
+    background-color: var(--bg-primary);
+    color: var(--text-secondary);
+    font-size: 10px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    font-family: var(--font-mono);
+}
+
+/* Left brand */
+.terminal-header-brand {
+    color: var(--text-tertiary);
+    font-weight: var(--font-weight-normal);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 9px;
+}
+
+/* Right controls container */
+.terminal-header-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+/* User badge */
+.terminal-user-badge {
+    color: var(--text-secondary);
+    font-weight: var(--font-weight-normal);
+}
+
+/* Separator */
+.terminal-separator {
+    color: var(--text-tertiary);
+}
+
+/* Exit/Logout button */
+.terminal-logout-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 10px;
+    font-family: var(--font-mono);
+    font-weight: var(--font-weight-normal);
+    cursor: pointer;
+    padding: 0;
+    text-transform: lowercase;
+    transition: color var(--transition-fast);
+}
+
+.terminal-logout-btn:hover {
+    color: var(--color-error);
+}
+
+.terminal-logout-btn:focus {
+    outline: 1px solid var(--border-color);
+    outline-offset: 2px;
+}
+
+/* Mobile - keep single line, just tighten spacing */
+@media (max-width: 768px) {
+    .terminal-header {
+        padding: var(--spacing-xs);
+    }
+
+    .terminal-header-controls {
+        gap: var(--spacing-xs);
+    }
+
+    .terminal-user-badge {
+        display: none;
+    }
+}

@@ -1,0 +1,26 @@
+/* ============================================
+   TEXT INPUTS
+   ============================================
+   Text input field component
+   ============================================ */
+
+.input {
+    width: 100%;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background-color: var(--bg-primary);
+    border: var(--border-width) solid var(--border-color);
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: 13px;
+}
+
+.input:focus,
+.input:focus-visible {
+    outline: 2px solid var(--text-white);
+    outline-offset: 1px;
+    border-color: var(--text-white);
+}
+
+.input::placeholder {
+    color: var(--text-tertiary);
+}

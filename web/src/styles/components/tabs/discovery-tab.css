@@ -1,0 +1,80 @@
+/**
+ * Discovery Tab Styles
+ *
+ * Styles for the discovery management tab including:
+ * - Tab header with title
+ * - Bulk actions toolbar
+ * - Discovery grid layout
+ * - Empty state
+ */
+
+/* Discovery Tab Container */
+.discovery-tab {
+  /* No padding - Box component already provides padding via .box-content */
+}
+
+/* Tab Header */
+.tab-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--spacing-lg);
+  gap: var(--spacing-md);
+}
+
+.tab-title h2 {
+  margin: 0 0 var(--spacing-xs) 0;
+  font-size: var(--text-lg);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Empty State */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-16);
+  text-align: center;
+}
+
+.empty-state-icon {
+  font-size: 4rem;
+  margin-bottom: var(--spacing-md);
+  opacity: 0.5;
+}
+
+.empty-state h3 {
+  margin: 0 0 var(--spacing-sm) 0;
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.empty-state p {
+  max-width: 500px;
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .tab-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .tab-title h2 {
+    font-size: var(--text-base);
+  }
+
+  .empty-state {
+    padding: var(--spacing-10);
+  }
+
+  .empty-state-icon {
+    font-size: 3rem;
+  }
+}

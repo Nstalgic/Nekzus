@@ -1,0 +1,182 @@
+/* ============================================
+   DROPDOWN / SELECT
+   ============================================
+   Custom dropdown component with arrow indicator
+   ============================================ */
+
+/* Select wrapper for custom arrow */
+.select-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.select-wrapper::after {
+    content: '▼';
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+    font-size: 10px;
+    pointer-events: none;
+}
+
+select.input {
+    cursor: pointer;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    padding-right: 32px;
+    background-color: var(--bg-primary);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 12px;
+}
+
+select.input option {
+    background-color: var(--bg-primary, #1a1f2e);
+    color: var(--text-primary, #f8fafc);
+    padding: var(--spacing-sm);
+    border: none;
+}
+
+select.input option:checked,
+select.input option:hover {
+    background-color: var(--bg-tertiary, #2d3548);
+    color: var(--text-primary, #f8fafc);
+}
+
+/* Firefox-specific option styling */
+@-moz-document url-prefix() {
+    select.input option {
+        background-color: var(--bg-primary, #1a1f2e);
+        color: var(--text-primary, #f8fafc);
+    }
+
+    select.input option:checked {
+        background: linear-gradient(var(--bg-tertiary, #2d3548), var(--bg-tertiary, #2d3548));
+    }
+}
+
+select.input:hover {
+    background-color: var(--bg-secondary);
+}
+
+select.input:focus {
+    background-color: var(--bg-primary);
+}
+
+select.input:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* Custom Dropdown Component */
+.custom-dropdown {
+    position: relative;
+    width: 100%;
+}
+
+.custom-dropdown-toggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    cursor: pointer;
+    text-align: left;
+    background-color: var(--bg-primary);
+    border: var(--border-width) solid var(--border-color);
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    padding: var(--spacing-xs) var(--spacing-sm);
+}
+
+.custom-dropdown-toggle:hover {
+    background-color: var(--bg-secondary);
+}
+
+.custom-dropdown-toggle:focus,
+.custom-dropdown-toggle:focus-visible {
+    outline: 2px solid var(--text-white);
+    outline-offset: 1px;
+    border-color: var(--text-white);
+}
+
+.custom-dropdown-toggle .theme-name {
+    flex: 1;
+    text-align: left;
+}
+
+.dropdown-arrow {
+    font-size: 10px;
+    color: var(--text-secondary);
+    transition: transform 0.2s ease;
+    margin-left: var(--spacing-sm);
+}
+
+.custom-dropdown.open .dropdown-arrow {
+    transform: rotate(180deg);
+}
+
+.custom-dropdown-menu {
+    position: absolute;
+    top: calc(100% + 2px);
+    left: 0;
+    right: 0;
+    background-color: var(--bg-primary);
+    border: var(--border-width) solid var(--border-color);
+    max-height: 400px;
+    overflow-y: auto;
+    z-index: 1000;
+    display: none;
+}
+
+.custom-dropdown.open .custom-dropdown-menu {
+    display: block;
+}
+
+.custom-dropdown-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-sm) var(--spacing-md);
+    cursor: pointer;
+    transition: var(--transition-fast);
+    border-bottom: var(--border-width) solid var(--border-dim);
+    position: relative;
+}
+
+.custom-dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.custom-dropdown-item:hover {
+    background-color: var(--bg-secondary);
+}
+
+.custom-dropdown-item.active {
+    background-color: var(--bg-tertiary);
+}
+
+.custom-dropdown-item .theme-name {
+    font-size: 13px;
+    color: var(--text-primary);
+}
+
+.theme-check {
+    font-size: 14px;
+    color: var(--text-primary);
+    opacity: 0;
+    font-weight: var(--font-weight-bold);
+}
+
+.custom-dropdown-item.active .theme-check {
+    opacity: 1;
+}
+
+.custom-dropdown-item:focus {
+    outline: 2px solid var(--text-white);
+    outline-offset: -2px;
+}

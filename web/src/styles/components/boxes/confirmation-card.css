@@ -1,0 +1,202 @@
+/* ============================================
+   CONFIRMATION MODAL CARD
+   ============================================
+   Confirmation dialog card component
+   ============================================ */
+
+/* Confirmation Card */
+.confirmation-card {
+    background-color: var(--bg-secondary);
+    border: 2px solid var(--border-color);
+    border-radius: 0;
+    width: 100%;
+    padding: 0;
+    transform: scale(0.95);
+    transition: transform var(--transition-standard);
+}
+
+.modal-overlay.active .confirmation-card {
+    transform: scale(1);
+}
+
+/* Danger variant */
+.confirmation-card.danger {
+    border-color: var(--color-error);
+}
+
+/* ============================================
+   HEADER
+   ============================================ */
+
+.confirmation-card-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+    border-bottom: var(--border-width) solid var(--border-dim);
+    background: var(--bg-secondary);
+}
+
+.confirmation-card.danger .confirmation-card-header {
+    border-bottom-color: var(--border-dim);
+}
+
+.confirmation-icon {
+    font-size: 24px;
+    line-height: 1;
+    color: var(--color-warning);
+}
+
+.confirmation-card.danger .confirmation-icon {
+    color: var(--color-error);
+}
+
+.confirmation-card-header h3 {
+    margin: 0;
+    font-size: var(--text-xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+/* ============================================
+   BODY
+   ============================================ */
+
+.confirmation-card-body {
+    padding: var(--spacing-lg);
+}
+
+.confirmation-message {
+    color: var(--text-secondary);
+    margin: 0 0 var(--spacing-lg) 0;
+    font-size: var(--text-sm);
+    line-height: 1.6;
+}
+
+/* ============================================
+   DETAILS SECTION
+   ============================================ */
+
+.confirmation-details {
+    background-color: var(--bg-tertiary);
+    border: 1px solid var(--border-dim);
+    padding: var(--spacing-md);
+    margin-top: var(--spacing-md);
+}
+
+/* Detail Item Row */
+.confirmation-details-item {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-sm) 0;
+    gap: var(--spacing-md);
+    border-bottom: 1px solid var(--border-dim);
+}
+
+.confirmation-details-item:last-of-type {
+    border-bottom: none;
+}
+
+/* Detail Label (left side) */
+.confirmation-details-label {
+    color: var(--text-secondary);
+    font-weight: var(--font-weight-medium);
+    font-size: var(--text-xs);
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+/* Detail Value (right side) */
+.confirmation-details-value {
+    color: var(--text-primary);
+    font-weight: var(--font-weight-bold);
+    font-size: var(--text-xs);
+    text-align: right;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    font-family: var(--font-mono);
+    max-width: 70%;
+}
+
+/* ============================================
+   WARNING TEXT
+   ============================================ */
+
+.confirmation-warning {
+    margin: var(--spacing-md) 0 0 0;
+    padding-top: var(--spacing-md);
+    border-top: 1px solid var(--border-dim);
+    font-size: var(--text-xs);
+    line-height: 1.6;
+    color: var(--color-warning);
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+}
+
+.confirmation-warning::before {
+    content: "⚠";
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+/* ============================================
+   FOOTER / ACTIONS
+   ============================================ */
+
+.confirmation-card-actions {
+    display: flex;
+    gap: var(--spacing-md);
+    justify-content: flex-end;
+    padding: var(--spacing-lg);
+    border-top: var(--border-width) solid var(--border-dim);
+    background: var(--bg-secondary);
+}
+
+.confirmation-card.danger .confirmation-card-actions {
+    border-top-color: var(--border-dim);
+}
+
+.confirmation-card-actions .btn {
+    min-width: 140px;
+    padding: var(--spacing-sm) var(--spacing-lg);
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 768px) {
+    .confirmation-card-header {
+        padding: var(--spacing-md);
+    }
+
+    .confirmation-card-body {
+        padding: var(--spacing-md);
+    }
+
+    .confirmation-details-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-xs);
+    }
+
+    .confirmation-details-value {
+        text-align: left;
+        max-width: 100%;
+    }
+
+    .confirmation-card-actions {
+        flex-direction: column-reverse;
+        padding: var(--spacing-md);
+    }
+
+    .confirmation-card-actions .btn {
+        width: 100%;
+        min-width: unset;
+    }
+}

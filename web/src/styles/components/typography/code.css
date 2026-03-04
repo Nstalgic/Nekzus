@@ -1,0 +1,62 @@
+/* ============================================
+   CODE BLOCKS
+   ============================================
+   Code and preformatted text elements
+   ============================================ */
+
+code {
+    background-color: var(--bg-secondary);
+    padding: 2px 4px;
+    color: var(--accent-cyan);
+    border: var(--border-width) solid var(--border-dim);
+}
+
+kbd {
+    background-color: var(--bg-primary);
+    border: var(--border-width) solid var(--border-color);
+    padding: 2px 6px;
+    color: var(--text-primary);
+    font-size: 0.9em;
+}
+
+.code-block {
+    display: block;
+    padding: var(--spacing-sm);
+    background-color: var(--bg-primary);
+    border: var(--border-width) solid var(--border-color);
+    overflow-x: auto;
+    color: var(--text-primary);
+    font-size: 12px;
+}
+
+pre {
+    margin-bottom: var(--spacing-sm);
+}
+
+/* Terminal Output */
+.terminal-output {
+    background-color: var(--bg-primary);
+    border: var(--border-width) solid var(--border-color);
+    padding: var(--spacing-sm);
+    font-size: 12px;
+}
+
+.output-line {
+    margin-bottom: var(--spacing-xs);
+    color: var(--text-primary);
+}
+
+.output-line.secondary {
+    color: var(--text-secondary);
+    padding-left: var(--spacing-md);
+}
+
+.output-line .prompt {
+    color: var(--text-primary);
+    margin-right: var(--spacing-xs);
+}
+
+.output-line .success {
+    color: var(--color-success);
+    margin-right: var(--spacing-xs);
+}

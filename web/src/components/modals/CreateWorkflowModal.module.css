@@ -1,0 +1,75 @@
+/**
+ * CreateWorkflowModal Styles (CSS Module)
+ */
+
+/* Steps List */
+.stepsList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+/* Step Item */
+.stepItem {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-dim);
+  border-radius: 0;
+  padding: var(--spacing-sm);
+}
+
+/* Step Header */
+.stepHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-sm);
+  padding-bottom: var(--spacing-xs);
+  border-bottom: 1px solid var(--border-dim);
+}
+
+.stepNumber {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent-cyan);
+}
+
+.stepActions {
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
+.stepActions .btn {
+  padding: var(--spacing-xs);
+}
+
+/* Step Content */
+.stepContent {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-sm);
+}
+
+.stepField {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.stepField label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .stepContent {
+    grid-template-columns: 1fr;
+  }
+}

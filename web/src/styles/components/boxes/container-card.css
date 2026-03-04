@@ -1,0 +1,220 @@
+/* ============================================
+   CONTAINER CARDS
+   ============================================
+   Docker container management card components
+   ============================================ */
+
+.container-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: var(--spacing-md);
+}
+
+.container-card {
+    border: var(--border-width) solid var(--border-color);
+    background-color: var(--bg-primary);
+    padding: var(--spacing-md);
+    display: flex;
+    flex-direction: column;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.container-card:hover {
+    border-color: var(--color-accent);
+    transform: translateY(-2px);
+}
+
+/* Selected state */
+.container-card-selected {
+    border-color: var(--color-primary);
+    background-color: color-mix(in srgb, var(--color-primary) 5%, var(--bg-primary));
+}
+
+.container-card-selected:hover {
+    border-color: var(--color-primary);
+}
+
+.container-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+}
+
+/* Selection checkbox */
+.container-select-checkbox {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.container-select-checkbox .checkbox {
+    margin: 0;
+}
+
+/* Badge container for multiple badges */
+.container-badges {
+    display: flex;
+    gap: var(--spacing-xs);
+    align-items: center;
+}
+
+.container-status-badge {
+    font-size: 11px;
+}
+
+.container-runtime-badge {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.container-card-body {
+    flex: 1;
+    margin-bottom: var(--spacing-md);
+}
+
+.container-card-title {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: flex-start;
+    margin-bottom: var(--spacing-md);
+}
+
+.container-icon {
+    color: var(--color-primary);
+    flex-shrink: 0;
+}
+
+.container-name {
+    font-size: 14px;
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-xs);
+    word-break: break-word;
+}
+
+.container-image {
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-family: var(--font-mono);
+    margin-bottom: var(--spacing-sm);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.container-info {
+    background-color: var(--bg-secondary);
+    padding: var(--spacing-sm);
+    border: var(--border-width) solid var(--border-dim);
+    margin-bottom: var(--spacing-sm);
+}
+
+.container-info-item {
+    display: flex;
+    justify-content: space-between;
+    padding: var(--spacing-xs) 0;
+    border-bottom: var(--border-width) solid var(--border-dim);
+}
+
+.container-info-item:last-child {
+    border-bottom: none;
+}
+
+.container-info-label {
+    color: var(--text-secondary);
+    font-size: 12px;
+}
+
+.container-info-value {
+    color: var(--text-primary);
+    font-size: 12px;
+    font-weight: var(--font-weight-medium);
+    text-align: right;
+}
+
+.container-info-value code {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--color-primary);
+}
+
+.container-ports {
+    font-size: 11px !important;
+}
+
+/* Resource Metrics */
+.container-metrics {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    background-color: var(--bg-tertiary);
+    padding: var(--spacing-sm);
+    border: var(--border-width) solid var(--border-dim);
+}
+
+.metric-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: 12px;
+}
+
+.metric-icon {
+    color: var(--color-accent);
+    flex-shrink: 0;
+}
+
+.metric-label {
+    color: var(--text-secondary);
+    font-weight: var(--font-weight-medium);
+}
+
+.metric-value {
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-weight: var(--font-weight-bold);
+    margin-left: auto;
+}
+
+/* Actions */
+.container-card-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    padding-top: var(--spacing-md);
+    border-top: var(--border-width) solid var(--border-dim);
+}
+
+.container-actions-primary,
+.container-actions-secondary {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.container-actions-primary .btn,
+.container-actions-secondary .btn {
+    flex: 1;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .container-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .container-card-actions {
+        flex-direction: column;
+    }
+
+    .container-actions-primary,
+    .container-actions-secondary {
+        flex-direction: column;
+    }
+
+    .container-actions-primary .btn,
+    .container-actions-secondary .btn {
+        width: 100%;
+    }
+}

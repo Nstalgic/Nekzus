@@ -1,0 +1,82 @@
+/**
+ * Terminal Layout Styles
+ * Core layout for the terminal dashboard interface
+ */
+
+/* Terminal Container */
+.terminal-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-primary);
+}
+
+/* Terminal Header */
+.terminal-header {
+  padding: var(--spacing-4) var(--spacing-6);
+  background: var(--bg-secondary);
+  border-bottom: 2px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.terminal-title {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--accent-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  text-align: center;
+}
+
+/* Terminal Content */
+.terminal-content {
+  flex: 1;
+  padding: var(--spacing-6);
+  padding-bottom: calc(var(--spacing-6) + 50px); /* Add extra space for fixed footer */
+  max-width: 1600px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* Terminal Footer */
+.terminal-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: var(--spacing-4) var(--spacing-6);
+  background: var(--bg-secondary);
+  border-top: 2px solid var(--border);
+  text-align: center;
+  z-index: 50;
+}
+
+.footer-text {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Routes Demo Specific */
+.routes-demo {
+  width: 100%;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .terminal-content {
+    padding: var(--spacing-4);
+  }
+
+  .terminal-header,
+  .terminal-footer {
+    padding: var(--spacing-3) var(--spacing-4);
+  }
+
+  .terminal-title {
+    font-size: var(--text-lg);
+  }
+}

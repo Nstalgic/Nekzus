@@ -1,0 +1,79 @@
+/* ============================================
+   TYPOGRAPHY
+   ============================================
+   Text elements and heading styles
+   ============================================ */
+
+h1, h2, h3, h4, h5, h6 {
+    color: var(--text-primary);
+    font-weight: var(--font-weight-bold);
+    margin-bottom: var(--spacing-xs);
+}
+
+h1 { font-size: 18px; }
+h2 { font-size: 16px; }
+h3 { font-size: 15px; }
+h4 { font-size: 14px; }
+h5 { font-size: 13px; }
+h6 { font-size: 12px; }
+
+p {
+    margin-bottom: var(--spacing-xs);
+    line-height: 1.5;
+}
+
+.text-secondary {
+    color: var(--text-secondary);
+}
+
+.text-error {
+    color: var(--color-error);
+}
+
+.text-success {
+    color: var(--color-success);
+}
+
+/* Inline Elements */
+strong {
+    font-weight: var(--font-weight-bold);
+    color: var(--text-white);
+}
+
+em {
+    font-style: italic;
+    color: var(--text-secondary);
+}
+
+.link {
+    color: var(--accent-cyan);
+    text-decoration: underline;
+}
+
+.link:hover {
+    color: var(--text-white);
+}
+
+.highlight {
+    color: var(--accent-yellow);
+    font-weight: var(--font-weight-bold);
+}
+
+/* Lists */
+ul, ol {
+    margin-left: var(--spacing-lg);
+    margin-bottom: var(--spacing-sm);
+}
+
+li {
+    margin-bottom: var(--spacing-xs);
+    color: var(--text-primary);
+}
+
+li::marker {
+    color: var(--text-secondary);
+}
+
+ul li::marker {
+    content: '• ';
+}

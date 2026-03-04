@@ -1,0 +1,111 @@
+# Production Docker Compose Configuration
+#
+# This setup uses Caddy as a reverse proxy to handle TLS termination.
+# Nexus serves HTTP internally, Caddy exposes HTTPS to the outside world.
+#
+# Usage:
+#   docker compose up -d
+#   docker compose logs -f nexus
+#   docker compose down
+
+services:
+  nexus:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nekzus
+    networks:
+      - nekzus
+    environment:
+      # IMPORTANT: Change these in production!
+      # Use strong secrets (32+ chars, no weak patterns)
+      NEKZUS_JWT_SECRET: "${NEKZUS_JWT_SECRET:-change-this-to-strong-secret-min-32-chars}"
+      NEKZUS_BOOTSTRAP_TOKEN: "${NEKZUS_BOOTSTRAP_TOKEN:-change-this-bootstrap-token}"
+      NEKZUS_BASE_URL: "${NEKZUS_BASE_URL:-https://localhost:8443}"
+      NEKZUS_ADDR: ":8080"
+      # Optional overrides
+      # NEKZUS_TLS_CERT: ""
+      # NEKZUS_TLS_KEY: ""
+    command:
+      - "--config"
+      - "/app/configs/config.example.yaml"
+      - "--insecure-http"  # Safe because Caddy handles TLS
+    volumes:
+      - ./configs/config.example.yaml:/app/configs/config.example.yaml:ro
+      - ./deployments/tls:/tls:ro
+      # Mount Docker socket for discovery (optional)
+      # - /var/run/docker.sock:/var/run/docker.sock:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["/app/nekzus", "--health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      - "com.nekzus.service=nekzus"
+      - "com.nekzus.version=1.0.0"
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  caddy:
+    image: caddy:2.8-alpine
+    container_name: nekzus-caddy
+    depends_on:
+      nekzus:
+        condition: service_started
+    networks:
+      - nekzus
+    environment:
+      - NEKZUS_HOST=nekzus  # Nekzus container name for reverse proxy
+    ports:
+      - "8443:8443"  # HTTPS
+      - "80:80"      # HTTP (redirects to HTTPS)
+    volumes:
+      - ./deployments/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./deployments/tls:/tls:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "caddy", "validate", "--config", "/etc/caddy/Caddyfile"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "com.nekzus.service=caddy"
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 64M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  nekzus:
+    driver: bridge
+    name: nekzus-network
+
+volumes:
+  caddy_data:
+    name: nekzus-caddy-data
+  caddy_config:
+    name: nekzus-caddy-config

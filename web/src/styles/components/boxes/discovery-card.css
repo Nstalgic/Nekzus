@@ -1,0 +1,177 @@
+/* ============================================
+   DISCOVERY CARDS
+   ============================================
+   Service discovery card components with selection state
+   ============================================ */
+
+.discovery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+    gap: var(--spacing-md);
+}
+
+.discovery-card {
+    border: var(--border-width) solid var(--border-color);
+    background-color: var(--bg-primary);
+    padding: var(--spacing-md);
+    position: relative;
+}
+
+.discovery-card-select {
+    position: absolute;
+    top: var(--spacing-sm);
+    left: var(--spacing-sm);
+}
+
+.discovery-card.selected {
+    border-color: var(--color-success);
+    background-color: rgba(0, 255, 0, 0.02);
+}
+
+.discovery-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: var(--border-width) solid var(--border-dim);
+}
+
+.discovery-card-title {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: flex-start;
+}
+
+.discovery-icon {
+    color: var(--text-primary);
+    padding: var(--spacing-xs);
+    background-color: var(--bg-secondary);
+    border: var(--border-width) solid var(--border-color);
+}
+
+.discovery-card-title h3 {
+    font-size: 13px;
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-xs);
+}
+
+.discovery-tags {
+    display: flex;
+    gap: var(--spacing-xs);
+    flex-wrap: wrap;
+}
+
+.discovery-confidence {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: 12px;
+}
+
+.confidence-label {
+    color: var(--text-secondary);
+}
+
+.confidence-value {
+    color: var(--color-success);
+    font-weight: var(--font-weight-bold);
+    font-size: 13px;
+}
+
+.discovery-card-body {
+    margin-bottom: var(--spacing-md);
+}
+
+.discovery-detail {
+    display: flex;
+    justify-content: space-between;
+    padding: var(--spacing-xs) 0;
+    border-bottom: var(--border-width) solid var(--border-dim);
+    gap: var(--spacing-md);
+}
+
+.discovery-detail:last-child {
+    border-bottom: none;
+}
+
+.detail-label {
+    color: var(--text-secondary);
+    font-size: 13px;
+    flex-shrink: 0;
+}
+
+.detail-value {
+    color: var(--text-primary);
+    font-size: 13px;
+    text-align: right;
+}
+
+.detail-value.security-warning {
+    color: var(--color-warning);
+    font-weight: var(--font-weight-bold);
+}
+
+/* Port selector dropdown */
+.port-select {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    border: var(--border-width) solid var(--border-color);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: 12px;
+    font-family: var(--font-mono);
+    cursor: pointer;
+    min-width: 120px;
+}
+
+.port-select:hover:not(:disabled) {
+    border-color: var(--color-primary);
+}
+
+.port-select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+}
+
+.port-select:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Prominent security alert styling */
+.security-alert {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm);
+    margin: var(--spacing-sm) 0;
+    background-color: rgba(255, 191, 0, 0.1);
+    border: var(--border-width) solid var(--color-warning);
+    border-left: 3px solid var(--color-warning);
+}
+
+.security-alert-icon {
+    color: var(--color-warning);
+    font-weight: var(--font-weight-bold);
+    font-size: 16px;
+}
+
+.discovery-card-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spacing-sm);
+    padding-top: var(--spacing-sm);
+    border-top: var(--border-width) solid var(--border-dim);
+}
+
+.discovery-card-actions .btn {
+    min-width: 100px;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .discovery-grid {
+        grid-template-columns: 1fr;
+    }
+}

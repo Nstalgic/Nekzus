@@ -1,0 +1,104 @@
+/* ============================================
+   TERMINAL UI DESIGN SYSTEM - CSS Tokens
+   ============================================
+
+   Design tokens extracted from styles.css (lines 8-54)
+   These CSS custom properties power the entire theme system
+   ============================================ */
+
+:root {
+    /* ========================================
+       COLOR TOKENS - SLATE PROFESSIONAL (DEFAULT)
+       ======================================== */
+
+    /* Background Colors - Cool slate grays for professional appearance */
+    --bg-primary: #0f172a;          /* Slate 900 - rich dark blue-gray */
+    --bg-secondary: #1e293b;        /* Slate 800 - elevated surfaces */
+    --bg-tertiary: #334155;         /* Slate 700 - input backgrounds */
+
+    /* Text Colors - High contrast whites for WCAG AAA compliance */
+    --text-primary: #f1f5f9;        /* Slate 100 - primary text */
+    --text-secondary: #cbd5e1;      /* Slate 300 - secondary text */
+    --text-tertiary: #94a3b8;       /* Slate 400 - muted text */
+    --text-white: #ffffff;          /* Pure white for emphasis */
+
+    /* Accent Colors - Professional palette */
+    --accent-cyan: #06b6d4;         /* Cyan 500 - primary actions */
+    --accent-yellow: #fbbf24;       /* Amber 400 - highlights */
+    --accent-magenta: #a855f7;      /* Purple 500 - special states */
+    --accent-amber: #f59e0b;        /* Amber 500 - alerts */
+    --accent-red: #ef4444;          /* Red 500 - errors */
+    --accent-blue: #3b82f6;         /* Blue 500 - info/links */
+
+    /* Semantic Colors */
+    --color-error: #ef4444;         /* Red 500 - clear error indication */
+    --color-success: #22c55e;       /* Green 500 - success states */
+    --color-warning: #f59e0b;       /* Amber 500 - warning states */
+    --color-info: #3b82f6;          /* Blue 500 - informational */
+
+    /* ========================================
+       TYPOGRAPHY TOKENS
+       ======================================== */
+
+    --font-mono: 'JetBrains Mono', 'Consolas', 'Monaco', 'Source Code Pro', 'IBM Plex Mono', monospace;
+    --font-size-base: 13px;
+    --font-weight-normal: 500;
+    --font-weight-bold: 600;
+    --line-height: 1.4;
+
+    /* Typography scale */
+    --text-xs: 0.75rem;   /* 12px */
+    --text-sm: 0.875rem;  /* 14px */
+    --text-base: 1rem;    /* 16px */
+    --text-lg: 1.125rem;  /* 18px */
+    --text-xl: 1.25rem;   /* 20px */
+    --text-2xl: 1.5rem;   /* 24px */
+    --text-3xl: 1.875rem; /* 30px */
+    --text-4xl: 2.25rem;  /* 36px */
+
+    /* ========================================
+       SPACING TOKENS (8px base grid)
+       ======================================== */
+
+    /* Named spacing tokens (legacy) */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 12px;
+    --spacing-lg: 16px;
+    --spacing-xl: 24px;
+
+    /* Numbered spacing tokens (recommended) */
+    --spacing-1: 0.25rem;  /* 4px */
+    --spacing-2: 0.5rem;   /* 8px */
+    --spacing-3: 0.75rem;  /* 12px */
+    --spacing-4: 1rem;     /* 16px */
+    --spacing-5: 1.25rem;  /* 20px */
+    --spacing-6: 1.5rem;   /* 24px */
+    --spacing-8: 2rem;     /* 32px */
+    --spacing-10: 2.5rem;  /* 40px */
+    --spacing-12: 3rem;    /* 48px */
+    --spacing-16: 4rem;    /* 64px */
+
+    /* ========================================
+       BORDER & EFFECTS TOKENS
+       ======================================== */
+
+    --border-width: 1px;
+    --border-color: #3b82f6;        /* Blue 500 - active borders */
+    --border-dim: #475569;          /* Slate 600 - inactive borders */
+
+    /* Border radius */
+    --radius-sm: 0.375rem;  /* 6px */
+    --radius-md: 0.5rem;    /* 8px */
+    --radius-lg: 0.75rem;   /* 12px */
+    --radius-xl: 1rem;      /* 16px */
+
+    /* ========================================
+       ANIMATION TOKENS
+       ======================================== */
+
+    --transition-fast: 0.15s ease;
+    --transition-base: 0.2s ease;
+    --transition-slow: 0.3s ease;
+    --transition-standard: 0.2s ease;
+}

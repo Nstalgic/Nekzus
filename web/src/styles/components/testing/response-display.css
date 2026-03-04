@@ -1,0 +1,93 @@
+/* ============================================
+   RESPONSE DISPLAY
+   ============================================
+   API response display panel with metadata
+   ============================================ */
+
+/* Response Display */
+.response-output {
+    background-color: var(--bg-primary);
+    border: var(--border-width) solid var(--border-dim);
+    padding: var(--spacing-sm);
+    font-size: 12px;
+    max-height: 400px;
+    overflow-y: auto;
+    font-family: var(--font-mono);
+    color: var(--text-primary);
+    white-space: pre-wrap;
+    word-break: break-all;
+    text-decoration: none !important;
+}
+
+.response-output a,
+.response-output a:link,
+.response-output a:visited,
+.response-output a:hover,
+.response-output a:active {
+    color: var(--text-primary) !important;
+    text-decoration: none !important;
+    pointer-events: none;
+    cursor: default;
+}
+
+.response-output code {
+    background-color: transparent;
+    border: none;
+    padding: 0;
+    color: var(--text-primary);
+    text-decoration: none !important;
+}
+
+.response-output code a,
+.response-output code a:link,
+.response-output code a:visited,
+.response-output code a:hover,
+.response-output code a:active {
+    color: var(--text-primary) !important;
+    text-decoration: none !important;
+    pointer-events: none;
+    cursor: default;
+}
+
+.response-meta {
+    display: flex;
+    gap: var(--spacing-md);
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+    padding: var(--spacing-sm);
+    background-color: var(--bg-secondary);
+    border: var(--border-width) solid var(--border-dim);
+    flex-wrap: wrap;
+}
+
+.response-meta-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: 13px;
+}
+
+.response-meta-label {
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    font-size: 11px;
+}
+
+.response-meta-value {
+    color: var(--text-primary);
+    font-weight: var(--font-weight-bold);
+}
+
+.response-actions {
+    display: flex;
+    gap: var(--spacing-xs);
+    margin-top: var(--spacing-md);
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .response-meta {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}

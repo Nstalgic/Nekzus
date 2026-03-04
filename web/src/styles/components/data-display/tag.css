@@ -1,0 +1,14 @@
+/* ============================================
+   TAG
+   ============================================
+   Tag/label component for metadata
+   ============================================ */
+
+.tag {
+    display: inline-block;
+    padding: 2px 6px;
+    background-color: var(--bg-secondary);
+    color: var(--text-secondary);
+    font-size: 11px;
+    border: var(--border-width) solid var(--border-dim);
+}

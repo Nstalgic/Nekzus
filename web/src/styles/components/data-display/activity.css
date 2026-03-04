@@ -1,0 +1,36 @@
+/* ============================================
+   ACTIVITY LIST
+   ============================================
+   Activity log/feed component
+   ============================================ */
+
+.activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.activity-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: var(--spacing-xs) 0;
+    border-bottom: var(--border-width) solid var(--border-dim);
+    gap: var(--spacing-sm);
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-text {
+    color: var(--text-primary);
+    font-size: 13px;
+    flex: 1;
+}
+
+.activity-time {
+    color: var(--text-secondary);
+    font-size: 12px;
+    white-space: nowrap;
+}

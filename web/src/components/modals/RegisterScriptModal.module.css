@@ -1,0 +1,147 @@
+/**
+ * RegisterScriptModal Styles (CSS Module)
+ * Form-specific styles for script registration
+ */
+
+/* Loading State */
+.loadingState {
+  padding: var(--spacing-md);
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+/* Error State */
+.errorState {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+/* Empty State */
+.emptyState {
+  padding: var(--spacing-md);
+  text-align: center;
+}
+
+/* Helper Text */
+.helperText {
+  font-size: 11px;
+  margin-top: var(--spacing-xs);
+}
+
+/* Script Type Display */
+.scriptType {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2) var(--spacing-3);
+  background: var(--bg-tertiary);
+  border-radius: 0;
+  margin-top: var(--spacing-2);
+  font-size: var(--text-sm);
+}
+
+.scriptTypeLabel {
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.scriptTypeValue {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--accent-cyan);
+  background: none;
+  padding: 0;
+}
+
+/* Advanced Toggle */
+.advancedToggle {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2) 0;
+  margin-top: var(--spacing-2);
+  margin-bottom: var(--spacing-2);
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+
+.advancedToggle:hover {
+  color: var(--text-primary);
+}
+
+/* Advanced Section */
+.advancedSection {
+  padding: var(--spacing-sm);
+  margin-top: var(--spacing-2);
+  background: var(--bg-tertiary);
+  border-radius: 0;
+  border: 1px solid var(--border-dim);
+}
+
+.advancedSection .form-group {
+  margin-bottom: var(--spacing-sm);
+}
+
+.advancedSection .form-group:last-child {
+  margin-bottom: 0;
+}
+
+.advancedSection label {
+  font-size: 11px;
+}
+
+.advancedSection input,
+.advancedSection textarea {
+  font-size: var(--text-sm);
+}
+
+/* Environment Variables */
+.envVarsList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  margin-bottom: var(--spacing-2);
+}
+
+.envVarRow {
+  display: grid;
+  grid-template-columns: 1fr 2fr auto;
+  gap: var(--spacing-2);
+  align-items: center;
+}
+
+.envVarKey {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+}
+
+.envVarValue {
+  font-family: var(--font-mono);
+}
+
+/* Responsive overrides */
+@media (max-width: 768px) {
+  .envVarRow {
+    grid-template-columns: 1fr;
+  }
+
+  .scriptType {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

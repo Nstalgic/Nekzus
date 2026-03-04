@@ -1,0 +1,1882 @@
+/* ============================================
+   NEKZUS THEME DEFINITIONS
+   ============================================
+
+   This file contains all 15 available themes for the Nekzus terminal UI.
+   Themes are applied via body class: body.theme-{name}
+
+   Available themes:
+   1. Slate Professional (default - no class needed)
+   2. Obsidian Dark (body.theme-obsidian-dark)
+   3. Nord Frost (body.theme-nord-frost)
+   4. Carbon Neutral (body.theme-carbon-neutral)
+   5. Classic Green (body.theme-green)
+   6. Cyan theme (body.theme-cyan)
+   7. Amber theme (body.theme-amber)
+   8. Gruvbox theme (body.theme-gruvbox)
+   9. Gruvbox Light theme (body.theme-gruvbox-light)
+   10. Tokyo Night theme (body.theme-tokyo-night)
+   11. Tokyo Night Storm theme (body.theme-tokyo-night-storm)
+   12. Catppuccin Mocha theme (body.theme-catppuccin-mocha)
+   13. Pipboy theme (body.theme-pipboy) - includes CRT effects
+   14. Pipboy Green theme (body.theme-pipboy-green) - green CRT effects
+   15. Retro theme (body.theme-retro) - 80s/90s vaporwave aesthetic
+   ============================================ */
+
+/* ============================================
+   THEME 1: SLATE PROFESSIONAL (DEFAULT)
+   ============================================
+   Modern, neutral, professional dashboard aesthetic
+   Cool slate grays with cyan/blue accents
+   WCAG AAA compliant - broad appeal
+   Default theme - defined in :root (tokens.css)
+   ============================================ */
+
+/* ============================================
+   THEME 2: OBSIDIAN DARK
+   ============================================
+   Pure black minimalist with vibrant accents
+   OLED-friendly true blacks, maximum contrast
+   ============================================ */
+body.theme-obsidian-dark {
+    /* Backgrounds - True blacks */
+    --bg-primary: #000000;
+    --bg-secondary: #0a0a0a;
+    --bg-tertiary: #1a1a1a;
+
+    /* Text - Bright whites */
+    --text-primary: #ffffff;
+    --text-secondary: #d1d5db;
+    --text-tertiary: #9ca3af;
+    --text-white: #ffffff;
+
+    /* Accent Colors - Vibrant pops */
+    --accent-cyan: #22d3ee;
+    --accent-yellow: #fbbf24;
+    --accent-magenta: #c084fc;
+    --accent-amber: #fb923c;
+    --accent-red: #f87171;
+    --accent-blue: #60a5fa;
+
+    /* Status Colors */
+    --color-error: #f87171;
+    --color-success: #22d3ee;
+    --color-warning: #fbbf24;
+    --color-info: #60a5fa;
+
+    /* Borders */
+    --border-color: #60a5fa;
+    --border-dim: #374151;
+}
+
+body.theme-obsidian-dark .box-header {
+    color: var(--accent-cyan);
+}
+
+
+/* ============================================
+   THEME 3: NORD FROST
+   ============================================
+   Nordic-inspired cool blues with soft pastels
+   Easy on the eyes for extended use
+   Based on the popular Nord color palette
+   ============================================ */
+body.theme-nord-frost {
+    /* Backgrounds - Nord Polar Night */
+    --bg-primary: #2e3440;
+    --bg-secondary: #3b4252;
+    --bg-tertiary: #434c5e;
+
+    /* Text - Nord Snow Storm */
+    --text-primary: #eceff4;
+    --text-secondary: #d8dee9;
+    --text-tertiary: #616e88;
+    --text-white: #eceff4;
+
+    /* Accent Colors - Nord Frost + Aurora */
+    --accent-cyan: #88c0d0;
+    --accent-yellow: #ebcb8b;
+    --accent-magenta: #b48ead;
+    --accent-amber: #d08770;
+    --accent-red: #bf616a;
+    --accent-blue: #5e81ac;
+
+    /* Status Colors */
+    --color-error: #bf616a;
+    --color-success: #a3be8c;
+    --color-warning: #ebcb8b;
+    --color-info: #5e81ac;
+
+    /* Borders */
+    --border-color: #88c0d0;
+    --border-dim: #4c566a;
+}
+
+body.theme-nord-frost .box-header {
+    color: var(--accent-cyan);
+}
+
+
+/* ============================================
+   THEME 4: CARBON NEUTRAL
+   ============================================
+   IBM Carbon Design System inspired
+   Corporate-friendly with sophisticated grays
+   Professional and enterprise-ready
+   ============================================ */
+body.theme-carbon-neutral {
+    /* Backgrounds - Carbon Gray */
+    --bg-primary: #161616;
+    --bg-secondary: #262626;
+    --bg-tertiary: #393939;
+
+    /* Text - Cool whites */
+    --text-primary: #f4f4f4;
+    --text-secondary: #c6c6c6;
+    --text-tertiary: #8d8d8d;
+    --text-white: #ffffff;
+
+    /* Accent Colors - IBM Palette */
+    --accent-cyan: #33b1ff;
+    --accent-yellow: #f1c21b;
+    --accent-magenta: #be95ff;
+    --accent-amber: #ff832b;
+    --accent-red: #fa4d56;
+    --accent-blue: #4589ff;
+
+    /* Status Colors */
+    --color-error: #fa4d56;
+    --color-success: #42be65;
+    --color-warning: #f1c21b;
+    --color-info: #4589ff;
+
+    /* Borders */
+    --border-color: #4589ff;
+    --border-dim: #525252;
+}
+
+body.theme-carbon-neutral .box-header {
+    color: var(--accent-blue);
+}
+
+
+/* ============================================
+   THEME 5: CLASSIC GREEN
+   ============================================
+   Traditional green phosphor CRT terminal
+   Colors: Black background with bright green text
+   ============================================ */
+body.theme-green {
+    --bg-primary: #0a1a0a;
+    --bg-secondary: #0d2410;
+    --bg-tertiary: #123316;
+
+    --text-primary: #33ff66;
+    --text-secondary: #22cc55;
+    --text-tertiary: #118833;
+    --text-white: #99ffbb;
+
+    --accent-cyan: #33ff66;
+    --accent-yellow: #99ffbb;
+    --accent-magenta: #22cc55;
+    --accent-amber: #33ff66;
+    --accent-red: #22aa44;
+    --accent-blue: #22bb55;
+
+    --color-success: #33ff66;
+    --color-info: #22cc55;
+    --color-warning: #99ffbb;
+    --color-error: #ff6666;
+
+    --border-color: #33ff66;
+    --border-dim: #1a4d1a;
+}
+
+body.theme-green .box-header {
+    color: var(--accent-cyan);
+}
+
+
+/* ============================================
+   THEME 2: CYAN
+   ============================================
+   Colors: Dark teal background with cyan text
+   ============================================ */
+body.theme-cyan {
+    --bg-primary: #001a1a;
+    --bg-secondary: #002626;
+    --bg-tertiary: #003333;
+
+    --text-primary: #00FFFF;
+    --text-secondary: #80cccc;
+    --text-white: #ccffff;
+
+    --border-color: #00FFFF;
+    --border-dim: #004d4d;
+
+    --color-success: #00FFFF;
+    --color-info: #00cccc;
+    --color-warning: #ffcc00;
+    --color-error: #ff3333;
+}
+
+/* ============================================
+   THEME 3: AMBER
+   ============================================
+   Colors: Dark brown background with amber text
+   ============================================ */
+body.theme-amber {
+    --bg-primary: #1a1200;
+    --bg-secondary: #261a00;
+    --bg-tertiary: #332200;
+
+    --text-primary: #FFBF00;
+    --text-secondary: #cc9900;
+    --text-white: #ffdd99;
+
+    --border-color: #FFBF00;
+    --border-dim: #664d00;
+
+    --color-success: #cccc00;
+    --color-info: #ff9900;
+    --color-warning: #FFBF00;
+    --color-error: #ff3333;
+}
+
+/* ============================================
+   THEME 4: GRUVBOX (DARK)
+   ============================================
+   Colors: Warm, retro color palette
+   Based on the popular Gruvbox theme
+   ============================================ */
+body.theme-gruvbox {
+    /* Backgrounds */
+    --bg-primary: #282828;
+    --bg-secondary: #3c3836;
+    --bg-tertiary: #504945;
+
+    /* Text Colors */
+    --text-primary: #ebdbb2;        /* Light beige/cream */
+    --text-secondary: #a89984;      /* Muted beige */
+    --text-tertiary: #665c54;       /* Dark gray */
+    --text-white: #fbf1c7;          /* Bright cream */
+
+    /* Accent Colors */
+    --accent-cyan: #8ec07c;         /* Gruvbox aqua */
+    --accent-yellow: #fabd2f;       /* Gruvbox yellow */
+    --accent-magenta: #d3869b;      /* Gruvbox purple */
+    --accent-amber: #fe8019;        /* Gruvbox orange */
+    --accent-red: #fb4934;          /* Gruvbox red */
+    --accent-blue: #83a598;         /* Gruvbox blue */
+
+    /* Status Colors */
+    --color-error: #fb4934;         /* Gruvbox red */
+    --color-success: #b8bb26;       /* Gruvbox green */
+    --color-warning: #fabd2f;       /* Gruvbox yellow */
+    --color-info: #83a598;          /* Gruvbox blue */
+
+    /* Borders */
+    --border-color: #d65d0e;        /* Gruvbox dark orange */
+    --border-dim: #504945;          /* Gruvbox gray */
+}
+
+body.theme-gruvbox .box-header {
+    color: var(--accent-yellow);
+}
+
+
+/* ============================================
+   THEME 5: GRUVBOX LIGHT
+   ============================================
+   Colors: Light variant of Gruvbox
+   Cream background with dark text
+   ============================================ */
+body.theme-gruvbox-light {
+    /* Backgrounds */
+    --bg-primary: #fbf1c7;          /* Light cream */
+    --bg-secondary: #f2e5bc;        /* Slightly darker cream */
+    --bg-tertiary: #ebdbb2;         /* Beige */
+
+    /* Text Colors */
+    --text-primary: #3c3836;        /* Dark gray */
+    --text-secondary: #665c54;      /* Medium gray */
+    --text-tertiary: #bdae93;       /* Light gray */
+    --text-white: #282828;          /* Darkest */
+
+    /* Accent Colors */
+    --accent-cyan: #427b58;         /* Gruvbox aqua (darker) */
+    --accent-yellow: #b57614;       /* Gruvbox yellow (darker) */
+    --accent-magenta: #8f3f71;      /* Gruvbox purple (darker) */
+    --accent-amber: #af3a03;        /* Gruvbox orange (darker) */
+    --accent-red: #9d0006;          /* Gruvbox red (darker) */
+    --accent-blue: #076678;         /* Gruvbox blue (darker) */
+
+    /* Status Colors */
+    --color-error: #cc241d;         /* Gruvbox red (light mode) */
+    --color-success: #79740e;       /* Gruvbox green (light mode) */
+    --color-warning: #b57614;       /* Gruvbox yellow (light mode) */
+    --color-info: #076678;          /* Gruvbox blue (light mode) */
+
+    /* Borders */
+    --border-color: #af3a03;        /* Gruvbox orange (darker) */
+    --border-dim: #d5c4a1;          /* Light beige */
+}
+
+body.theme-gruvbox-light .box-header {
+    color: var(--accent-amber);
+}
+
+
+/* ============================================
+   THEME 6: TOKYO NIGHT
+   ============================================
+   Colors: Deep blue background with pastel accents
+   Based on the popular Tokyo Night theme
+   ============================================ */
+body.theme-tokyo-night {
+    /* Backgrounds */
+    --bg-primary: #1a1b26;          /* Editor background */
+    --bg-secondary: #16161e;        /* Sidebar/panel background */
+    --bg-tertiary: #14141b;         /* Input/widget background */
+
+    /* Text Colors */
+    --text-primary: #a9b1d6;        /* Primary foreground */
+    --text-secondary: #787c99;      /* Secondary text */
+    --text-tertiary: #515670;       /* Muted text */
+    --text-white: #c0caf5;          /* Bright text */
+
+    /* Accent Colors */
+    --accent-cyan: #7dcfff;         /* Cyan */
+    --accent-yellow: #e0af68;       /* Yellow */
+    --accent-magenta: #bb9af7;      /* Purple */
+    --accent-amber: #ff9e64;        /* Orange */
+    --accent-red: #f7768e;          /* Red/pink */
+    --accent-blue: #7aa2f7;         /* Blue */
+
+    /* Status Colors */
+    --color-error: #db4b4b;         /* Error red */
+    --color-success: #9ece6a;       /* Success green */
+    --color-warning: #e0af68;       /* Warning yellow */
+    --color-info: #7aa2f7;          /* Info blue */
+
+    /* Borders */
+    --border-color: #3d59a1;        /* Accent border */
+    --border-dim: #101014;          /* Subtle border */
+}
+
+body.theme-tokyo-night .box-header {
+    color: var(--accent-cyan);
+}
+
+
+/* ============================================
+   THEME 7: TOKYO NIGHT STORM
+   ============================================
+   Colors: Lighter variant of Tokyo Night
+   Storm variant with slightly brighter background
+   ============================================ */
+body.theme-tokyo-night-storm {
+    /* Backgrounds */
+    --bg-primary: #24283b;          /* Editor background */
+    --bg-secondary: #1f2335;        /* Sidebar/panel background */
+    --bg-tertiary: #1b1e2e;         /* Input/widget background */
+
+    /* Text Colors */
+    --text-primary: #a9b1d6;        /* Primary foreground */
+    --text-secondary: #8089b3;      /* Secondary text */
+    --text-tertiary: #6f7bb6;       /* Muted text */
+    --text-white: #c0caf5;          /* Bright text */
+
+    /* Accent Colors */
+    --accent-cyan: #7dcfff;         /* Cyan */
+    --accent-yellow: #e0af68;       /* Yellow */
+    --accent-magenta: #bb9af7;      /* Purple */
+    --accent-amber: #ff9e64;        /* Orange */
+    --accent-red: #f7768e;          /* Red/pink */
+    --accent-blue: #7aa2f7;         /* Blue */
+
+    /* Status Colors */
+    --color-error: #db4b4b;         /* Error red */
+    --color-success: #9ece6a;       /* Success green */
+    --color-warning: #e0af68;       /* Warning yellow */
+    --color-info: #7aa2f7;          /* Info blue */
+
+    /* Borders */
+    --border-color: #3d59a1;        /* Accent border */
+    --border-dim: #1b1e2e;          /* Subtle border */
+}
+
+body.theme-tokyo-night-storm .box-header {
+    color: var(--accent-cyan);
+}
+
+
+/* ============================================
+   THEME 8: CATPPUCCIN MOCHA
+   ============================================
+   Colors: Warm, pastel color palette
+   Based on the Catppuccin Mocha theme
+   ============================================ */
+body.theme-catppuccin-mocha {
+    /* Backgrounds */
+    --bg-primary: #1e1e2e;          /* Base - primary pane */
+    --bg-secondary: #181825;        /* Mantle - secondary pane */
+    --bg-tertiary: #313244;         /* Surface 0 - inputs/widgets */
+
+    /* Text Colors */
+    --text-primary: #cdd6f4;        /* Text - body text */
+    --text-secondary: #bac2de;      /* Subtext 1 - labels */
+    --text-tertiary: #6c7086;       /* Overlay 0 - muted text */
+    --text-white: #cdd6f4;          /* Text - bright text */
+
+    /* Accent Colors */
+    --accent-cyan: #89dceb;         /* Sky */
+    --accent-yellow: #f9e2af;       /* Yellow */
+    --accent-magenta: #cba6f7;      /* Mauve */
+    --accent-amber: #fab387;        /* Peach */
+    --accent-red: #f38ba8;          /* Red */
+    --accent-blue: #89b4fa;         /* Blue */
+
+    /* Status Colors */
+    --color-error: #f38ba8;         /* Red - errors */
+    --color-success: #a6e3a1;       /* Green - success */
+    --color-warning: #f9e2af;       /* Yellow - warnings */
+    --color-info: #89b4fa;          /* Blue - info */
+
+    /* Borders */
+    --border-color: #b4befe;        /* Lavender - active borders */
+    --border-dim: #6c7086;          /* Overlay 0 - inactive borders */
+}
+
+body.theme-catppuccin-mocha .box-header {
+    color: var(--accent-magenta);
+}
+
+
+/* ============================================
+   THEME 9: PIPBOY (RETRO CRT TERMINAL)
+   ============================================
+   Colors: Amber monochrome with CRT effects
+   Includes: scanlines, flicker, vignette, glow
+   Inspired by Fallout Pip-Boy terminals
+   ============================================ */
+body.theme-pipboy {
+    /* Backgrounds */
+    --bg-primary: #12100d;          /* Near-black CRT background */
+    --bg-secondary: #1a1610;        /* Slightly lighter */
+    --bg-tertiary: #221e18;         /* Input/widget background */
+
+    /* Text Colors - Amber/Orange monochrome */
+    --text-primary: rgb(255, 170, 60);     /* Main amber */
+    --text-secondary: rgb(200, 135, 50);   /* Dimmer amber */
+    --text-tertiary: rgb(120, 75, 20);     /* Dark amber */
+    --text-white: rgb(255, 190, 80);       /* Bright amber */
+
+    /* Accent Colors - Amber variations */
+    --accent-cyan: rgb(255, 170, 60);
+    --accent-yellow: rgb(255, 190, 80);
+    --accent-magenta: rgb(220, 145, 50);
+    --accent-amber: rgb(255, 170, 60);
+    --accent-red: rgb(200, 110, 30);
+    --accent-blue: rgb(180, 120, 40);
+
+    /* Status Colors - Amber brightness levels */
+    --color-error: rgb(200, 110, 30);      /* Dark amber */
+    --color-success: rgb(255, 190, 80);    /* Bright amber */
+    --color-warning: rgb(255, 170, 60);    /* Medium amber */
+    --color-info: rgb(200, 135, 50);       /* Dim amber */
+
+    /* Borders */
+    --border-color: rgb(255, 170, 60);
+    --border-dim: rgb(120, 75, 20);
+    --border-width: 2px;
+
+    /* Font */
+    --font-mono: 'Roboto Mono', monospace;
+
+    /* Scrollbar */
+    scrollbar-color: rgb(120, 75, 20) var(--bg-primary);
+}
+
+/* Pipboy scrollbar styling */
+body.theme-pipboy ::-webkit-scrollbar {
+    width: 12px;
+}
+
+body.theme-pipboy ::-webkit-scrollbar-track {
+    background: var(--bg-primary);
+}
+
+body.theme-pipboy ::-webkit-scrollbar-thumb {
+    border-radius: 0;
+    background-color: rgb(120, 75, 20);
+    border: 2px solid transparent;
+}
+
+/* Pipboy text glow effect - targeted selectors for performance */
+body.theme-pipboy h1,
+body.theme-pipboy h2,
+body.theme-pipboy h3,
+body.theme-pipboy h4,
+body.theme-pipboy .box-header,
+body.theme-pipboy .card-header,
+body.theme-pipboy .terminal-header,
+body.theme-pipboy .tab-item,
+body.theme-pipboy .btn,
+body.theme-pipboy .badge,
+body.theme-pipboy .nav-item,
+body.theme-pipboy label,
+body.theme-pipboy a {
+    text-shadow: 0 0.1rem 0.5rem currentColor;
+}
+
+body.theme-pipboy ::selection {
+    background-color: rgba(120, 75, 20, 0.7);
+    color: rgb(255, 170, 60);
+}
+
+/* ============================================
+   PIPBOY CRT VISUAL EFFECTS
+   ============================================ */
+
+/* CRT Background Flicker Animation - optimized from 10ms to 100ms */
+@keyframes crt-output {
+    0%, 100% {
+        opacity: 0.95;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
+/* Radial Glow Pulse Animation */
+@keyframes crt-glow {
+    0%, 100% {
+        opacity: 0.15;
+    }
+    50% {
+        opacity: 0.20;
+    }
+}
+
+/* Background flicker effect - optimized: 100ms instead of 10ms (10 FPS vs 100 FPS) */
+body.theme-pipboy::before {
+    content: "";
+    display: block;
+    height: 100%;
+    left: 0;
+    top: 0;
+    width: 100%;
+    pointer-events: none;
+    position: fixed;
+    z-index: -1;
+    animation: crt-output 100ms infinite;
+    background-color: #12100d;
+    will-change: opacity;
+}
+
+/* Scanlines overlay */
+body.theme-pipboy::after {
+    content: "";
+    display: block;
+    height: 100%;
+    left: 0;
+    top: 0;
+    width: 100%;
+    pointer-events: none;
+    position: fixed;
+    z-index: 9998;
+    background: linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0),
+        rgba(255, 255, 255, 0) 50%,
+        rgba(0, 0, 0, 0.08) 70%,
+        rgba(0, 0, 0, 0.15)
+    );
+    background-size: 100% 0.25rem;
+}
+
+/* Radial glow from center - optimized with will-change hint */
+body.theme-pipboy .container::before {
+    content: "";
+    display: block;
+    height: 100%;
+    left: 0;
+    top: 0;
+    width: 100%;
+    pointer-events: none;
+    position: fixed;
+    z-index: 2;
+    animation: crt-glow 60s infinite;
+    background: radial-gradient(
+        circle at center,
+        rgb(255, 170, 60) 0%,
+        rgba(120, 75, 20, 0.78) 58%,
+        rgba(120, 75, 20, 0.55) 80%,
+        rgba(120, 75, 20, 0.27) 93%,
+        rgba(120, 75, 20, 0) 100%
+    );
+    opacity: 0.15;
+    will-change: opacity;
+}
+
+/* Vignette effect - darkened edges (optimized: reduced blur radius) */
+@media only screen and (min-width: 989px) {
+    body.theme-pipboy .container::after {
+        content: "";
+        display: block;
+        height: 100%;
+        left: 0;
+        top: 0;
+        width: 100%;
+        pointer-events: none;
+        position: fixed;
+        z-index: 9999;
+        box-shadow: inset 0 0 12rem black, inset 0 0 3rem black;
+        opacity: 0.7;
+    }
+}
+
+/* CRT screen curvature effect */
+body.theme-pipboy #root {
+    position: relative;
+    overflow: hidden;
+}
+
+body.theme-pipboy #root::before {
+    content: "";
+    position: fixed;
+    top: -5%;
+    left: -5%;
+    right: -5%;
+    bottom: -5%;
+    width: 110%;
+    height: 110%;
+    pointer-events: none;
+    z-index: 10000;
+    background: radial-gradient(
+        ellipse 80% 80% at 50% 50%,
+        transparent 0%,
+        transparent 60%,
+        rgba(0, 0, 0, 0.15) 75%,
+        rgba(0, 0, 0, 0.4) 85%,
+        rgba(0, 0, 0, 0.7) 95%,
+        rgba(0, 0, 0, 0.9) 100%
+    );
+    border-radius: 50% / 10%;
+}
+
+/* CRT edge highlight/reflection */
+body.theme-pipboy #root::after {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 10001;
+    background:
+        /* Top edge highlight */
+        linear-gradient(
+            to bottom,
+            rgba(255, 170, 60, 0.08) 0%,
+            transparent 3%
+        ),
+        /* Bottom edge shadow */
+        linear-gradient(
+            to top,
+            rgba(0, 0, 0, 0.3) 0%,
+            transparent 5%
+        ),
+        /* Left edge */
+        linear-gradient(
+            to right,
+            rgba(0, 0, 0, 0.2) 0%,
+            transparent 3%
+        ),
+        /* Right edge */
+        linear-gradient(
+            to left,
+            rgba(0, 0, 0, 0.2) 0%,
+            transparent 3%
+        );
+    border-radius: 8px;
+}
+
+/* Ensure content stays above CRT effects */
+body.theme-pipboy .terminal-header,
+body.theme-pipboy .terminal-content,
+body.theme-pipboy main,
+body.theme-pipboy .box,
+body.theme-pipboy .card {
+    position: relative;
+    z-index: 1;
+}
+
+/* ============================================
+   PIPBOY ENHANCED BORDERS AND BOX SHADOWS
+   ============================================ */
+
+/* Box and card layered shadows - optimized: removed expensive inset shadow */
+body.theme-pipboy .box,
+body.theme-pipboy .card,
+body.theme-pipboy .discovery-card,
+body.theme-pipboy .device-card {
+    border-width: 2px;
+    box-shadow: 5px 5px 0 #12100d, 6px 6px 0 rgb(255, 170, 60);
+    overflow: visible;
+}
+
+/* When dropdown is open, elevate parent box above other boxes and CRT effects */
+body.theme-pipboy .box:has(.custom-dropdown.open) {
+    z-index: 10000;
+}
+
+/* Alert boxes with shadow - optimized: removed inset shadow */
+body.theme-pipboy .alert {
+    border-width: 2px;
+    box-shadow: 5px 5px 0 #12100d, 6px 6px 0 currentColor;
+}
+
+/* Tables with enhanced borders */
+body.theme-pipboy .table {
+    border-width: 2px;
+}
+
+body.theme-pipboy .table th,
+body.theme-pipboy .table td {
+    border-width: 2px;
+}
+
+/* Buttons with layered shadows */
+body.theme-pipboy .btn {
+    border-width: 2px;
+    box-shadow: 2px 2px 0 #12100d, 3px 3px 0 currentColor;
+    transition: all 0.1s;
+}
+
+body.theme-pipboy .btn:hover {
+    box-shadow: 3px 3px 0 #12100d, 4px 4px 0 currentColor,
+                0 0 12px rgba(255, 170, 60, 0.5);
+}
+
+body.theme-pipboy .btn:active {
+    box-shadow: 1px 1px 0 #12100d, 2px 2px 0 currentColor;
+    transform: translate(1px, 1px);
+}
+
+/* Input fields with shadow */
+body.theme-pipboy .input,
+body.theme-pipboy select.input {
+    border-width: 2px;
+}
+
+/* Modal with enhanced shadow - optimized: removed inset shadow */
+body.theme-pipboy .confirmation-card {
+    border-width: 2px;
+    box-shadow: 10px 10px 0 #000000, 11px 11px 0 rgb(255, 170, 60);
+}
+
+/* Blockquotes with Pipboy styling - optimized: removed inset shadow */
+body.theme-pipboy blockquote,
+body.theme-pipboy #guidelines .container p:first-of-type {
+    border-width: 2px;
+    box-shadow: 5px 5px 0 #12100d, 6px 6px 0 rgb(255, 170, 60);
+}
+
+/* Tab items */
+body.theme-pipboy .tab-item {
+    border-width: 2px;
+    border-bottom: none;
+}
+
+body.theme-pipboy .tab-item.active {
+    border-bottom: 2px solid #12100d;
+    margin-bottom: -2px;
+}
+
+body.theme-pipboy .tab-item.active:hover {
+    border-bottom: 2px solid #12100d;
+}
+
+/* ============================================
+   PIPBOY GRADIENT CORNER DECORATIONS
+   ============================================ */
+
+/* Add gradient corners to boxes, cards, and headers */
+body.theme-pipboy .box::before,
+body.theme-pipboy .box::after,
+body.theme-pipboy .card::before,
+body.theme-pipboy .card::after,
+body.theme-pipboy .terminal-header::before,
+body.theme-pipboy .terminal-header::after,
+body.theme-pipboy main article::before,
+body.theme-pipboy main article::after {
+    position: absolute;
+    content: "";
+    width: 2px;
+    height: 100%;
+    background: linear-gradient(
+        to bottom,
+        rgb(255, 170, 60) 0%,
+        rgba(0, 0, 0, 0) 35%,
+        rgba(0, 0, 0, 0) 65%,
+        rgb(255, 170, 60) 100%
+    );
+    top: 0;
+    left: 0;
+    z-index: 1;
+}
+
+body.theme-pipboy .box::after,
+body.theme-pipboy .card::after,
+body.theme-pipboy .terminal-header::after,
+body.theme-pipboy main article::after {
+    left: unset;
+    right: 0;
+}
+
+/* Discovery and device cards */
+body.theme-pipboy .discovery-card::before,
+body.theme-pipboy .discovery-card::after,
+body.theme-pipboy .device-card::before,
+body.theme-pipboy .device-card::after {
+    position: absolute;
+    content: "";
+    width: 2px;
+    height: 100%;
+    background: linear-gradient(
+        to bottom,
+        rgb(255, 170, 60) 0%,
+        rgba(0, 0, 0, 0) 35%,
+        rgba(0, 0, 0, 0) 65%,
+        rgb(255, 170, 60) 100%
+    );
+    top: 0;
+    left: 0;
+    z-index: 1;
+}
+
+body.theme-pipboy .discovery-card::after,
+body.theme-pipboy .device-card::after {
+    left: unset;
+    right: 0;
+}
+
+/* Section headers with gradient underline */
+body.theme-pipboy section h3::after,
+body.theme-pipboy section:not(:first-of-type) h2::after {
+    background: linear-gradient(
+        to right,
+        rgb(255, 170, 60) 0%,
+        rgba(255, 170, 60, 0.5) 50%,
+        rgba(0, 0, 0, 0) 100%
+    );
+}
+
+/* Article footer gradient line */
+body.theme-pipboy article footer::before {
+    background: linear-gradient(
+        to right,
+        rgba(0, 0, 0, 0) 0%,
+        rgb(255, 170, 60) 35%,
+        rgb(255, 170, 60) 65%,
+        rgba(0, 0, 0, 0) 100%
+    );
+}
+
+/* ============================================
+   PIPBOY ENHANCED HOVER EFFECTS
+   ============================================ */
+
+/* Links with glow on hover */
+body.theme-pipboy a:hover {
+    outline: 2px solid currentColor;
+    background: rgba(120, 75, 20, 0.25);
+    box-shadow: 0 0 8px rgba(255, 170, 60, 0.5);
+}
+
+/* Links with external indicator - optimized: outer glow instead of inset */
+body.theme-pipboy a[href^="http"]::before {
+    background: #12100d;
+    border: 2px solid;
+    box-shadow: 0 0 6px rgba(255, 170, 60, 0.5);
+}
+
+body.theme-pipboy a[href^="http"]:hover::before {
+    box-shadow: 0 0 10px rgba(255, 170, 60, 0.8);
+}
+
+/* Navigation items */
+body.theme-pipboy .nav-item:hover {
+    background-color: rgba(120, 75, 20, 0.3);
+    box-shadow: 0 0 8px rgba(255, 170, 60, 0.4);
+}
+
+/* Tab items hover */
+body.theme-pipboy .tab-item:hover {
+    background-color: rgba(120, 75, 20, 0.2);
+    box-shadow: 0 0 8px rgba(255, 170, 60, 0.3);
+    border-bottom: none;
+}
+
+/* Discovery and device cards hover - optimized: removed inset shadow */
+body.theme-pipboy .discovery-card:hover,
+body.theme-pipboy .device-card:hover {
+    box-shadow: 6px 6px 0 #12100d, 7px 7px 0 rgb(255, 170, 60),
+                0 0 15px rgba(255, 170, 60, 0.3);
+}
+
+/* Feature list items hover */
+body.theme-pipboy .features li:hover {
+    background: rgba(120, 75, 20, 0.2);
+    outline: 2px solid;
+    box-shadow: 0 0 10px rgba(255, 170, 60, 0.4);
+}
+
+/* About list items hover */
+body.theme-pipboy footer ul a:hover,
+body.theme-pipboy #about ul li:hover {
+    outline: 2px solid;
+    background: rgba(120, 75, 20, 0.2);
+    box-shadow: 0 0 8px rgba(255, 170, 60, 0.3);
+}
+
+/* Overview link hover with glow */
+body.theme-pipboy .overview-link:hover {
+    box-shadow: 0 0 8px rgba(255, 170, 60, 0.6);
+}
+
+/* History item hover */
+body.theme-pipboy .history-item:hover {
+    background-color: rgba(120, 75, 20, 0.2);
+    border-color: rgb(255, 170, 60);
+    box-shadow: 0 0 8px rgba(255, 170, 60, 0.3);
+}
+
+/* Focus states with enhanced glow */
+body.theme-pipboy a:focus-visible,
+body.theme-pipboy a:focus,
+body.theme-pipboy .btn:focus-visible,
+body.theme-pipboy .input:focus-visible {
+    box-shadow: 0 0 4px rgb(255, 170, 60), 0 0 8px rgb(255, 170, 60);
+}
+
+/* ============================================
+   PIPBOY CHECKER PATTERN ANIMATION
+   ============================================ */
+
+/* Checker pattern keyframe */
+@keyframes checker {
+    0% {
+        background-position: 0px 0px, 5px 5px;
+    }
+    100% {
+        background-position: 5px 5px, 10px 10px;
+    }
+}
+
+/* Optional: Add checker pattern to empty states or special sections */
+body.theme-pipboy .empty-state {
+    background: linear-gradient(
+            45deg,
+            rgba(120, 75, 20, 0.5) 25%,
+            transparent 25%,
+            transparent 75%,
+            rgba(120, 75, 20, 0.5) 75%,
+            rgba(120, 75, 20, 0.5) 0
+        ),
+        linear-gradient(
+            45deg,
+            rgba(120, 75, 20, 0.5) 25%,
+            transparent 25%,
+            transparent 75%,
+            rgba(120, 75, 20, 0.5) 75%,
+            rgba(120, 75, 20, 0.5) 0
+        ),
+        #12100d;
+    background-size: 10px 10px, 10px 10px;
+    background-position: 0px 0, 5px 5px;
+    animation: checker 0.75s steps(4) infinite;
+}
+
+/* Loading states can use checker pattern */
+body.theme-pipboy .btn.loading::after {
+    animation: checker 0.75s steps(4) infinite;
+}
+
+/* Reduced motion support - disable checker animation */
+@media (prefers-reduced-motion: reduce) {
+    body.theme-pipboy .empty-state,
+    body.theme-pipboy .btn.loading::after {
+        animation: none;
+        background-position: 0px 0, 5px 5px;
+    }
+
+    body.theme-pipboy::before {
+        animation: none;
+        opacity: 0.95;
+    }
+
+    body.theme-pipboy .container::before {
+        animation: none;
+        opacity: 0.15;
+    }
+}
+
+/* ============================================
+   PIPBOY BADGE AMBER BRIGHTNESS LEVELS
+   ============================================ */
+
+/* Success badges - Brightest amber */
+body.theme-pipboy .badge-success,
+body.theme-pipboy .badge-success.badge-filled {
+    border-color: rgb(255, 190, 80);
+    color: rgb(255, 190, 80);
+    background-color: rgba(255, 190, 80, 0.1);
+    box-shadow: 0 0 6px rgba(255, 190, 80, 0.3);
+}
+
+body.theme-pipboy .badge-success.badge-filled {
+    background-color: rgb(255, 190, 80);
+    color: #12100d;
+}
+
+/* Warning badges - Medium amber */
+body.theme-pipboy .badge-warning,
+body.theme-pipboy .badge-warning.badge-filled {
+    border-color: rgb(255, 170, 60);
+    color: rgb(255, 170, 60);
+    background-color: rgba(255, 170, 60, 0.1);
+    box-shadow: 0 0 6px rgba(255, 170, 60, 0.3);
+}
+
+body.theme-pipboy .badge-warning.badge-filled {
+    background-color: rgb(255, 170, 60);
+    color: #12100d;
+}
+
+/* Info badges - Dim amber */
+body.theme-pipboy .badge-info,
+body.theme-pipboy .badge-info.badge-filled {
+    border-color: rgb(200, 135, 50);
+    color: rgb(200, 135, 50);
+    background-color: rgba(200, 135, 50, 0.1);
+}
+
+body.theme-pipboy .badge-info.badge-filled {
+    background-color: rgb(200, 135, 50);
+    color: #12100d;
+}
+
+/* Error badges - Dark amber */
+body.theme-pipboy .badge-error,
+body.theme-pipboy .badge-error.badge-filled {
+    border-color: rgb(200, 110, 30);
+    color: rgb(200, 110, 30);
+    background-color: rgba(200, 110, 30, 0.1);
+}
+
+body.theme-pipboy .badge-error.badge-filled {
+    background-color: rgb(200, 110, 30);
+    color: #12100d;
+}
+
+/* Tab badges with severity */
+body.theme-pipboy .tab-badge[data-severity="info"] {
+    background: rgb(255, 190, 80);
+    color: #12100d;
+    border: 2px solid rgb(255, 190, 80);
+    box-shadow: 0 0 8px rgba(255, 190, 80, 0.5);
+}
+
+body.theme-pipboy .tab-badge[data-severity="warning"] {
+    background: rgb(255, 170, 60);
+    color: #12100d;
+    border: 2px solid rgb(255, 170, 60);
+    box-shadow: 0 0 8px rgba(255, 170, 60, 0.5);
+}
+
+body.theme-pipboy .tab-badge[data-severity="critical"] {
+    background: rgb(200, 110, 30);
+    color: rgb(255, 190, 80);
+    border: 2px solid rgb(200, 110, 30);
+    box-shadow: 0 0 12px rgba(255, 170, 60, 0.6);
+}
+
+/* Status badges */
+body.theme-pipboy .status-badge.status-2xx {
+    color: rgb(255, 190, 80);
+    background: rgba(255, 190, 80, 0.1);
+    border: 1px solid rgb(255, 190, 80);
+}
+
+body.theme-pipboy .status-badge.status-3xx {
+    color: rgb(200, 135, 50);
+    background: rgba(200, 135, 50, 0.1);
+    border: 1px solid rgb(200, 135, 50);
+}
+
+body.theme-pipboy .status-badge.status-4xx {
+    color: rgb(255, 170, 60);
+    background: rgba(255, 170, 60, 0.1);
+    border: 1px solid rgb(255, 170, 60);
+}
+
+body.theme-pipboy .status-badge.status-5xx {
+    color: rgb(200, 110, 30);
+    background: rgba(200, 110, 30, 0.1);
+    border: 1px solid rgb(200, 110, 30);
+}
+
+/* Method badges */
+body.theme-pipboy .method-badge.get {
+    border-color: rgb(255, 190, 80);
+    color: rgb(255, 190, 80);
+}
+
+body.theme-pipboy .method-badge.post {
+    border-color: rgb(255, 170, 60);
+    color: rgb(255, 170, 60);
+}
+
+body.theme-pipboy .method-badge.put,
+body.theme-pipboy .method-badge.patch {
+    border-color: rgb(200, 135, 50);
+    color: rgb(200, 135, 50);
+}
+
+body.theme-pipboy .method-badge.delete {
+    border-color: rgb(200, 110, 30);
+    color: rgb(200, 110, 30);
+}
+
+/* Device status badges */
+body.theme-pipboy .device-status-badge {
+    border-width: 2px;
+}
+
+/* Progress bars with amber fill */
+body.theme-pipboy .progress-fill {
+    background-color: rgb(255, 170, 60);
+    box-shadow: 0 0 8px rgba(255, 170, 60, 0.5);
+}
+/* ============================================
+   THEME 10: PIPBOY GREEN (RETRO CRT TERMINAL)
+   ============================================
+   Colors: Green monochrome with CRT effects
+   Includes: scanlines, flicker, vignette, glow
+   Inspired by classic green phosphor CRT terminals
+   ============================================ */
+body.theme-pipboy-green {
+    /* Backgrounds */
+    --bg-primary: #0d120d;          /* Near-black CRT background */
+    --bg-secondary: #101a10;        /* Slightly lighter */
+    --bg-tertiary: #182218;         /* Input/widget background */
+
+    /* Text Colors - Green monochrome */
+    --text-primary: rgb(0, 255, 65);      /* Main green */
+    --text-secondary: rgb(0, 200, 50);    /* Dimmer green */
+    --text-tertiary: rgb(0, 120, 30);     /* Dark green */
+    --text-white: rgb(80, 255, 100);      /* Bright green */
+
+    /* Accent Colors - Green variations */
+    --accent-cyan: rgb(0, 255, 65);
+    --accent-yellow: rgb(80, 255, 100);
+    --accent-magenta: rgb(0, 220, 50);
+    --accent-amber: rgb(0, 255, 65);
+    --accent-red: rgb(0, 200, 30);
+    --accent-blue: rgb(0, 180, 40);
+
+    /* Status Colors - Green brightness levels */
+    --color-error: rgb(0, 200, 30);       /* Dark green */
+    --color-success: rgb(80, 255, 100);   /* Bright green */
+    --color-warning: rgb(0, 255, 65);     /* Medium green */
+    --color-info: rgb(0, 200, 50);        /* Dim green */
+
+    /* Borders */
+    --border-color: rgb(0, 255, 65);
+    --border-dim: rgb(0, 120, 30);
+    --border-width: 2px;
+
+    /* Font */
+    --font-mono: 'Roboto Mono', monospace;
+
+    /* Scrollbar */
+    scrollbar-color: rgb(0, 120, 30) var(--bg-primary);
+}
+
+/* Pipboy Green scrollbar styling */
+body.theme-pipboy-green ::-webkit-scrollbar {
+    width: 12px;
+}
+
+body.theme-pipboy-green ::-webkit-scrollbar-track {
+    background: var(--bg-primary);
+}
+
+body.theme-pipboy-green ::-webkit-scrollbar-thumb {
+    border-radius: 0;
+    background-color: rgb(0, 120, 30);
+    border: 2px solid transparent;
+}
+
+/* Pipboy Green text glow effect - targeted selectors for performance */
+body.theme-pipboy-green h1,
+body.theme-pipboy-green h2,
+body.theme-pipboy-green h3,
+body.theme-pipboy-green h4,
+body.theme-pipboy-green .box-header,
+body.theme-pipboy-green .card-header,
+body.theme-pipboy-green .terminal-header,
+body.theme-pipboy-green .tab-item,
+body.theme-pipboy-green .btn,
+body.theme-pipboy-green .badge,
+body.theme-pipboy-green .nav-item,
+body.theme-pipboy-green label,
+body.theme-pipboy-green a {
+    text-shadow: 0 0.1rem 0.5rem currentColor;
+}
+
+body.theme-pipboy-green ::selection {
+    background-color: rgba(0, 120, 30, 0.7);
+    color: rgb(0, 255, 65);
+}
+
+/* ============================================
+   PIPBOY GREEN CRT VISUAL EFFECTS
+   ============================================ */
+
+/* Background flicker effect - optimized: 100ms instead of 10ms (10 FPS vs 100 FPS) */
+body.theme-pipboy-green::before {
+    content: "";
+    display: block;
+    height: 100%;
+    left: 0;
+    top: 0;
+    width: 100%;
+    pointer-events: none;
+    position: fixed;
+    z-index: -1;
+    animation: crt-output 100ms infinite;
+    background-color: #0d120d;
+    will-change: opacity;
+}
+
+/* Scanlines overlay */
+body.theme-pipboy-green::after {
+    content: "";
+    display: block;
+    height: 100%;
+    left: 0;
+    top: 0;
+    width: 100%;
+    pointer-events: none;
+    position: fixed;
+    z-index: 9998;
+    background: linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0),
+        rgba(255, 255, 255, 0) 50%,
+        rgba(0, 0, 0, 0.08) 70%,
+        rgba(0, 0, 0, 0.15)
+    );
+    background-size: 100% 0.25rem;
+}
+
+/* Radial glow from center - optimized with will-change hint */
+body.theme-pipboy-green .terminal-container::before {
+    content: "";
+    display: block;
+    height: 100%;
+    left: 0;
+    top: 0;
+    width: 100%;
+    pointer-events: none;
+    position: fixed;
+    z-index: 2;
+    animation: crt-glow 60s infinite;
+    background: radial-gradient(
+        circle at center,
+        rgb(0, 255, 65) 0%,
+        rgba(0, 120, 30, 0.78) 58%,
+        rgba(0, 120, 30, 0.55) 80%,
+        rgba(0, 120, 30, 0.27) 93%,
+        rgba(0, 120, 30, 0) 100%
+    );
+    opacity: 0.15;
+    will-change: opacity;
+}
+
+/* Vignette effect - darkened edges (optimized: reduced blur radius) */
+@media only screen and (min-width: 989px) {
+    body.theme-pipboy-green .terminal-container::after {
+        content: "";
+        display: block;
+        height: 100%;
+        left: 0;
+        top: 0;
+        width: 100%;
+        pointer-events: none;
+        position: fixed;
+        z-index: 9999;
+        box-shadow: inset 0 0 12rem black, inset 0 0 3rem black;
+        opacity: 0.7;
+    }
+}
+
+/* CRT screen curvature effect */
+body.theme-pipboy-green #root {
+    position: relative;
+    overflow: hidden;
+}
+
+body.theme-pipboy-green #root::before {
+    content: "";
+    position: fixed;
+    top: -5%;
+    left: -5%;
+    right: -5%;
+    bottom: -5%;
+    width: 110%;
+    height: 110%;
+    pointer-events: none;
+    z-index: 10000;
+    background: radial-gradient(
+        ellipse 80% 80% at 50% 50%,
+        transparent 0%,
+        transparent 60%,
+        rgba(0, 0, 0, 0.15) 75%,
+        rgba(0, 0, 0, 0.4) 85%,
+        rgba(0, 0, 0, 0.7) 95%,
+        rgba(0, 0, 0, 0.9) 100%
+    );
+    border-radius: 50% / 10%;
+}
+
+/* CRT edge highlight/reflection */
+body.theme-pipboy-green #root::after {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 10001;
+    background:
+        /* Top edge highlight */
+        linear-gradient(
+            to bottom,
+            rgba(0, 255, 65, 0.08) 0%,
+            transparent 3%
+        ),
+        /* Bottom edge shadow */
+        linear-gradient(
+            to top,
+            rgba(0, 0, 0, 0.3) 0%,
+            transparent 5%
+        ),
+        /* Left edge */
+        linear-gradient(
+            to right,
+            rgba(0, 0, 0, 0.2) 0%,
+            transparent 3%
+        ),
+        /* Right edge */
+        linear-gradient(
+            to left,
+            rgba(0, 0, 0, 0.2) 0%,
+            transparent 3%
+        );
+    border-radius: 8px;
+}
+
+/* Ensure content stays above CRT effects */
+body.theme-pipboy-green .terminal-header,
+body.theme-pipboy-green .terminal-content,
+body.theme-pipboy-green main,
+body.theme-pipboy-green .box,
+body.theme-pipboy-green .card {
+    position: relative;
+    z-index: 1;
+}
+
+/* ============================================
+   PIPBOY GREEN ENHANCED BORDERS AND BOX SHADOWS
+   ============================================ */
+
+/* Box and card layered shadows - optimized: removed expensive inset shadow */
+body.theme-pipboy-green .box,
+body.theme-pipboy-green .card,
+body.theme-pipboy-green .discovery-card,
+body.theme-pipboy-green .device-card {
+    border-width: 2px;
+    box-shadow: 5px 5px 0 #0d120d, 6px 6px 0 rgb(0, 255, 65);
+    overflow: visible;
+}
+
+/* When dropdown is open, elevate parent box above other boxes and CRT effects */
+body.theme-pipboy-green .box:has(.custom-dropdown.open) {
+    z-index: 10000;
+}
+
+/* Alert boxes with shadow */
+body.theme-pipboy-green .alert {
+    border-width: 2px;
+    box-shadow: 5px 5px 0 #0d120d, 6px 6px 0 rgb(0, 255, 65);
+}
+
+/* Input fields with shadow */
+body.theme-pipboy-green .input,
+body.theme-pipboy-green .textarea,
+body.theme-pipboy-green .custom-dropdown-trigger {
+    border-width: 2px;
+    box-shadow: inset 3px 3px 0 rgba(0, 120, 30, 0.3);
+}
+
+/* Button shadows */
+body.theme-pipboy-green .btn {
+    border-width: 2px;
+    box-shadow: 3px 3px 0 #0d120d, 4px 4px 0 rgb(0, 255, 65);
+}
+
+body.theme-pipboy-green .btn:hover {
+    box-shadow: 2px 2px 0 #0d120d, 3px 3px 0 rgb(0, 255, 65), 0 0 10px rgba(0, 255, 65, 0.5);
+}
+
+body.theme-pipboy-green .btn:active {
+    box-shadow: inset 2px 2px 0 rgba(0, 120, 30, 0.3);
+}
+
+/* Checkbox with shadow */
+body.theme-pipboy-green .checkbox {
+    border-width: 2px;
+    box-shadow: 2px 2px 0 #0d120d, 3px 3px 0 rgb(0, 255, 65);
+}
+
+/* Tab items */
+body.theme-pipboy-green .tab-item {
+    border-width: 2px;
+}
+
+body.theme-pipboy-green .tab-item.active {
+    box-shadow: inset 0 -3px 0 rgb(0, 255, 65);
+    border-bottom: 2px solid rgb(0, 255, 65);
+}
+
+body.theme-pipboy-green .tab-item.active:hover {
+    border-bottom: 2px solid #0d120d;
+}
+
+/* ============================================
+   PIPBOY GREEN ENHANCED HOVER EFFECTS
+   ============================================ */
+
+/* Links with glow on hover */
+body.theme-pipboy-green a:hover,
+body.theme-pipboy-green .link:hover {
+    text-shadow: 0 0 8px rgba(0, 255, 65, 0.8), 0 0 12px rgba(0, 255, 65, 0.4);
+}
+
+/* Discovery and device cards glow on hover - optimized: removed inset shadow */
+body.theme-pipboy-green .discovery-card:hover,
+body.theme-pipboy-green .device-card:hover {
+    box-shadow: 5px 5px 0 #0d120d, 6px 6px 0 rgb(0, 255, 65),
+                0 0 15px rgba(0, 255, 65, 0.3);
+}
+
+/* Tab items glow on hover */
+body.theme-pipboy-green .tab-item:hover {
+    text-shadow: 0 0 6px rgba(0, 255, 65, 0.6);
+}
+
+/* ============================================
+   PIPBOY GREEN ANIMATION OPTIMIZATIONS
+   ============================================ */
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+    body.theme-pipboy-green::before,
+    body.theme-pipboy-green .terminal-container::before {
+        animation: none !important;
+    }
+}
+
+/* Disable glow animation on mobile for performance */
+@media only screen and (max-width: 989px) {
+    body.theme-pipboy-green .terminal-container::before {
+        animation: none;
+        opacity: 0.15;
+    }
+}
+
+/* ============================================
+   PIPBOY GREEN BADGE BRIGHTNESS LEVELS
+   ============================================ */
+
+/* Success badges - Brightest green */
+body.theme-pipboy-green .badge-success,
+body.theme-pipboy-green .badge-success.badge-filled {
+    border-color: rgb(80, 255, 100);
+    color: rgb(80, 255, 100);
+    background-color: rgba(80, 255, 100, 0.1);
+    box-shadow: 0 0 6px rgba(80, 255, 100, 0.3);
+}
+
+/* Info badges - Medium green */
+body.theme-pipboy-green .badge-info,
+body.theme-pipboy-green .badge-info.badge-filled {
+    border-color: rgb(0, 200, 50);
+    color: rgb(0, 200, 50);
+    background-color: rgba(0, 200, 50, 0.1);
+    box-shadow: 0 0 6px rgba(0, 200, 50, 0.3);
+}
+
+/* Warning badges - Main green */
+body.theme-pipboy-green .badge-warning,
+body.theme-pipboy-green .badge-warning.badge-filled {
+    border-color: rgb(0, 255, 65);
+    color: rgb(0, 255, 65);
+    background-color: rgba(0, 255, 65, 0.1);
+    box-shadow: 0 0 6px rgba(0, 255, 65, 0.3);
+}
+
+/* Error badges - Dark green */
+body.theme-pipboy-green .badge-error,
+body.theme-pipboy-green .badge-error.badge-filled {
+    border-color: rgb(0, 200, 30);
+    color: rgb(0, 200, 30);
+    background-color: rgba(0, 200, 30, 0.1);
+    box-shadow: 0 0 6px rgba(0, 200, 30, 0.3);
+}
+
+/* Primary badges - Main green */
+body.theme-pipboy-green .badge-primary,
+body.theme-pipboy-green .badge-primary.badge-filled {
+    border-color: rgb(0, 255, 65);
+    color: rgb(0, 255, 65);
+    background-color: rgba(0, 255, 65, 0.1);
+    box-shadow: 0 0 6px rgba(0, 255, 65, 0.3);
+}
+
+/* Secondary badges - Dimmer green */
+body.theme-pipboy-green .badge-secondary,
+body.theme-pipboy-green .badge-secondary.badge-filled {
+    border-color: rgb(0, 200, 50);
+    color: rgb(0, 200, 50);
+    background-color: rgba(0, 200, 50, 0.1);
+}
+
+/* Method badges */
+body.theme-pipboy-green .method-badge.get {
+    border-color: rgb(80, 255, 100);
+    color: rgb(80, 255, 100);
+}
+
+body.theme-pipboy-green .method-badge.post {
+    border-color: rgb(0, 255, 65);
+    color: rgb(0, 255, 65);
+}
+
+body.theme-pipboy-green .method-badge.put,
+body.theme-pipboy-green .method-badge.patch {
+    border-color: rgb(0, 200, 50);
+    color: rgb(0, 200, 50);
+}
+
+body.theme-pipboy-green .method-badge.delete {
+    border-color: rgb(0, 200, 30);
+    color: rgb(0, 200, 30);
+}
+
+/* Device status badges */
+body.theme-pipboy-green .device-status-badge {
+    border-width: 2px;
+}
+
+/* Progress bars with green fill */
+body.theme-pipboy-green .progress-fill {
+    background-color: rgb(0, 255, 65);
+    box-shadow: 0 0 8px rgba(0, 255, 65, 0.5);
+}
+
+/* ============================================
+   THEME 11: RETRO (80s/90s VAPORWAVE)
+   ============================================
+   Colors: Purple and magenta inspired by 80s/90s computing
+   Aesthetic: Vaporwave meets vintage terminal
+   No heavy CRT effects for a cleaner retro look
+   ============================================ */
+body.theme-retro {
+    /* Backgrounds - Dark purple/black gradient */
+    --bg-primary: #1a0a2e;          /* Deep purple-black */
+    --bg-secondary: #240b3e;        /* Slightly lighter purple */
+    --bg-tertiary: #350d4e;         /* Richer purple for inputs */
+
+    /* Text Colors - Magenta/Purple spectrum */
+    --text-primary: #ff6ac1;        /* Hot pink/magenta */
+    --text-secondary: #c74fb3;      /* Dimmer magenta */
+    --text-tertiary: #8b3a8e;       /* Muted purple */
+    --text-white: #ffd6f3;          /* Light pink-white */
+
+    /* Accent Colors - 80s neon palette */
+    --accent-cyan: #00f6ff;         /* Electric cyan */
+    --accent-yellow: #ffeb3b;       /* Neon yellow */
+    --accent-magenta: #ff6ac1;      /* Hot pink */
+    --accent-amber: #ff8c42;        /* Neon orange */
+    --accent-red: #ff2079;          /* Neon red */
+    --accent-blue: #6366f1;         /* Electric blue */
+
+    /* Status Colors */
+    --color-error: #ff2079;         /* Neon red */
+    --color-success: #00f6ff;       /* Electric cyan */
+    --color-warning: #ffeb3b;       /* Neon yellow */
+    --color-info: #6366f1;          /* Electric blue */
+
+    /* Borders */
+    --border-color: #ff6ac1;        /* Hot pink borders */
+    --border-dim: #6b2f7a;          /* Dim purple borders */
+}
+
+/* Retro box headers with gradient effect */
+body.theme-retro .box-header {
+    color: var(--accent-cyan);
+    text-shadow: 0 0 8px rgba(0, 246, 255, 0.6);
+}
+
+/* Retro ASCII logo with dual-tone glow */
+
+/* Subtle text glow for retro feel without heavy CRT */
+body.theme-retro h1,
+body.theme-retro h2,
+body.theme-retro h3 {
+    text-shadow: 0 0 4px rgba(255, 106, 193, 0.4);
+}
+
+/* Button styling with neon glow on hover */
+body.theme-retro .btn {
+    transition: all 0.2s ease;
+}
+
+body.theme-retro .btn:hover {
+    box-shadow: 0 0 12px rgba(255, 106, 193, 0.6);
+    text-shadow: 0 0 6px rgba(255, 106, 193, 0.8);
+}
+
+/* Links with subtle glow */
+body.theme-retro a,
+body.theme-retro .link {
+    color: var(--accent-cyan);
+    text-shadow: 0 0 2px rgba(0, 246, 255, 0.3);
+}
+
+body.theme-retro a:hover,
+body.theme-retro .link:hover {
+    text-shadow: 0 0 8px rgba(0, 246, 255, 0.8);
+}
+
+/* Input focus with neon glow */
+body.theme-retro .input:focus,
+body.theme-retro .textarea:focus {
+    box-shadow: 0 0 8px rgba(255, 106, 193, 0.5);
+}
+
+/* Badges with retro neon styling */
+body.theme-retro .badge {
+    box-shadow: 0 0 4px currentColor;
+}
+
+/* Success badges - Electric cyan */
+body.theme-retro .badge-success,
+body.theme-retro .badge-success.badge-filled {
+    border-color: #00f6ff;
+    color: #00f6ff;
+    background-color: rgba(0, 246, 255, 0.15);
+    box-shadow: 0 0 6px rgba(0, 246, 255, 0.4);
+}
+
+body.theme-retro .badge-success.badge-filled {
+    background-color: #00f6ff;
+    color: #1a0a2e;
+}
+
+/* Warning badges - Neon yellow */
+body.theme-retro .badge-warning,
+body.theme-retro .badge-warning.badge-filled {
+    border-color: #ffeb3b;
+    color: #ffeb3b;
+    background-color: rgba(255, 235, 59, 0.15);
+    box-shadow: 0 0 6px rgba(255, 235, 59, 0.4);
+}
+
+body.theme-retro .badge-warning.badge-filled {
+    background-color: #ffeb3b;
+    color: #1a0a2e;
+}
+
+/* Error badges - Neon red */
+body.theme-retro .badge-error,
+body.theme-retro .badge-error.badge-filled {
+    border-color: #ff2079;
+    color: #ff2079;
+    background-color: rgba(255, 32, 121, 0.15);
+    box-shadow: 0 0 6px rgba(255, 32, 121, 0.4);
+}
+
+body.theme-retro .badge-error.badge-filled {
+    background-color: #ff2079;
+    color: #1a0a2e;
+}
+
+/* Info badges - Electric blue */
+body.theme-retro .badge-info,
+body.theme-retro .badge-info.badge-filled {
+    border-color: #6366f1;
+    color: #6366f1;
+    background-color: rgba(99, 102, 241, 0.15);
+    box-shadow: 0 0 6px rgba(99, 102, 241, 0.4);
+}
+
+body.theme-retro .badge-info.badge-filled {
+    background-color: #6366f1;
+    color: #ffffff;
+}
+
+/* Primary badges */
+body.theme-retro .badge-primary,
+body.theme-retro .badge-primary.badge-filled {
+    border-color: #ff6ac1;
+    color: #ff6ac1;
+    background-color: rgba(255, 106, 193, 0.15);
+    box-shadow: 0 0 6px rgba(255, 106, 193, 0.4);
+}
+
+body.theme-retro .badge-primary.badge-filled {
+    background-color: #ff6ac1;
+    color: #1a0a2e;
+}
+
+/* Secondary badges */
+body.theme-retro .badge-secondary,
+body.theme-retro .badge-secondary.badge-filled {
+    border-color: #9580ff;
+    color: #9580ff;
+    background-color: rgba(149, 128, 255, 0.15);
+    box-shadow: 0 0 6px rgba(149, 128, 255, 0.4);
+}
+
+body.theme-retro .badge-secondary.badge-filled {
+    background-color: #9580ff;
+    color: #1a0a2e;
+}
+
+/* Cards with subtle neon outline */
+body.theme-retro .card,
+body.theme-retro .box {
+    box-shadow: 0 0 1px rgba(255, 106, 193, 0.3);
+}
+
+body.theme-retro .card:hover,
+body.theme-retro .discovery-card:hover,
+body.theme-retro .device-card:hover {
+    box-shadow: 0 0 12px rgba(255, 106, 193, 0.4);
+}
+
+/* Tab items with gradient active state */
+body.theme-retro .tab-item.active {
+    background: linear-gradient(
+        to bottom,
+        rgba(255, 106, 193, 0.1),
+        transparent
+    );
+    box-shadow: 0 -2px 0 var(--accent-magenta);
+}
+
+/* Scrollbar styling */
+body.theme-retro ::-webkit-scrollbar-thumb {
+    background: linear-gradient(
+        to bottom,
+        var(--accent-magenta),
+        var(--accent-blue)
+    );
+}
+
+/* Selection with retro pink */
+body.theme-retro ::selection {
+    background-color: rgba(255, 106, 193, 0.3);
+    color: var(--text-white);
+}
+
+/* Alert styling with neon borders */
+body.theme-retro .alert-info {
+    border-left-color: var(--color-info);
+    box-shadow: -2px 0 8px rgba(99, 102, 241, 0.2);
+}
+
+body.theme-retro .alert-success {
+    border-left-color: var(--color-success);
+    box-shadow: -2px 0 8px rgba(0, 246, 255, 0.2);
+}
+
+body.theme-retro .alert-warning {
+    border-left-color: var(--color-warning);
+    box-shadow: -2px 0 8px rgba(255, 235, 59, 0.2);
+}
+
+body.theme-retro .alert-error {
+    border-left-color: var(--color-error);
+    box-shadow: -2px 0 8px rgba(255, 32, 121, 0.2);
+}
+
+/* Progress bars with gradient */
+body.theme-retro .progress-fill {
+    background: linear-gradient(
+        to right,
+        var(--accent-magenta),
+        var(--accent-cyan)
+    );
+    box-shadow: 0 0 10px rgba(255, 106, 193, 0.5);
+}
+
+/* Code blocks with retro styling */
+body.theme-retro code {
+    background-color: rgba(255, 106, 193, 0.1);
+    color: var(--accent-cyan);
+    text-shadow: 0 0 4px rgba(0, 246, 255, 0.3);
+}
+
+/* Subtle grid pattern background for authentic 80s feel */
+body.theme-retro::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image:
+        linear-gradient(rgba(255, 106, 193, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 106, 193, 0.03) 1px, transparent 1px);
+    background-size: 20px 20px;
+    pointer-events: none;
+    z-index: -1;
+}
+
+/* Retro gradient vignette for depth */
+body.theme-retro::after {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(
+        ellipse at center,
+        transparent 0%,
+        transparent 60%,
+        rgba(26, 10, 46, 0.3) 100%
+    );
+    pointer-events: none;
+    z-index: -1;
+}

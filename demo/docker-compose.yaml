@@ -1,0 +1,134 @@
+# Nekzus Demo Environment
+#
+# Quick demo setup with Nekzus and example services for testing discovery,
+# proxying, and container management features.
+#
+# Usage:
+#   make demo           # Recommended
+#   # Or manually:
+#   docker compose -f demo/docker-compose.yaml up -d
+#
+# Access:
+#   Web UI: http://localhost:8080
+#
+# Demo services will be auto-discovered and available at:
+#   - /apps/webapp1/  - Test Web App
+#   - /apps/api/      - Test API Service
+#   - /apps/logs/     - Log Generator (for log streaming demo)
+
+services:
+  nexus:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: nekzus-demo
+    networks:
+      - nekzus-demo
+    environment:
+      NEKZUS_JWT_SECRET: "demo-jwt-key-change-in-production-min32chars"
+      NEKZUS_BOOTSTRAP_TOKEN: "demo-bootstrap-token"
+      NEKZUS_ADDR: ":8080"
+      NEKZUS_BASE_URL: "${NEKZUS_BASE_URL:-}"
+      NEKZUS_TOOLBOX_HOST_DATA_DIR: "${PWD}/data/toolbox"
+      NEKZUS_SCRIPTS_HOST_DIRECTORY: "${PWD}/demo/scripts"
+    command:
+      - "--config"
+      - "/app/configs/config.example.yaml"
+      - "--insecure-http"
+    ports:
+      - "8080:8080"
+    volumes:
+      - ../configs/config.example.yaml:/app/configs/config.example.yaml:ro
+      - ../toolbox:/app/toolbox:ro
+      - ../data/toolbox:/app/data/toolbox
+      - ./scripts:/app/scripts:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+  # Test Web Application
+  webapp1:
+    image: busybox:latest
+    container_name: demo-webapp
+    networks:
+      - nekzus-demo
+    restart: on-failure
+    expose:
+      - "8080"
+    command: >
+      sh -c "
+      mkdir -p /www &&
+      echo '<html><body><h1>Demo Web App</h1><p>This service was auto-discovered by Nekzus</p></body></html>' > /www/index.html &&
+      httpd -f -p 8080 -h /www
+      "
+    labels:
+      - "nekzus.enable=true"
+      - "nekzus.app.id=webapp1"
+      - "nekzus.app.name=Demo Web App"
+      - "nekzus.app.icon=globe"
+      - "nekzus.app.tags=demo,web"
+      - "nekzus.route.path=/apps/webapp1/"
+      - "nekzus.route.strip_prefix=true"
+
+  # Test API Service
+  api-service:
+    image: busybox:latest
+    container_name: demo-api
+    networks:
+      - nekzus-demo
+    restart: on-failure
+    expose:
+      - "3000"
+    command: >
+      sh -c "
+      mkdir -p /www &&
+      echo '{\"status\":\"ok\",\"service\":\"api\",\"version\":\"1.0.0\"}' > /www/health &&
+      echo '<html><body><h1>Demo API</h1><pre>{\"status\":\"ok\"}</pre></body></html>' > /www/index.html &&
+      httpd -f -p 3000 -h /www
+      "
+    labels:
+      - "nekzus.enable=true"
+      - "nekzus.app.id=api-service"
+      - "nekzus.app.name=Demo API"
+      - "nekzus.app.icon=server"
+      - "nekzus.app.tags=demo,api"
+      - "nekzus.route.path=/apps/api/"
+      - "nekzus.route.strip_prefix=true"
+
+  # Log Generator (for testing container logs feature)
+  log-generator:
+    image: busybox:latest
+    container_name: demo-log-generator
+    networks:
+      - nekzus-demo
+    restart: on-failure
+    expose:
+      - "8080"
+    command: >
+      sh -c "
+      mkdir -p /www &&
+      echo '<html><body><h1>Log Generator</h1></body></html>' > /www/index.html &&
+      httpd -f -p 8080 -h /www &
+      i=0 &&
+      while true; do
+        i=$$((i + 1))
+        ts=$$(date -u +%Y-%m-%dT%H:%M:%SZ)
+        case $$((i % 10)) in
+          0) echo \"$$ts [ERROR] Connection failed - retry $$i\" ;;
+          1) echo \"$$ts [WARN] High memory usage: $$(( (i % 30) + 70 ))%\" ;;
+          *) echo \"$$ts [INFO] Request processed - id=$$i latency=$$(( (i % 50) + 10 ))ms\" ;;
+        esac
+        sleep 2
+      done
+      "
+    labels:
+      - "nekzus.enable=true"
+      - "nekzus.app.id=log-generator"
+      - "nekzus.app.name=Log Generator"
+      - "nekzus.app.icon=file-text"
+      - "nekzus.app.tags=demo,logs"
+      - "nekzus.route.path=/apps/logs/"
+      - "nekzus.route.strip_prefix=true"
+
+networks:
+  nekzus-demo:
+    driver: bridge
+    name: nekzus-demo

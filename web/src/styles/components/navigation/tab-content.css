@@ -1,0 +1,13 @@
+/* ============================================
+   TAB CONTENT
+   ============================================
+   Tab panel content display control
+   ============================================ */
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}

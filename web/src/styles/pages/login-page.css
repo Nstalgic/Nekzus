@@ -1,0 +1,189 @@
+/**
+ * LoginPage Styles
+ *
+ * Terminal-themed login page with centered form
+ * and CRT aesthetic matching the rest of the dashboard.
+ */
+
+/* Login Page Container */
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-primary);
+  padding: var(--spacing-6);
+}
+
+/* Login Form Container */
+.login-container {
+  max-width: 500px;
+  width: 100%;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-8);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+}
+
+/* Login Title */
+.login-title {
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--accent-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  text-align: center;
+  margin: 0 0 var(--spacing-8);
+  border-bottom: 2px solid var(--border);
+  padding-bottom: var(--spacing-4);
+}
+
+/* Login Form */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-5);
+}
+
+.login-form .form-group {
+  margin: 0;
+}
+
+/* Login Input Fields */
+.login-input {
+  width: 100%;
+  padding: var(--spacing-4);
+  font-size: var(--text-base);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  transition: all var(--transition-fast);
+}
+
+.login-input:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(var(--accent-primary-rgb, 59, 130, 246), 0.1);
+}
+
+.login-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.login-input::placeholder {
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: var(--text-sm);
+}
+
+/* Error Message */
+.login-error {
+  padding: var(--spacing-3) var(--spacing-4);
+  background: rgba(239, 68, 68, 0.1);
+  border: 2px solid var(--error);
+  border-radius: var(--radius-sm);
+  color: var(--error);
+  font-size: var(--text-sm);
+  text-align: center;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* Login Button */
+.login-button {
+  width: 100%;
+  padding: var(--spacing-4);
+  font-size: var(--text-base);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-top: var(--spacing-2);
+}
+
+.login-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Loading State Animation */
+.login-button:disabled::after {
+  content: '';
+  display: inline-block;
+  width: 0.8em;
+  height: 0.8em;
+  margin-left: var(--spacing-2);
+  border: 2px solid var(--text-primary);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Login Footer */
+.login-footer {
+  margin-top: var(--spacing-6);
+  padding-top: var(--spacing-4);
+  border-top: 2px solid var(--border);
+  text-align: center;
+}
+
+.login-footer p {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .login-page {
+    padding: var(--spacing-4);
+  }
+
+  .login-container {
+    padding: var(--spacing-6);
+  }
+
+  .login-title {
+    font-size: var(--text-xl);
+  }
+
+  .login-input {
+    padding: var(--spacing-3);
+  }
+
+  .login-button {
+    padding: var(--spacing-3);
+  }
+}
+
+/* Terminal CRT Effects (optional enhancement) */
+@media (prefers-reduced-motion: no-preference) {
+  .login-container {
+    animation: flicker 0.15s ease-in;
+  }
+}
+
+@keyframes flicker {
+  0% {
+    opacity: 0.9;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.98;
+  }
+}

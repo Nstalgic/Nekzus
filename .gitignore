@@ -1,0 +1,64 @@
+# Binaries
+bin/
+*.exe
+*.dll
+*.so
+*.dylib
+*.pem
+tls/
+/nekzus
+
+# Test and coverage
+*.test
+*.out
+coverage.out
+
+# Runtime data
+/data/*
+
+# Backup files
+*.bak
+*_backup*
+*_old*
+*_original*
+
+# IDE and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Configuration (keep examples only)
+configs/config.yaml
+configs/new-config.yaml
+
+# Local deployment configs
+docker-compose.nas.yaml
+docker-compose.local.yaml
+Makefile.local
+
+# Experimental/test infrastructure
+docker-compose-federation.yml
+docker-compose.test-infra.yaml
+configs/federation/
+
+# TLS certificates
+tls/*.pem
+
+# Dependencies
+vendor/
+
+# Environment
+.env
+.env.*
+
+# Web UI
+web/dist/
+web/node_modules/
+web/.vite/
+cmd/nekzus/webdist/

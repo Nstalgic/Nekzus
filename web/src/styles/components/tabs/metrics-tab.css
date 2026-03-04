@@ -1,0 +1,386 @@
+/**
+ * Metrics Tab Styles
+ *
+ * Styles for the metrics dashboard tab including:
+ * - Metric cards with values and trends
+ * - Stats lists and rows
+ * - Progress meters
+ * - App metrics lists
+ */
+
+/* Metrics Tab Container */
+.metrics-tab {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+/* Metrics Header */
+.metrics-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: var(--spacing-md);
+  border-bottom: var(--border-width) solid var(--border-dim);
+  margin-bottom: var(--spacing-md);
+}
+
+.metrics-header-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.metrics-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+/* Metrics Grid - 4 columns for metric cards */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+@media (max-width: 1200px) {
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Metric Card */
+.metric-card {
+  position: relative;
+  padding: var(--spacing-md);
+  border: var(--border-width) solid var(--border-color);
+  background-color: var(--bg-secondary);
+  transition: all var(--transition-normal);
+}
+
+.metric-card:hover {
+  border-color: var(--text-primary);
+  background-color: var(--bg-tertiary);
+}
+
+.metric-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--spacing-xs);
+}
+
+.metric-value-wrapper {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-xs);
+}
+
+.metric-value {
+  font-size: 24px;
+  font-weight: var(--font-weight-bold);
+  font-family: var(--font-mono);
+  line-height: 1;
+}
+
+.metric-unit {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.metric-subtitle {
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+.metric-trend {
+  position: absolute;
+  top: var(--spacing-sm);
+  right: var(--spacing-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+}
+
+/* Metrics Section */
+.metrics-section {
+  margin-bottom: var(--spacing-lg);
+}
+
+.metrics-section:last-child {
+  margin-bottom: 0;
+}
+
+.metrics-section-title {
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 var(--spacing-sm) 0;
+  padding-bottom: var(--spacing-xs);
+  border-bottom: var(--border-width) solid var(--border-dim);
+}
+
+/* Stats List */
+.stats-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-xs) 0;
+  border-bottom: var(--border-width) solid var(--border-dim);
+}
+
+.stat-row:last-child {
+  border-bottom: none;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.stat-value {
+  font-size: 13px;
+  font-weight: var(--font-weight-bold);
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+}
+
+/* Progress Meter */
+.progress-meter {
+  width: 100%;
+}
+
+.progress-meter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-xs);
+}
+
+.progress-meter-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.progress-meter-value {
+  font-size: 12px;
+  font-weight: var(--font-weight-bold);
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+}
+
+.progress-meter-bar {
+  width: 100%;
+  height: 8px;
+  background-color: var(--bg-primary);
+  border: var(--border-width) solid var(--border-color);
+  overflow: hidden;
+}
+
+.progress-meter-fill {
+  height: 100%;
+  background-color: var(--accent-primary);
+  transition: width var(--transition-normal);
+}
+
+.progress-meter-fill-success {
+  background-color: var(--color-success);
+}
+
+.progress-meter-fill-warning {
+  background-color: var(--color-warning);
+}
+
+.progress-meter-fill-error {
+  background-color: var(--color-error);
+}
+
+.progress-meter-fill-info {
+  background-color: var(--color-info);
+}
+
+.progress-meter-fill-primary {
+  background-color: var(--accent-primary);
+}
+
+/* App Metrics List */
+.app-metrics-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.app-metric-item {
+  padding: var(--spacing-sm);
+  border: var(--border-width) solid var(--border-dim);
+  background-color: var(--bg-tertiary);
+  transition: all var(--transition-fast);
+}
+
+.app-metric-item:hover {
+  border-color: var(--border-color);
+  background-color: var(--bg-secondary);
+}
+
+.app-metric-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-xs);
+}
+
+.app-metric-name {
+  font-size: 13px;
+  font-weight: var(--font-weight-bold);
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+}
+
+.app-metric-count {
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+}
+
+.app-metric-stats {
+  display: flex;
+  gap: var(--spacing-md);
+  font-size: 11px;
+}
+
+/* Metrics Loading */
+.metrics-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl);
+  gap: var(--spacing-md);
+  color: var(--text-secondary);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .metrics-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+  }
+
+  .metrics-header-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .app-metric-stats {
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
+}
+
+/* Compact mode adjustments */
+body.compact-mode .metric-card {
+  padding: var(--spacing-sm);
+}
+
+body.compact-mode .metrics-section {
+  margin-bottom: var(--spacing-md);
+}
+
+body.compact-mode .metric-value {
+  font-size: 20px;
+}
+
+/* ============================================
+   COMPACT STATS GRID
+   Three-column layout for secondary stats
+   ============================================ */
+
+.metrics-compact-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-md);
+}
+
+@media (max-width: 1024px) {
+  .metrics-compact-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .metrics-compact-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.metrics-compact-section {
+  padding: var(--spacing-sm);
+  border: var(--border-width) solid var(--border-dim);
+  background-color: var(--bg-tertiary);
+}
+
+.metrics-compact-title {
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 var(--spacing-sm) 0;
+  padding-bottom: var(--spacing-xs);
+  border-bottom: var(--border-width) solid var(--border-dim);
+}
+
+.metrics-compact-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+}
+
+.compact-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 60px;
+}
+
+.compact-stat-label {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+}
+
+.compact-stat-value {
+  font-size: 14px;
+  font-weight: var(--font-weight-bold);
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+}
+
+/* Compact mode adjustments for compact grid */
+body.compact-mode .metrics-compact-section {
+  padding: var(--spacing-xs);
+}
+
+body.compact-mode .metrics-compact-stats {
+  gap: var(--spacing-sm);
+}

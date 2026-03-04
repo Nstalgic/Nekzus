@@ -1,0 +1,69 @@
+/* ============================================
+   ALERT BOXES
+   ============================================
+   Status alert components with severity levels
+   ============================================ */
+
+.alert-section {
+    margin-bottom: var(--spacing-md);
+}
+
+.alert {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
+    border: var(--border-width) solid;
+    background-color: var(--bg-primary);
+}
+
+.alert-icon {
+    font-weight: var(--font-weight-bold);
+    font-size: 16px;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.alert > div {
+    flex: 1;
+}
+
+.alert-info {
+    border-color: var(--color-info);
+    color: var(--color-info);
+    border-left: 3px solid var(--color-info);
+}
+
+.alert-success {
+    border-color: var(--color-success);
+    color: var(--color-success);
+    border-left: 3px solid var(--color-success);
+}
+
+.alert-warning {
+    border-color: var(--color-warning);
+    color: var(--color-warning);
+    border-left: 3px solid var(--color-warning);
+    background-color: rgba(255, 191, 0, 0.05);
+}
+
+.alert-error {
+    border-color: var(--color-error);
+    color: var(--color-error);
+    border-left: 3px solid var(--color-error);
+    background-color: rgba(255, 0, 0, 0.05);
+}
+
+.alert strong {
+    color: inherit;
+}
+
+.alert .link {
+    color: inherit;
+    text-decoration: underline;
+}
+
+.alert .link:hover {
+    color: var(--text-white);
+}

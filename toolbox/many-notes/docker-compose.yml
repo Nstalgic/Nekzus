@@ -1,0 +1,59 @@
+services:
+  many-notes:
+    image: brufdev/many-notes:${MANY_NOTES_TAG:-latest}
+    container_name: ${SERVICE_NAME:-many-notes}
+    ports:
+      - "${MANY_NOTES_PORT:-8885}:8080"
+    volumes:
+      - many-notes-db:/var/www/html/database/sqlite
+      - many-notes-logs:/var/www/html/storage/logs
+      - many-notes-private:/var/www/html/storage/app/private
+      - many-notes-typesense:/var/www/html/typesense
+    environment:
+      APP_URL: "${BASE_URL:-http://localhost:8080}/apps/many-notes"
+      APP_TIMEZONE: "${APP_TIMEZONE:-UTC}"
+    restart: unless-stopped
+    networks:
+      - nekzus-demo
+    labels:
+      # Toolbox metadata
+      nekzus.toolbox.name: "Many Notes"
+      nekzus.toolbox.icon: "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/notes.png"
+      nekzus.toolbox.category: "productivity"
+      nekzus.toolbox.tags: "notes,productivity,markdown,pwa"
+      nekzus.toolbox.description: "Self-hosted note-taking app with full-text search"
+      nekzus.toolbox.documentation: "https://github.com/brufdev/many-notes"
+      nekzus.toolbox.image_url: "https://hub.docker.com/r/brufdev/many-notes"
+      nekzus.toolbox.repository_url: "https://github.com/brufdev/many-notes"
+
+      # Discovery labels
+      nekzus.enable: "true"
+      nekzus.primary_port: "8080"
+      nekzus.app.id: "many-notes"
+      nekzus.app.name: "Many Notes"
+      nekzus.app.icon: "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/notes.png"
+      nekzus.route.path: "/apps/many-notes/"
+      nekzus.route.strip_prefix: "true"
+      nekzus.route.rewrite_html: "true"
+
+networks:
+  nekzus-demo:
+    external: true
+
+volumes:
+  many-notes-db:
+    driver: local
+    labels:
+      nekzus.toolbox: "true"
+  many-notes-logs:
+    driver: local
+    labels:
+      nekzus.toolbox: "true"
+  many-notes-private:
+    driver: local
+    labels:
+      nekzus.toolbox: "true"
+  many-notes-typesense:
+    driver: local
+    labels:
+      nekzus.toolbox: "true"

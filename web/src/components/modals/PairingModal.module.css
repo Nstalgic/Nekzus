@@ -1,0 +1,275 @@
+/**
+ * PairingModal Styles (CSS Module)
+ */
+
+/* Pairing Modal Card */
+.pairingModalCard {
+  background-color: var(--bg-primary);
+  border: var(--border-width) solid var(--border-color);
+  max-width: 600px;
+  width: 100%;
+  padding: 0;
+}
+
+/* Header */
+.pairingModalHeader {
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-bottom: var(--border-width) solid var(--border-dim);
+  background-color: var(--bg-secondary);
+}
+
+.pairingModalHeader h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-align: center;
+}
+
+/* Body */
+.pairingModalBody {
+  padding: var(--spacing-lg);
+}
+
+/* Instructions */
+.pairingInstructions {
+  margin-bottom: var(--spacing-lg);
+  text-align: center;
+}
+
+.pairingInstructions p {
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Info Box */
+.pairingInfoBox {
+  display: flex;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  border: var(--border-width) solid var(--border-color);
+  background-color: var(--bg-secondary);
+}
+
+.pairingInfoIcon {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-success);
+  font-size: 20px;
+  font-weight: var(--font-weight-bold);
+}
+
+.pairingInfoContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.pairingInfoItem {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: baseline;
+}
+
+.pairingInfoLabel {
+  color: var(--text-secondary);
+  font-size: 13px;
+  min-width: 80px;
+}
+
+.pairingInfoValue {
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: var(--font-weight-bold);
+  word-break: break-all;
+}
+
+.pairingCode {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  letter-spacing: 3px;
+  color: var(--color-accent);
+  background-color: var(--bg-tertiary);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: var(--border-width) solid var(--border-dim);
+}
+
+/* QR Code Container */
+.pairingQrContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.pairingQrBox {
+  border: 2px dashed var(--border-color);
+  padding: var(--spacing-lg);
+  background-color: var(--bg-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+}
+
+.pairingQrPlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qrCodeImage {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Status */
+.pairingQrStatus {
+  text-align: center;
+}
+
+.pairingStatusIndicator {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: 13px;
+  padding: var(--spacing-xs) var(--spacing-md);
+  border: var(--border-width) solid var(--border-dim);
+  background-color: var(--bg-secondary);
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.statusDot.statusActive {
+  background-color: var(--color-success);
+  box-shadow: 0 0 8px var(--color-success);
+  animation: pulseDot 2s infinite;
+}
+
+.statusDot.statusExpired {
+  background-color: var(--color-error);
+}
+
+.statusDot.statusRedeemed {
+  background-color: var(--color-success);
+}
+
+@keyframes pulseDot {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 8px var(--color-success);
+  }
+  50% {
+    opacity: 0.7;
+    box-shadow: 0 0 12px var(--color-success);
+  }
+}
+
+.statusText {
+  color: var(--text-primary);
+  font-weight: var(--font-weight-bold);
+}
+
+.statusText.expired {
+  color: var(--color-error);
+}
+
+.statusText.redeemed {
+  color: var(--color-success);
+}
+
+.statusTimer {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+/* Loading/Error States */
+.loadingState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-lg);
+  gap: var(--spacing-md);
+  color: var(--text-secondary);
+}
+
+.errorState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-lg);
+  gap: var(--spacing-md);
+  color: var(--color-error);
+}
+
+/* Actions */
+.pairingModalActions {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: flex-end;
+  padding: var(--spacing-lg);
+  border-top: var(--border-width) solid var(--border-dim);
+  background-color: var(--bg-secondary);
+}
+
+.pairingModalActions .btn {
+  min-width: 160px;
+}
+
+.btnIcon {
+  margin-right: var(--spacing-xs);
+  font-size: 16px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .pairingModalCard {
+    max-width: 100%;
+    margin: var(--spacing-md);
+  }
+
+  .pairingModalBody {
+    padding: var(--spacing-md);
+  }
+
+  .pairingInfoBox {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .pairingInfoIcon {
+    align-self: flex-start;
+  }
+
+  .pairingQrBox {
+    padding: var(--spacing-md);
+    min-height: 250px;
+  }
+
+  .pairingModalActions {
+    flex-direction: column-reverse;
+    padding: var(--spacing-md);
+  }
+
+  .pairingModalActions .btn {
+    width: 100%;
+    min-width: unset;
+  }
+}

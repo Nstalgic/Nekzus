@@ -1,0 +1,37 @@
+/**
+ * CreateScheduleModal Styles (CSS Module)
+ */
+
+/* Type Toggle */
+.typeToggle {
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
+/* Cron Help */
+.cronHelp {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-xs);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+/* Checkbox Label */
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.checkboxLabel input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent-cyan);
+  cursor: pointer;
+}

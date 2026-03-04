@@ -1,0 +1,31 @@
+/* ============================================
+   BOX COMPONENT (WTFUtil Style)
+   ============================================
+   WTFUtil-inspired box component with centered header
+   ============================================ */
+
+.box {
+    border: var(--border-width) solid var(--border-color);
+    background-color: var(--bg-primary);
+    position: relative;
+    margin-bottom: var(--spacing-md);
+    padding-top: var(--spacing-md);
+}
+
+.box-header {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 0 var(--spacing-sm);
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-weight: var(--font-weight-bold);
+    font-size: 14px;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.box-content {
+    padding: var(--spacing-sm);
+}

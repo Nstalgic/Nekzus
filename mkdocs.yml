@@ -1,0 +1,130 @@
+# MkDocs Configuration for Nekzus Documentation
+# https://www.mkdocs.org/
+# https://squidfunk.github.io/mkdocs-material/
+
+site_name: Nekzus
+site_description: Secure API gateway for homelab with auto-discovery, reverse proxy, and web dashboard
+site_url: https://nstalgic.github.io/nekzus/
+repo_url: https://github.com/nstalgic/nekzus
+repo_name: nstalgic/nekzus
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    # Dark mode (default)
+    - scheme: slate
+      primary: deep purple
+      accent: cyan
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+    # Light mode
+    - scheme: default
+      primary: deep purple
+      accent: cyan
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+  font:
+    text: Inter
+    code: JetBrains Mono
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - navigation.footer
+    - toc.follow
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+    - content.action.edit
+  icon:
+    repo: fontawesome/brands/github
+  logo: assets/logo.png
+  favicon: assets/favicon.ico
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/nstalgic/nekzus
+    - icon: fontawesome/brands/docker
+      link: https://hub.docker.com/r/nstalgic/nekzus
+
+extra_css:
+  - stylesheets/extra.css
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
+
+plugins:
+  - search
+  - kroki:
+      ServerURL: https://kroki.io
+      EnableBlockDiag: true
+      EnableBpmn: true
+      EnableExcalidraw: true
+      EnableMermaid: true
+      EnableDiagramsnet: false
+      Enablec4plantuml: true
+      EnablePlantuml: true
+      EnableStructurizr: true
+      EnableD2: true
+      HttpMethod: POST
+      FileTypes:
+        - svg
+  - minify:
+      minify_html: true
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Installation: getting-started/installation.md
+    - Quick Start: getting-started/quick-start.md
+    - Configuration: getting-started/configuration.md
+  - Guides:
+    - Docker Compose: guides/docker-compose.md
+    - Upgrading: guides/upgrade.md
+    - Troubleshooting: guides/troubleshooting.md
+  - Platforms:
+    - Overview: platforms/index.md
+    - Synology NAS: platforms/synology.md
+    - Unraid: platforms/unraid.md
+    - Proxmox: platforms/proxmox.md
+    - Raspberry Pi: platforms/raspberry-pi.md
+  - Features:
+    - Web Dashboard: features/web-dashboard.md
+    - Discovery: features/discovery.md
+    - Toolbox: features/toolbox.md
+    - Notifications: features/notifications.md
+    - Scripts: features/scripts.md
+  - Reference:
+    - API: reference/api.md
+    - Containers API: reference/api-containers.md
+    - CLI: reference/cli.md
+    - Configuration: reference/configuration.md
+  - Development:
+    - Contributing: development/contributing.md
+    - Testing: development/testing.md
+    - Architecture: development/architecture.md
+  - Kubernetes:
+    - Overview: kubernetes/index.md
+    - Architecture: kubernetes/rollout.md

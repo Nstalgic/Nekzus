@@ -1,0 +1,498 @@
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { ConfirmationModal } from './ConfirmationModal';
+import { EditRouteModal } from './EditRouteModal';
+
+/**
+ * Specialized Modals Test Suite
+ *
+ * Tests for ConfirmationModal and EditRouteModal components
+ */
+
+describe('ConfirmationModal', () => {
+  const mockRoute = {
+    id: 'route-001',
+    application: 'Test App',
+    path: '/test',
+    target: 'http://localhost:8080',
+    status: 'ACTIVE'
+  };
+
+  describe('Rendering', () => {
+    it('should not render when isOpen is false', () => {
+      render(
+        <ConfirmationModal
+          isOpen={false}
+          onClose={() => {}}
+          onConfirm={() => {}}
+          title="Delete Route"
+          message="Are you sure?"
+        />
+      );
+
+      expect(screen.queryByText('Delete Route')).not.toBeInTheDocument();
+    });
+
+    it('should render title and message when isOpen is true', () => {
+      render(
+        <ConfirmationModal
+          isOpen={true}
+          onClose={() => {}}
+          onConfirm={() => {}}
+          title="Delete Route"
+          message="Are you sure you want to delete this route?"
+        />
+      );
+
+      expect(screen.getByText('Delete Route')).toBeInTheDocument();
+      expect(screen.getByText('Are you sure you want to delete this route?')).toBeInTheDocument();
+    });
+
+    it('should render details section when provided', () => {
+      const details = (
+        <div className="confirmation-details">
+          <div>Path: {mockRoute.path}</div>
+          <div>Target: {mockRoute.target}</div>
+        </div>
+      );
+
+      render(
+        <ConfirmationModal
+          isOpen={true}
+          onClose={() => {}}
+          onConfirm={() => {}}
+          title="Delete Route"
+          message="Are you sure?"
+          details={details}
+        />
+      );
+
+      expect(screen.getByText(`Path: ${mockRoute.path}`)).toBeInTheDocument();
+      expect(screen.getByText(`Target: ${mockRoute.target}`)).toBeInTheDocument();
+    });
+  });
+
+  describe('Actions', () => {
+    it('should call onConfirm when confirm button is clicked', async () => {
+      const user = userEvent.setup();
+      const onConfirm = vi.fn();
+
+      render(
+        <ConfirmationModal
+          isOpen={true}
+          onClose={() => {}}
+          onConfirm={onConfirm}
+          title="Confirm Action"
+          message="Are you sure?"
+        />
+      );
+
+      const confirmButton = screen.getByRole('button', { name: /confirm/i });
+      await user.click(confirmButton);
+
+      expect(onConfirm).toHaveBeenCalledTimes(1);
+    });
+
+    it('should call onClose when cancel button is clicked', async () => {
+      const user = userEvent.setup();
+      const onClose = vi.fn();
+
+      render(
+        <ConfirmationModal
+          isOpen={true}
+          onClose={onClose}
+          onConfirm={() => {}}
+          title="Confirm Action"
+          message="Are you sure?"
+        />
+      );
+
+      const cancelButton = screen.getByRole('button', { name: /cancel/i });
+      await user.click(cancelButton);
+
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('Danger Mode', () => {
+    it('should apply danger class when danger prop is true', () => {
+      const { container } = render(
+        <ConfirmationModal
+          isOpen={true}
+          onClose={() => {}}
+          onConfirm={() => {}}
+          title="Delete Route"
+          message="This is dangerous"
+          danger={true}
+        />
+      );
+
+      const confirmButton = screen.getByRole('button', { name: /confirm/i });
+      expect(confirmButton).toHaveClass('btn-danger');
+    });
+
+    it('should use primary variant when danger is false', () => {
+      render(
+        <ConfirmationModal
+          isOpen={true}
+          onClose={() => {}}
+          onConfirm={() => {}}
+          title="Confirm Action"
+          message="This is safe"
+          danger={false}
+        />
+      );
+
+      const confirmButton = screen.getByRole('button', { name: /confirm/i });
+      expect(confirmButton).toHaveClass('btn-primary');
+    });
+  });
+});
+
+describe('EditRouteModal', () => {
+  const mockOnSave = vi.fn();
+  const mockOnClose = vi.fn();
+
+  const existingRoute = {
+    id: 'route-001',
+    application: 'Grafana',
+    path: '/grafana',
+    target: 'http://localhost:3000',
+    healthCheck: '/api/health',
+    scopes: ['READ', 'WRITE'],
+    status: 'ACTIVE',
+    requiresAuth: true
+  };
+
+  beforeEach(() => {
+    mockOnSave.mockClear();
+    mockOnClose.mockClear();
+  });
+
+  describe('Rendering - Add Mode', () => {
+    it('should render "ADD NEW ROUTE" title when route is null', () => {
+      render(
+        <EditRouteModal
+          isOpen={true}
+          onClose={mockOnClose}
+          onSave={mockOnSave}
+          route={null}
+        />
+      );
+
+      expect(screen.getByText('ADD NEW ROUTE')).toBeInTheDocument();
+    });
+
+    it('should render empty form fields in add mode', () => {
+      render(
+        <EditRouteModal
+          isOpen={true}
+          onClose={mockOnClose}
+          onSave={mockOnSave}
+          route={null}
+        />
+      );
+
+      expect(screen.getByLabelText(/application name/i)).toHaveValue('');
+      expect(screen.getByLabelText(/path/i)).toHaveValue('');
+      expect(screen.getByLabelText(/target url/i)).toHaveValue('');
+    });
+  });
+
+  describe('Rendering - Edit Mode', () => {
+    it('should render "EDIT ROUTE" title when route is provided', () => {
+      render(
+        <EditRouteModal
+          isOpen={true}
+          onClose={mockOnClose}
+          onSave={mockOnSave}
+          route={existingRoute}
+        />
+      );
+
+      expect(screen.getByText('EDIT ROUTE')).toBeInTheDocument();
+    });
+
+    it('should populate form fields with existing route data', () => {
+      render(
+        <EditRouteModal
+          isOpen={true}
+          onClose={mockOnClose}
+          onSave={mockOnSave}
+          route={existingRoute}
+        />
+      );
+
+      expect(screen.getByLabelText(/application name/i)).toHaveValue('Grafana');
+      expect(screen.getByLabelText(/path/i)).toHaveValue('/grafana');
+      expect(screen.getByLabelText(/target url/i)).toHaveValue('http://localhost:3000');
+      expect(screen.getByLabelText(/health check/i)).toHaveValue('/api/health');
+    });
+  });
+
+  describe('Form Validation', () => {
+    it('should show error when application name is empty', async () => {
+      const user = userEvent.setup();
+
+      render(
+        <EditRouteModal
+          isOpen={true}
+          onClose={mockOnClose}
+          onSave={mockOnSave}
+          route={null}
+        />
+      );
+
+      const createButton = screen.getByRole('button', { name: /create route/i });
+      await user.click(createButton);
+
+      expect(await screen.findByText(/application name required/i)).toBeInTheDocument();
+      expect(mockOnSave).not.toHaveBeenCalled();
+    });
+
+    it('should show error when path is empty', async () => {
+      const user = userEvent.setup();
+
+      render(
+        <EditRouteModal
+          isOpen={true}
+          onClose={mockOnClose}
+          onSave={mockOnSave}
+          route={null}
+        />
+      );
+
+      const appInput = screen.getByLabelText(/application name/i);
+      await user.type(appInput, 'Test App');
+
+      const createButton = screen.getByRole('button', { name: /create route/i });
+      await user.click(createButton);
+
+      expect(await screen.findByText(/path is required/i)).toBeInTheDocument();
+      expect(mockOnSave).not.toHaveBeenCalled();
+    });
+
+    it('should show error when path does not start with /', async () => {
+      const user = userEvent.setup();
+
+      render(
+        <EditRouteModal
+          isOpen={true}
+          onClose={mockOnClose}
+          onSave={mockOnSave}
+          route={null}
+        />
+      );
+
+      const appInput = screen.getByLabelText(/application name/i);
+      await user.type(appInput, 'Test App');
+
+      const pathInput = screen.getByLabelText(/path/i);
+      await user.type(pathInput, 'invalid-path');
+
+      const createButton = screen.getByRole('button', { name: /create route/i });
+      await user.click(saveButton);
+
+      expect(await screen.findByText(/path must start with/i)).toBeInTheDocument();
+      expect(mockOnSave).not.toHaveBeenCalled();
+    });
+
+    it('should show error when target URL is empty', async () => {
+      const user = userEvent.setup();
+
+      render(
+        <EditRouteModal
+          isOpen={true}
+          onClose={mockOnClose}
+          onSave={mockOnSave}
+          route={null}
+        />
+      );
+
+      const appInput = screen.getByLabelText(/application name/i);
+      await user.type(appInput, 'Test App');
+
+      const pathInput = screen.getByLabelText(/path/i);
+      await user.type(pathInput, '/test');
+
+      const createButton = screen.getByRole('button', { name: /create route/i });
+      await user.click(saveButton);
+
+      expect(await screen.findByText(/target url is required/i)).toBeInTheDocument();
+      expect(mockOnSave).not.toHaveBeenCalled();
+    });
+
+    it('should show error when target URL is invalid', async () => {
+      const user = userEvent.setup();
+
+      render(
+        <EditRouteModal
+          isOpen={true}
+          onClose={mockOnClose}
+          onSave={mockOnSave}
+          route={null}
+        />
+      );
+
+      const appInput = screen.getByLabelText(/application name/i);
+      await user.type(appInput, 'Test App');
+
+      const pathInput = screen.getByLabelText(/path/i);
+      await user.type(pathInput, '/test');
+
+      const targetInput = screen.getByLabelText(/target url/i);
+      await user.type(targetInput, 'not-a-url');
+
+      const createButton = screen.getByRole('button', { name: /create route/i });
+      await user.click(saveButton);
+
+      expect(await screen.findByText(/invalid url format/i)).toBeInTheDocument();
+      expect(mockOnSave).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Form Submission', () => {
+    it('should call onSave with form data when valid', async () => {
+      const user = userEvent.setup();
+
+      render(
+        <EditRouteModal
+          isOpen={true}
+          onClose={mockOnClose}
+          onSave={mockOnSave}
+          route={null}
+        />
+      );
+
+      // Fill out form
+      await user.type(screen.getByLabelText(/application name/i), 'New App');
+      await user.type(screen.getByLabelText(/path/i), '/newapp');
+      await user.type(screen.getByLabelText(/target url/i), 'http://localhost:9000');
+
+      const createButton = screen.getByRole('button', { name: /create route/i });
+      await user.click(saveButton);
+
+      expect(mockOnSave).toHaveBeenCalledTimes(1);
+      expect(mockOnSave).toHaveBeenCalledWith(
+        expect.objectContaining({
+          application: 'New App',
+          path: '/newapp',
+          target: 'http://localhost:9000',
+          status: 'ACTIVE',
+          requiresAuth: false
+        })
+      );
+    });
+
+    it('should update existing route in edit mode', async () => {
+      const user = userEvent.setup();
+
+      render(
+        <EditRouteModal
+          isOpen={true}
+          onClose={mockOnClose}
+          onSave={mockOnSave}
+          route={existingRoute}
+        />
+      );
+
+      // Modify application name
+      const appInput = screen.getByLabelText(/application name/i);
+      await user.clear(appInput);
+      await user.type(appInput, 'Updated Grafana');
+
+      const createButton = screen.getByRole('button', { name: /create route/i });
+      await user.click(saveButton);
+
+      expect(mockOnSave).toHaveBeenCalledTimes(1);
+      expect(mockOnSave).toHaveBeenCalledWith(
+        expect.objectContaining({
+          application: 'Updated Grafana',
+          path: '/grafana',
+          target: 'http://localhost:3000'
+        })
+      );
+    });
+  });
+
+  describe('Scope Selection', () => {
+    it('should allow toggling READ scope', async () => {
+      const user = userEvent.setup();
+
+      render(
+        <EditRouteModal
+          isOpen={true}
+          onClose={mockOnClose}
+          onSave={mockOnSave}
+          route={null}
+        />
+      );
+
+      const readCheckbox = screen.getByRole('checkbox', { name: /read/i });
+      expect(readCheckbox).not.toBeChecked();
+
+      await user.click(readCheckbox);
+      expect(readCheckbox).toBeChecked();
+
+      await user.click(readCheckbox);
+      expect(readCheckbox).not.toBeChecked();
+    });
+
+    it('should allow selecting multiple scopes', async () => {
+      const user = userEvent.setup();
+
+      render(
+        <EditRouteModal
+          isOpen={true}
+          onClose={mockOnClose}
+          onSave={mockOnSave}
+          route={null}
+        />
+      );
+
+      const readCheckbox = screen.getByRole('checkbox', { name: /read/i });
+      const writeCheckbox = screen.getByRole('checkbox', { name: /write/i });
+
+      await user.click(readCheckbox);
+      await user.click(writeCheckbox);
+
+      expect(readCheckbox).toBeChecked();
+      expect(writeCheckbox).toBeChecked();
+
+      // Fill required fields
+      await user.type(screen.getByLabelText(/application name/i), 'Test');
+      await user.type(screen.getByLabelText(/path/i), '/test');
+      await user.type(screen.getByLabelText(/target url/i), 'http://localhost:8000');
+
+      await user.click(screen.getByRole('button', { name: /save/i }));
+
+      expect(mockOnSave).toHaveBeenCalledWith(
+        expect.objectContaining({
+          scopes: expect.arrayContaining(['READ', 'WRITE'])
+        })
+      );
+    });
+  });
+
+  describe('Cancel Action', () => {
+    it('should call onClose when cancel button is clicked', async () => {
+      const user = userEvent.setup();
+
+      render(
+        <EditRouteModal
+          isOpen={true}
+          onClose={mockOnClose}
+          onSave={mockOnSave}
+          route={null}
+        />
+      );
+
+      const cancelButton = screen.getByRole('button', { name: /cancel/i });
+      await user.click(cancelButton);
+
+      expect(mockOnClose).toHaveBeenCalledTimes(1);
+      expect(mockOnSave).not.toHaveBeenCalled();
+    });
+  });
+});

@@ -1,0 +1,178 @@
+# Nekzus Configuration
+# All sections are optional with sensible defaults unless marked [REQUIRED]
+
+# =============================================================================
+# Server Configuration
+# =============================================================================
+server:
+  addr: ":8080"                    # Default: ":8443" | Env: NEKZUS_ADDR
+  base_url: ""                     # Optional: Auto-detects LAN IP if empty
+  # http_redirect_addr: ":80"      # Optional: HTTP->HTTPS redirect port
+  tls_cert: ""                     # Optional: Path to TLS cert (auto-generated if path set but file missing)
+  tls_key: ""                      # Optional: Path to TLS key | Env: NEKZUS_TLS_CERT, NEKZUS_TLS_KEY
+
+# =============================================================================
+# Authentication [REQUIRED for production]
+# =============================================================================
+auth:
+  hs256_secret: "change-me-min-32-chars-for-production"  # [REQUIRED] Min 32 chars | Env: NEKZUS_JWT_SECRET
+  issuer: "nekzus"                 # Default: "nekzus"
+  audience: "nekzus-mobile"        # Default: "nekzus-mobile"
+  # default_scopes: ["read"]       # Optional: Applied to routes without explicit scopes
+
+# =============================================================================
+# Bootstrap Tokens (for device pairing)
+# =============================================================================
+bootstrap:
+  tokens: ["dev-bootstrap"]        # Optional: QR code pairing works without tokens | Env: NEKZUS_BOOTSTRAP_TOKEN
+
+# =============================================================================
+# Storage
+# =============================================================================
+storage:
+  database_path: "./data/nexus.db" # Default: "./data/nexus.db" | Env: NEKZUS_DATABASE_PATH
+
+# =============================================================================
+# Notifications (WebSocket push to mobile)
+# =============================================================================
+notifications:
+  enabled: true                    # Default: false
+  ack_timeout: "30s"               # Default: "30s"
+  queue:
+    worker_count: 4                # Default: 4
+    buffer_size: 1000              # Default: 1000
+    retry_interval: "30s"          # Default: "30s"
+    max_retries: 3                 # Default: 3
+  offline_detection:
+    enabled: false                 # Default: false
+    check_interval: "1m"           # Default: "1m"
+    offline_threshold: "5m"        # Default: "5m"
+
+# =============================================================================
+# Backup
+# =============================================================================
+backup:
+  enabled: true                    # Default: false
+  directory: "./data/backups"      # Default: "./data/backups"
+  schedule: "24h"                  # Default: "24h"
+  retention: 7                     # Default: 7
+
+# =============================================================================
+# Toolbox (One-Click Service Deployment)
+# =============================================================================
+toolbox:
+  enabled: true                    # Default: false | Env: NEKZUS_TOOLBOX_ENABLED
+  catalog_dir: "./toolbox"         # Default: "./toolbox"
+  data_dir: "./data/toolbox"       # Default: "./data/toolbox"
+  host_data_dir: ""                # Optional: Required for Docker-in-Docker | Env: NEKZUS_TOOLBOX_HOST_DATA_DIR
+  auto_route: true                 # Default: false
+  auto_start: true                 # Default: false
+
+# =============================================================================
+# Scripts (Shell/Python execution via API)
+# =============================================================================
+scripts:
+  enabled: true                    # Default: false
+  directory: "./scripts"           # Default: "" (disabled if empty)
+  host_directory: ""               # Optional: Required for container execution | Env: NEKZUS_SCRIPTS_HOST_DIRECTORY
+  default_timeout: 300             # Default: 300 (5 minutes)
+  max_output_bytes: 10485760       # Default: 10485760 (10MB)
+
+# =============================================================================
+# System Metrics
+# =============================================================================
+system:
+  # host_root_path: "/mnt/host"    # Optional: Mount host filesystem for accurate metrics in Docker
+                                   # Env: NEKZUS_HOST_ROOT_PATH
+
+# =============================================================================
+# Container Runtimes
+# =============================================================================
+runtimes:
+  primary: "docker"                # Default: "docker" | Options: "docker", "kubernetes"
+
+  docker:
+    enabled: true                  # Default: true
+    socket_path: ""                # Default: "unix:///var/run/docker.sock"
+
+  kubernetes:
+    enabled: false                 # Default: false
+    kubeconfig: ""                 # Default: "" (uses in-cluster or ~/.kube/config)
+    context: ""                    # Default: "" (current context)
+    namespaces: []                 # Default: [] (all namespaces)
+    metrics_server: true           # Default: true
+    metrics_cache_ttl: "30s"       # Default: "30s"
+
+# =============================================================================
+# Service Discovery
+# =============================================================================
+discovery:
+  enabled: true                    # Default: false | Env: NEKZUS_DISCOVERY_ENABLED
+
+  docker:
+    enabled: true                  # Default: false | Env: NEKZUS_DISCOVERY_DOCKER_ENABLED
+    socket_path: "unix:///var/run/docker.sock"  # Default: "unix:///var/run/docker.sock"
+    poll_interval: "30s"           # Default: "30s"
+    network_mode: "all"            # Default: "all" | Options: "all", "first", "preferred"
+    # networks: []                 # Optional: Filter to specific networks
+    # exclude_networks: []         # Optional: Exclude specific networks
+
+  mdns:
+    enabled: true                  # Default: false
+    scan_interval: "60s"           # Default: "60s"
+    services:                      # Default: ["_http._tcp", "_https._tcp"]
+      - "_http._tcp"
+      - "_https._tcp"
+
+  kubernetes:
+    enabled: false                 # Default: false
+    kubeconfig: ""                 # Default: "" (in-cluster or ~/.kube/config)
+    namespaces: []                 # Default: [] (all namespaces)
+    poll_interval: "30s"           # Default: "30s"
+
+# =============================================================================
+# Metrics (Prometheus)
+# =============================================================================
+metrics:
+  enabled: true                    # Default: true | Env: NEKZUS_METRICS_ENABLED
+  path: "/metrics"                 # Default: "/metrics"
+
+# =============================================================================
+# Health Checks
+# =============================================================================
+health_checks:
+  enabled: true                    # Default: true (always enabled)
+  interval: "30s"                  # Default: "10s"
+  timeout: "5s"                    # Default: "5s"
+  unhealthy_threshold: 3           # Default: 2
+  path: "/"                        # Default: "/"
+
+  # Per-service overrides (optional)
+  per_service:
+    grafana:
+      path: "/api/health"
+      interval: "30s"
+      timeout: "5s"
+
+# =============================================================================
+# Routes (optional - typically auto-created by discovery)
+# =============================================================================
+# routes:
+#   - id: "route:myapp"            # [REQUIRED] Unique route ID
+#     app_id: "myapp"              # [REQUIRED] Associated app ID
+#     path_base: "/apps/myapp/"    # [REQUIRED] URL path prefix
+#     to: "http://localhost:3000"  # [REQUIRED] Backend URL
+#     scopes: []                   # Optional: Required JWT scopes
+#     public_access: false         # Default: false (bypasses auth if true)
+#     websockets: false            # Default: false
+#     strip_prefix: false          # Default: false
+#     health_check_path: "/health" # Optional: Override global health check path
+
+# =============================================================================
+# Apps (optional - typically auto-created by discovery)
+# =============================================================================
+# apps:
+#   - id: "myapp"                  # [REQUIRED] Unique app ID
+#     name: "My Application"       # [REQUIRED] Display name
+#     icon: "server"               # Optional: Lucide icon name
+#     tags: ["web", "api"]         # Optional: Searchable tags

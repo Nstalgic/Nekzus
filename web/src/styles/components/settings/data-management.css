@@ -1,0 +1,51 @@
+/* ============================================
+   DATA MANAGEMENT
+   ============================================
+   Data management UI for clearing/resetting data
+   ============================================ */
+
+.data-management-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-md) 0;
+    border-bottom: var(--border-width) solid var(--border-dim);
+    gap: var(--spacing-lg);
+}
+
+.data-management-item:last-child {
+    border-bottom: none;
+}
+
+.data-management-info {
+    flex: 1;
+}
+
+.data-management-info h4 {
+    font-size: 14px;
+    color: var(--text-primary);
+    font-weight: var(--font-weight-bold);
+}
+
+.data-management-info p {
+    font-size: 13px;
+    margin-bottom: 0;
+}
+
+.data-management-item .btn {
+    min-width: 150px;
+    flex-shrink: 0;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .data-management-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-md);
+    }
+
+    .data-management-item .btn {
+        width: 100%;
+    }
+}

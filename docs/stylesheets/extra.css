@@ -1,0 +1,22 @@
+/* Custom styles for Nekzus documentation */
+
+/* Adjust logo size */
+.md-header__button.md-logo img {
+  height: 1.5rem;
+}
+
+/* Custom admonition for homelab tips */
+.md-typeset .admonition.homelab,
+.md-typeset details.homelab {
+  border-color: #7c4dff;
+}
+.md-typeset .homelab > .admonition-title,
+.md-typeset .homelab > summary {
+  background-color: rgba(124, 77, 255, 0.1);
+}
+.md-typeset .homelab > .admonition-title::before,
+.md-typeset .homelab > summary::before {
+  background-color: #7c4dff;
+  -webkit-mask-image: var(--md-admonition-icon--tip);
+  mask-image: var(--md-admonition-icon--tip);
+}
