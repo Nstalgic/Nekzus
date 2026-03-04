@@ -62,3 +62,8 @@ web/dist/
 web/node_modules/
 web/.vite/
 cmd/nekzus/webdist/
+
+# Documentation site
+docs-site/node_modules/
+docs-site/.docusaurus/
+docs-site/build/
