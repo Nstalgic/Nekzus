@@ -10,7 +10,7 @@ const config = {
   favicon: "img/favicon.ico",
 
   url: "https://nstalgic.github.io",
-  baseUrl: "/nekzus/",
+  baseUrl: "/Nekzus/",
 
   organizationName: "nstalgic",
   projectName: "nekzus",
