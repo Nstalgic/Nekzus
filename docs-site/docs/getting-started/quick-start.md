@@ -32,9 +32,9 @@ That's it. Nekzus is now running with:
 :::tip[Verify it's running]
 
 ```bash
-curl http://localhost:8080/healthz
+curl http://localhost:8080/api/v1/healthz
 ```
-Expected response: `{"status":"healthy"}`
+Expected response: `ok`
 
 :::
 

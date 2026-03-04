@@ -64,17 +64,17 @@ federation:
 
   # Gossip network settings
   gossip_bind_addr: "0.0.0.0"
-  gossip_bind_port: 7947
+  gossip_bind_port: 7946
   gossip_advertise_addr: "192.168.1.100"
-  gossip_advertise_port: 7947
+  gossip_advertise_port: 7946
 
   # Security
   cluster_secret: "your-secret-key-32-chars"  # Must match all peers
 
   # Bootstrap peers to connect to on startup
   bootstrap_peers:
-    - "192.168.1.101:7947"
-    - "192.168.1.102:7947"
+    - "192.168.1.101:7946"
+    - "192.168.1.102:7946"
 ```
 
 ### Advanced Configuration
@@ -102,9 +102,9 @@ federation:
 | `local_peer_name` | string | required | Human-readable peer name |
 | `api_address` | string | required | API address for remote connections |
 | `gossip_bind_addr` | string | "0.0.0.0" | Address to bind gossip listener |
-| `gossip_bind_port` | int | 7947 | Port for gossip protocol |
+| `gossip_bind_port` | int | 7946 | Port for gossip protocol |
 | `gossip_advertise_addr` | string | required | Address to advertise to peers |
-| `gossip_advertise_port` | int | 7947 | Port to advertise to peers |
+| `gossip_advertise_port` | int | 7946 | Port to advertise to peers |
 | `cluster_secret` | string | required | Shared secret (min 32 chars) for cluster authentication |
 | `bootstrap_peers` | []string | [] | Addresses of peers to join on startup |
 | `full_sync_interval` | duration | 5m | Interval for periodic full catalog sync (min 1m) |
@@ -205,7 +205,7 @@ Returns the list of connected federation peers.
       "id": "nxs_homeserver",
       "name": "Home Server",
       "address": "192.168.1.100",
-      "gossip_addr": "192.168.1.100:7947",
+      "gossip_addr": "192.168.1.100:7946",
       "status": "online",
       "last_seen": "2024-01-15T10:30:00Z"
     }
@@ -257,7 +257,7 @@ Triggers a manual full catalog synchronization.
 **Peers not connecting:**
 
 1. Verify `cluster_secret` matches on all peers
-2. Check firewall allows UDP on gossip port (default 7947)
+2. Check firewall allows UDP on gossip port (default 7946)
 3. Ensure `gossip_advertise_addr` is reachable from other peers
 4. Check logs for memberlist connection errors
 

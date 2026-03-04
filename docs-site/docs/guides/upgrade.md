@@ -752,20 +752,13 @@ After upgrading, verify the installation is working correctly.
 ### Health Checks
 
 ```bash
-# Check overall health
-curl -s https://localhost:8443/api/v1/healthz | jq .
+# Quick health check
+curl https://localhost:8443/api/v1/healthz
+# Expected: ok
 
-# Expected output:
-# {
-#   "status": "healthy",
-#   "version": "v1.2.3",
-#   "uptime": "1m30s",
-#   "checks": {
-#     "database": "healthy",
-#     "discovery": "healthy",
-#     ...
-#   }
-# }
+# Detailed health check
+curl -s https://localhost:8443/healthz | jq .
+# Expected output includes: status, version, uptime, timestamp, components
 ```
 
 ### API Verification

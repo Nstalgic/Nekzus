@@ -75,8 +75,8 @@ Get started quickly with a minimal Docker Compose configuration.
 5. **Verify it's running:**
 
     ```bash
-    curl http://localhost:8080/healthz
-    # Expected: {"status":"healthy"}
+    curl http://localhost:8080/api/v1/healthz
+    # Expected: ok
     ```
 
 :::tip[Docker Socket Access]

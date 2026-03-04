@@ -132,7 +132,7 @@ Configuration via YAML file or environment variables.
 
 | Variable | Description |
 |----------|-------------|
-| `NEKZUS_ADDR` | Listen address (default: `:8080`) |
+| `NEKZUS_ADDR` | Listen address (default: `:8443`) |
 | `NEKZUS_BASE_URL` | Public URL for mobile clients |
 | `NEKZUS_JWT_SECRET` | JWT signing secret (min 32 chars) |
 | `NEKZUS_BOOTSTRAP_TOKEN` | Initial pairing token |

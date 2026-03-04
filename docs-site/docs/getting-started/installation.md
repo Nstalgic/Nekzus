@@ -115,7 +115,7 @@ Docker Compose is ideal for production deployments with TLS termination via Cadd
 
     ```yaml
     services:
-      nexus:
+      nekzus:
         image: nstalgic/nekzus:latest
         container_name: nekzus
         environment:
@@ -126,7 +126,7 @@ Docker Compose is ideal for production deployments with TLS termination via Cadd
           - "8080:8080"
         volumes:
           - /var/run/docker.sock:/var/run/docker.sock:ro
-          - nexus-data:/app/data
+          - nekzus-data:/app/data
         restart: unless-stopped
         healthcheck:
           test: ["/app/nekzus", "--health"]
@@ -136,7 +136,7 @@ Docker Compose is ideal for production deployments with TLS termination via Cadd
           start_period: 10s
 
     volumes:
-      nexus-data:
+      nekzus-data:
     ```
 
 3. **Create `.env` file with secure secrets:**
@@ -158,7 +158,7 @@ For production with automatic HTTPS via Caddy:
 
 ```yaml title="docker-compose.yml"
 services:
-  nexus:
+  nekzus:
     image: nstalgic/nekzus:latest
     container_name: nekzus
     networks:
@@ -172,7 +172,7 @@ services:
     volumes:
       - ./config.yaml:/app/configs/config.yaml:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - nexus-data:/app/data
+      - nekzus-data:/app/data
     restart: unless-stopped
     healthcheck:
       test: ["/app/nekzus", "--health"]
@@ -189,7 +189,7 @@ services:
     image: caddy:2.8-alpine
     container_name: nekzus-caddy
     depends_on:
-      - nexus
+      - nekzus
     networks:
       - nekzus
     ports:
@@ -206,14 +206,14 @@ networks:
     driver: bridge
 
 volumes:
-  nexus-data:
+  nekzus-data:
   caddy-data:
   caddy-config:
 ```
 
 ```title="Caddyfile"
 :8443 {
-    reverse_proxy nexus:8080
+    reverse_proxy nekzus:8080
     tls internal
 }
 
@@ -373,7 +373,7 @@ For production deployments, set these environment variables:
 |----------|-------------|----------|
 | `NEKZUS_JWT_SECRET` | JWT signing secret (32+ characters) | Yes |
 | `NEKZUS_BOOTSTRAP_TOKEN` | Bootstrap authentication token | Yes |
-| `NEKZUS_ADDR` | Server listen address (default: `:8080`) | No |
+| `NEKZUS_ADDR` | Server listen address (default: `:8443`) | No |
 | `NEKZUS_BASE_URL` | Public URL for QR code pairing | No |
 | `NEKZUS_TLS_CERT` | Path to TLS certificate | No |
 | `NEKZUS_TLS_KEY` | Path to TLS private key | No |
@@ -426,13 +426,13 @@ Verify your installation is working correctly:
 ### Health Check
 
 ```bash
-curl http://localhost:8080/healthz
+curl http://localhost:8080/api/v1/healthz
 ```
 
 Expected response:
 
-```json
-{"status":"healthy"}
+```
+ok
 ```
 
 ### API Status
