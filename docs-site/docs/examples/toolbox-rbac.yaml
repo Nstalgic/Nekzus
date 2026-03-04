@@ -1,0 +1,117 @@
+# Nekzus Toolbox Kubernetes RBAC Configuration
+#
+# This file contains additional RBAC permissions required for the
+# Toolbox feature to deploy and manage services on Kubernetes.
+#
+# Apply with: kubectl apply -f toolbox-rbac.yaml
+#
+# Note: This extends the base rbac.yaml with deployment permissions.
+
+---
+# ClusterRole for Toolbox deployments
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: nekzus-toolbox
+  labels:
+    app: nekzus
+    app.kubernetes.io/component: toolbox
+rules:
+  # Apps API - Deployments (full CRUD for Toolbox services)
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["create", "get", "list", "watch", "update", "patch", "delete"]
+
+  # Core API - Services (create/delete for Toolbox services)
+  - apiGroups: [""]
+    resources: ["services"]
+    verbs: ["create", "get", "list", "watch", "delete"]
+
+  # Core API - ConfigMaps (for Toolbox service config)
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["create", "get", "list", "watch", "update", "patch", "delete"]
+
+  # Core API - Secrets (for Toolbox service secrets)
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["create", "get", "list", "watch", "update", "patch", "delete"]
+
+  # Core API - PersistentVolumeClaims (for Toolbox volumes)
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims"]
+    verbs: ["create", "get", "list", "watch", "delete"]
+
+  # Core API - Pods (for monitoring deployments)
+  - apiGroups: [""]
+    resources: ["pods", "pods/log"]
+    verbs: ["get", "list", "watch"]
+
+---
+# ClusterRoleBinding for Toolbox permissions
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: nekzus-toolbox
+  labels:
+    app: nekzus
+subjects:
+  - kind: ServiceAccount
+    name: nekzus
+    namespace: default
+roleRef:
+  kind: ClusterRole
+  name: nekzus-toolbox
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# Optional: Namespace-scoped Role for Toolbox
+# Use this if you want to restrict Toolbox deployments to a specific namespace
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: nekzus-toolbox
+  namespace: nekzus-apps  # Namespace for Toolbox deployments
+  labels:
+    app: nekzus
+    app.kubernetes.io/component: toolbox
+rules:
+  # Apps API - Deployments
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["create", "get", "list", "watch", "update", "patch", "delete"]
+
+  # Core API - Services
+  - apiGroups: [""]
+    resources: ["services"]
+    verbs: ["create", "get", "list", "watch", "delete"]
+
+  # Core API - ConfigMaps
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["create", "get", "list", "watch", "update", "patch", "delete"]
+
+  # Core API - Secrets
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["create", "get", "list", "watch", "update", "patch", "delete"]
+
+  # Core API - PersistentVolumeClaims
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims"]
+    verbs: ["create", "get", "list", "watch", "delete"]
+
+  # Core API - Pods
+  - apiGroups: [""]
+    resources: ["pods", "pods/log"]
+    verbs: ["get", "list", "watch"]
+
+---
+# Create the Toolbox namespace if it doesn't exist
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nekzus-apps
+  labels:
+    app: nekzus
+    app.kubernetes.io/component: toolbox

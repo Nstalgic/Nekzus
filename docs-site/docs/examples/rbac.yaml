@@ -1,0 +1,144 @@
+# Nekzus Kubernetes RBAC Configuration
+#
+# This file contains the RBAC (Role-Based Access Control) configuration
+# required for Nekzus to manage Kubernetes resources.
+#
+# Apply with: kubectl apply -f rbac.yaml
+
+---
+# ServiceAccount for Nekzus
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: nekzus
+  namespace: default
+  labels:
+    app: nekzus
+    app.kubernetes.io/name: nekzus
+    app.kubernetes.io/component: gateway
+
+---
+# ClusterRole with required permissions
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: nekzus
+  labels:
+    app: nekzus
+rules:
+  # Core API - Pods (list, inspect, logs)
+  - apiGroups: [""]
+    resources: ["pods", "pods/log"]
+    verbs: ["get", "list", "watch"]
+
+  # Core API - Pod operations (restart via delete)
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["delete"]
+
+  # Core API - Services (for export and discovery)
+  - apiGroups: [""]
+    resources: ["services"]
+    verbs: ["get", "list", "watch"]
+
+  # Core API - ConfigMaps (for configuration discovery)
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list", "watch"]
+
+  # Core API - Namespaces (to list available namespaces)
+  - apiGroups: [""]
+    resources: ["namespaces"]
+    verbs: ["get", "list"]
+
+  # Apps API - Deployments (for lifecycle management)
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+
+  # Apps API - ReplicaSets (for owner reference traversal)
+  - apiGroups: ["apps"]
+    resources: ["replicasets"]
+    verbs: ["get", "list"]
+
+  # Metrics API - Pod metrics (optional, for resource stats)
+  - apiGroups: ["metrics.k8s.io"]
+    resources: ["pods"]
+    verbs: ["get", "list"]
+
+---
+# ClusterRoleBinding to connect ServiceAccount to ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: nekzus
+  labels:
+    app: nekzus
+subjects:
+  - kind: ServiceAccount
+    name: nekzus
+    namespace: default
+roleRef:
+  kind: ClusterRole
+  name: nekzus
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# Optional: Namespace-scoped Role for restricted access
+# Use this instead of ClusterRole if you want to limit access to specific namespaces
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: nekzus
+  namespace: default  # Change to your namespace
+  labels:
+    app: nekzus
+rules:
+  # Core API - Pods
+  - apiGroups: [""]
+    resources: ["pods", "pods/log"]
+    verbs: ["get", "list", "watch", "delete"]
+
+  # Core API - Services
+  - apiGroups: [""]
+    resources: ["services"]
+    verbs: ["get", "list", "watch"]
+
+  # Core API - ConfigMaps
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list", "watch"]
+
+  # Apps API - Deployments
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+
+  # Apps API - ReplicaSets
+  - apiGroups: ["apps"]
+    resources: ["replicasets"]
+    verbs: ["get", "list"]
+
+  # Metrics API
+  - apiGroups: ["metrics.k8s.io"]
+    resources: ["pods"]
+    verbs: ["get", "list"]
+
+---
+# RoleBinding for namespace-scoped access
+# Uncomment and modify if using Role instead of ClusterRole
+# apiVersion: rbac.authorization.k8s.io/v1
+# kind: RoleBinding
+# metadata:
+#   name: nekzus
+#   namespace: default
+#   labels:
+#     app: nekzus
+# subjects:
+#   - kind: ServiceAccount
+#     name: nekzus
+#     namespace: default
+# roleRef:
+#   kind: Role
+#   name: nekzus
+#   apiGroup: rbac.authorization.k8s.io

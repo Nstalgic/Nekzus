@@ -1,0 +1,85 @@
+/* Fonts */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
+
+:root {
+  --ifm-color-primary: #673ab7;
+  --ifm-color-primary-dark: #5c34a4;
+  --ifm-color-primary-darker: #57319b;
+  --ifm-color-primary-darkest: #472880;
+  --ifm-color-primary-light: #7841ca;
+  --ifm-color-primary-lighter: #7f4bce;
+  --ifm-color-primary-lightest: #9568d7;
+  --ifm-font-family-base: "Inter", system-ui, -apple-system, sans-serif;
+  --ifm-font-family-monospace: "JetBrains Mono", SFMono-Regular, Menlo,
+    monospace;
+  --ifm-code-font-size: 90%;
+}
+
+[data-theme="dark"] {
+  --ifm-color-primary: #b388ff;
+  --ifm-color-primary-dark: #9d66ff;
+  --ifm-color-primary-darker: #9255ff;
+  --ifm-color-primary-darkest: #6e11ff;
+  --ifm-color-primary-light: #c9aaff;
+  --ifm-color-primary-lighter: #d4bbff;
+  --ifm-color-primary-lightest: #f0e5ff;
+  --ifm-background-color: #1a1a2e;
+  --ifm-background-surface-color: #16213e;
+}
+
+/* Accent color for links and interactive elements */
+:root {
+  --ifm-link-color: #00bcd4;
+}
+
+[data-theme="dark"] {
+  --ifm-link-color: #00e5ff;
+}
+
+/* Custom homelab admonition */
+.alert--homelab {
+  --ifm-alert-background-color: rgba(124, 77, 255, 0.1);
+  --ifm-alert-border-color: #7c4dff;
+  --ifm-alert-foreground-color: var(--ifm-font-color-base);
+}
+
+/* Card grid for landing pages */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.card-grid .card {
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 8px;
+  padding: 1.25rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.card-grid .card:hover {
+  border-color: var(--ifm-color-primary);
+  box-shadow: 0 2px 12px rgba(103, 58, 183, 0.15);
+}
+
+.card-grid .card h3 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+}
+
+.card-grid .card p {
+  margin-bottom: 0.5rem;
+  color: var(--ifm-color-emphasis-700);
+}
+
+/* kbd styling */
+kbd {
+  background-color: var(--ifm-color-emphasis-200);
+  border: 1px solid var(--ifm-color-emphasis-400);
+  border-radius: 3px;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.85em;
+  padding: 0.15em 0.4em;
+}
