@@ -341,7 +341,7 @@ labels:
 After deployment, access the service at:
 
 ```
-https://your-nexus-host:8443/apps/grafana/
+https://your-nekzus-host:8443/apps/grafana/
 ```
 
 ---

@@ -22,7 +22,7 @@ discovery: Discovery Sources {
   docker: Docker/K8s Containers\nmDNS Services
 }
 
-nexus: NEKZUS {
+nekzus: NEKZUS {
   style.fill: "#7c3aed"
   style.font-color: "#ffffff"
 }
@@ -35,12 +35,12 @@ core: Core Components {
 
 upstream: Your Services\n(Grafana, Home Assistant, Jellyfin, etc.)
 
-clients.mobile -> nexus: HTTPS + JWT
-clients.browser -> nexus: HTTPS
-discovery.docker -> nexus: Discovery Labels
-nexus -> core.proxy
-nexus -> core.storage
-nexus -> core.dashboard
+clients.mobile -> nekzus: HTTPS + JWT
+clients.browser -> nekzus: HTTPS
+discovery.docker -> nekzus: Discovery Labels
+nekzus ->core.proxy
+nekzus ->core.storage
+nekzus ->core.dashboard
 core.proxy -> upstream
 ```
 

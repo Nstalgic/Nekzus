@@ -13,7 +13,7 @@ func TestGenerateCA_Success(t *testing.T) {
 	provider := NewSelfSignedProvider()
 
 	ca, err := provider.GenerateCA(CAOptions{
-		CommonName:   "Nexus Local CA",
+		CommonName:   "Nekzus Local CA",
 		Organization: "Nekzus",
 		ValidityDays: 3650, // 10 years
 	})
@@ -42,7 +42,7 @@ func TestGenerateCA_Success(t *testing.T) {
 	}
 
 	// Verify common name
-	if ca.Certificate.Subject.CommonName != "Nexus Local CA" {
+	if ca.Certificate.Subject.CommonName != "Nekzus Local CA" {
 		t.Errorf("Expected CN 'Nexus Local CA', got: %s", ca.Certificate.Subject.CommonName)
 	}
 
@@ -82,8 +82,8 @@ func TestGenerateCA_DefaultOptions(t *testing.T) {
 		t.Fatalf("Failed to generate CA with defaults: %v", err)
 	}
 
-	// Should default to "Nexus CA" common name
-	if ca.Certificate.Subject.CommonName != "Nexus CA" {
+	// Should default to "Nekzus CA" common name
+	if ca.Certificate.Subject.CommonName != "Nekzus CA" {
 		t.Errorf("Expected default CN 'Nexus CA', got: %s", ca.Certificate.Subject.CommonName)
 	}
 

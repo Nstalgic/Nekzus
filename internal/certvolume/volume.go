@@ -17,7 +17,7 @@ var log = slog.With("package", "certvolume")
 
 const (
 	// CertVolumeName is the name of the Docker volume for certificates
-	CertVolumeName = "nexus-certs"
+	CertVolumeName = "nekzus-certs"
 	// CertMountPath is the default mount path inside containers
 	CertMountPath = "/certs"
 	// CACertFile is the filename for the CA certificate
@@ -122,7 +122,7 @@ func (m *Manager) WriteCertsToVolume(ctx context.Context, data CertData) error {
 
 	// Create a helper container to write files to the volume
 	// We use Alpine with a shell command to write the files
-	containerName := "nexus-cert-writer"
+	containerName := "nekzus-cert-writer"
 
 	// Base64 encode the certificates for safe passing through shell
 	caB64 := base64.StdEncoding.EncodeToString(data.CACert)

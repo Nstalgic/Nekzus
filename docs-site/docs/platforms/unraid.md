@@ -290,7 +290,7 @@ For HTTPS access with automatic certificates, use Nginx Proxy Manager.
 
     | Field | Value |
     |-------|-------|
-    | Domain Names | `nexus.yourdomain.com` |
+    | Domain Names | `nekzus.yourdomain.com` |
     | Scheme | `http` |
     | Forward Hostname/IP | `YOUR_UNRAID_IP` |
     | Forward Port | `8080` |
@@ -309,7 +309,7 @@ For HTTPS access with automatic certificates, use Nginx Proxy Manager.
 5. Update Nekzus environment variable:
 
     ```
-    NEKZUS_BASE_URL=https://nexus.yourdomain.com
+    NEKZUS_BASE_URL=https://nekzus.yourdomain.com
     ```
 
 #### WebSocket Configuration
@@ -344,10 +344,10 @@ Add these labels to your Nekzus container:
 ```yaml
 labels:
   - "traefik.enable=true"
-  - "traefik.http.routers.nexus.rule=Host(`nexus.yourdomain.com`)"
-  - "traefik.http.routers.nexus.entrypoints=websecure"
-  - "traefik.http.routers.nexus.tls.certresolver=letsencrypt"
-  - "traefik.http.services.nexus.loadbalancer.server.port=8080"
+  - "traefik.http.routers.nekzus.rule=Host(`nekzus.yourdomain.com`)"
+  - "traefik.http.routers.nekzus.entrypoints=websecure"
+  - "traefik.http.routers.nekzus.tls.certresolver=letsencrypt"
+  - "traefik.http.services.nekzus.loadbalancer.server.port=8080"
 ```
 
 #### Via Unraid Docker UI
@@ -361,7 +361,7 @@ labels:
 For Caddy users, add to your Caddyfile:
 
 ```caddyfile
-nexus.yourdomain.com {
+nekzus.yourdomain.com {
     reverse_proxy YOUR_UNRAID_IP:8080
 }
 ```

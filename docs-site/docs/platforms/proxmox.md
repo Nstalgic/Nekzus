@@ -219,7 +219,7 @@ cd /opt/nekzus
 # Create docker-compose.yml
 cat > docker-compose.yml << 'EOF'
 services:
-  nexus:
+  nekzus:
     image: nstalgic/nekzus:latest
     container_name: nekzus
     environment:
@@ -231,7 +231,7 @@ services:
       - "8080:8080"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - nexus-data:/app/data
+      - nekzus-data:/app/data
     restart: unless-stopped
     healthcheck:
       test: ["/app/nekzus", "--health"]
@@ -241,7 +241,7 @@ services:
       start_period: 10s
 
 volumes:
-  nexus-data:
+  nekzus-data:
 EOF
 
 # Generate secure secrets
@@ -706,7 +706,7 @@ Deploy with Caddy for automatic TLS:
 
 ```yaml title="docker-compose.yml"
 services:
-  nexus:
+  nekzus:
     image: nstalgic/nekzus:latest
     container_name: nekzus
     networks:
@@ -719,14 +719,14 @@ services:
     command: ["--config", "/app/configs/config.yaml", "--insecure-http"]
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - nexus-data:/app/data
+      - nekzus-data:/app/data
     restart: unless-stopped
 
   caddy:
     image: caddy:2.8-alpine
     container_name: nekzus-caddy
     depends_on:
-      - nexus
+      - nekzus
     networks:
       - nekzus
     ports:
@@ -743,14 +743,14 @@ networks:
     driver: bridge
 
 volumes:
-  nexus-data:
+  nekzus-data:
   caddy-data:
   caddy-config:
 ```
 
 ```text title="Caddyfile"
 :8443 {
-    reverse_proxy nexus:8080
+    reverse_proxy nekzus:8080
     tls internal
 }
 
@@ -981,7 +981,7 @@ backup:
 
 1. Verify Docker socket is mounted:
     ```bash
-    docker compose exec nexus ls -la /var/run/docker.sock
+    docker compose exec nekzus ls -la /var/run/docker.sock
     ```
 
 2. Check discovery is enabled in config:
@@ -1001,7 +1001,7 @@ backup:
 
 4. Check Nekzus logs:
     ```bash
-    docker compose logs nexus | grep -i discovery
+    docker compose logs nekzus | grep -i discovery
     ```
 
 </details>
@@ -1111,7 +1111,7 @@ qm set 200 --balloon 512
 
 ```yaml title="docker-compose.yml"
 services:
-  nexus:
+  nekzus:
     # ... other config ...
     deploy:
       resources:

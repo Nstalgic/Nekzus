@@ -79,7 +79,7 @@ func (e *ContainerExecutor) Execute(ctx context.Context, script *Script, params 
 	defer cancel()
 
 	// Generate unique container name
-	containerName := fmt.Sprintf("nexus-script-%s-%s", script.ID, uuid.New().String()[:8])
+	containerName := fmt.Sprintf("nekzus-script-%s-%s", script.ID, uuid.New().String()[:8])
 
 	// Build container configuration
 	containerConfig, hostConfig := e.buildContainerConfig(script, params, dryRun)

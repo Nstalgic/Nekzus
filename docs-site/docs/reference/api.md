@@ -268,7 +268,7 @@ curl https://localhost:8443/api/v1/auth/qr?format=png -o qr.png
 
 The QR code encodes a minimal JSON payload:
 
-- `u`: Base URL of the Nexus instance
+- `u`: Base URL of the Nekzus instance
 - `c`: Short pairing code (8 characters, valid for 5 minutes)
 
 The `code` field is also returned separately for manual entry when QR scanning is not possible.
@@ -580,7 +580,7 @@ curl -X POST https://localhost:8443/api/v1/auth/logout \
 
 ### GET /api/v1/admin/info
 
-Returns Nexus instance information.
+Returns Nekzus instance information.
 
 **Authentication:** IP-based (local) or JWT
 
@@ -1928,7 +1928,7 @@ curl -X POST https://localhost:8443/api/v1/certificates/generate \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
   -H "Content-Type: application/json" \
   -d '{
-    "domains": ["localhost", "192.168.1.100", "nexus.local"],
+    "domains": ["localhost", "192.168.1.100", "nekzus.local"],
     "provider": "self-signed"
   }'
 ```
@@ -1944,7 +1944,7 @@ curl -X POST https://localhost:8443/api/v1/certificates/generate \
     "issuer": "Nekzus Self-Signed CA",
     "not_before": "2025-01-15T00:00:00Z",
     "not_after": "2026-01-15T00:00:00Z",
-    "sans": ["localhost", "192.168.1.100", "nexus.local"],
+    "sans": ["localhost", "192.168.1.100", "nekzus.local"],
     "fingerprint": "SHA256:abc123..."
   },
   "tls_upgraded": true
@@ -2263,7 +2263,7 @@ Returns federation status and health.
 {
   "enabled": true,
   "local_peer_id": "peer_abc123",
-  "local_peer_name": "nexus-primary",
+  "local_peer_name": "nekzus-primary",
   "peer_count": 3,
   "peers_by_status": {
     "connected": 2,

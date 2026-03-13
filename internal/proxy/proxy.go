@@ -243,7 +243,7 @@ func (c *Cache) Delete(target *url.URL) {
 }
 
 // CacheWithCA is a proxy cache that includes custom Certificate Authority support
-// for trusting self-signed certificates from Nexus CA
+// for trusting self-signed certificates from Nekzus CA
 type CacheWithCA struct {
 	*Cache
 	mu      sync.RWMutex

@@ -35,7 +35,7 @@ Get started quickly with a minimal Docker Compose configuration.
 
     ```yaml title="docker-compose.yml"
     services:
-      nexus:
+      nekzus:
         image: nstalgic/nekzus:latest
         container_name: nekzus
         ports:
@@ -46,7 +46,7 @@ Get started quickly with a minimal Docker Compose configuration.
           NEKZUS_ADDR: ":8080"
         volumes:
           - /var/run/docker.sock:/var/run/docker.sock:ro
-          - nexus-data:/app/data
+          - nekzus-data:/app/data
         restart: unless-stopped
         healthcheck:
           test: ["/app/nekzus", "--health"]
@@ -56,7 +56,7 @@ Get started quickly with a minimal Docker Compose configuration.
           start_period: 10s
 
     volumes:
-      nexus-data:
+      nekzus-data:
     ```
 
 3. **Generate secure secrets:**
@@ -99,20 +99,20 @@ direction: right
 
 internet: Internet/LAN
 caddy: Caddy\n(TLS Termination)
-nexus: Nekzus\n(port 8080) {
+nekzus: Nekzus\n(port 8080) {
   style.fill: "#7c3aed"
   style.font-color: "#ffffff"
 }
 
 internet -> caddy: ":443 HTTPS"
-caddy -> nexus: "HTTP"
+caddy -> nekzus: "HTTP"
 ```
 
 ### Production Compose File
 
 ```yaml title="docker-compose.yml"
 services:
-  nexus:
+  nekzus:
     image: nstalgic/nekzus:latest
     container_name: nekzus
     networks:
@@ -126,7 +126,7 @@ services:
     volumes:
       - ./config.yaml:/app/configs/config.yaml:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - nexus-data:/app/data
+      - nekzus-data:/app/data
     restart: unless-stopped
     healthcheck:
       test: ["/app/nekzus", "--health"]
@@ -152,12 +152,12 @@ services:
     image: caddy:2.8-alpine
     container_name: nekzus-caddy
     depends_on:
-      nexus:
+      nekzus:
         condition: service_started
     networks:
       - nekzus
     environment:
-      - NEKZUS_HOST=nexus
+      - NEKZUS_HOST=nekzus
     ports:
       - "8443:8443"  # HTTPS
       - "80:80"      # HTTP (redirects to HTTPS)
@@ -192,7 +192,7 @@ networks:
     name: nekzus-network
 
 volumes:
-  nexus-data:
+  nekzus-data:
     name: nekzus-data
   caddy-data:
     name: nekzus-caddy-data
@@ -208,7 +208,7 @@ volumes:
 
 ```title="Caddyfile"
 :8443 {
-    reverse_proxy nexus:8080
+    reverse_proxy nekzus:8080
     tls internal
 }
 
@@ -222,12 +222,12 @@ volumes:
 
 
 ```title="Caddyfile"
-nexus.example.com {
-    reverse_proxy nexus:8080
+nekzus.example.com {
+    reverse_proxy nekzus:8080
     # Automatic Let's Encrypt certificates
 }
 
-http://nexus.example.com {
+http://nekzus.example.com {
     redir https://{host}{uri} permanent
 }
 ```
@@ -238,7 +238,7 @@ http://nexus.example.com {
 
 ```title="Caddyfile"
 :8443 {
-    reverse_proxy nexus:8080
+    reverse_proxy nekzus:8080
     tls /certs/cert.pem /certs/key.pem
 }
 
@@ -252,7 +252,7 @@ http://nexus.example.com {
 
 :::warning[Security Notice]
 
-The `--insecure-http` flag is safe when Nexus is behind a TLS-terminating reverse proxy like Caddy. Never expose an `--insecure-http` instance directly to the internet.
+The `--insecure-http` flag is safe when Nekzus is behind a TLS-terminating reverse proxy like Caddy. Never expose an `--insecure-http` instance directly to the internet.
 
 :::
 
@@ -363,12 +363,12 @@ Nekzus stores data in SQLite and requires persistent volumes for:
 
 ```yaml
 services:
-  nexus:
+  nekzus:
     volumes:
-      - nexus-data:/app/data
+      - nekzus-data:/app/data
 
 volumes:
-  nexus-data:
+  nekzus-data:
     name: nekzus-data
 ```
 
@@ -384,7 +384,7 @@ volumes:
 
 ```yaml
 services:
-  nexus:
+  nekzus:
     volumes:
       - ./data:/app/data
       - ./config.yaml:/app/configs/config.yaml:ro
@@ -410,13 +410,13 @@ services:
 docker run --rm \
   -v nekzus-data:/source:ro \
   -v $(pwd)/backups:/backup \
-  alpine tar czf /backup/nexus-$(date +%Y%m%d).tar.gz -C /source .
+  alpine tar czf /backup/nekzus-$(date +%Y%m%d).tar.gz -C /source .
 
 # Restore from backup
 docker run --rm \
   -v nekzus-data:/target \
   -v $(pwd)/backups:/backup:ro \
-  alpine tar xzf /backup/nexus-20240101.tar.gz -C /target
+  alpine tar xzf /backup/nekzus-20240101.tar.gz -C /target
 ```
 
 </details>
@@ -452,18 +452,18 @@ DATE=$(date +%Y%m%d_%H%M%S)
 mkdir -p "$BACKUP_DIR"
 
 # Stop for consistent backup (optional)
-docker compose stop nexus
+docker compose stop nekzus
 
 # Create backup
-tar czf "$BACKUP_DIR/nexus-$DATE.tar.gz" -C "$DATA_DIR" .
+tar czf "$BACKUP_DIR/nekzus-$DATE.tar.gz" -C "$DATA_DIR" .
 
 # Restart
-docker compose start nexus
+docker compose start nekzus
 
 # Keep only last 7 backups
-ls -t "$BACKUP_DIR"/nexus-*.tar.gz | tail -n +8 | xargs rm -f 2>/dev/null
+ls -t "$BACKUP_DIR"/nekzus-*.tar.gz | tail -n +8 | xargs rm -f 2>/dev/null
 
-echo "Backup created: $BACKUP_DIR/nexus-$DATE.tar.gz"
+echo "Backup created: $BACKUP_DIR/nekzus-$DATE.tar.gz"
 ```
 
 </details>
@@ -479,7 +479,7 @@ Docker Compose creates a default bridge network for inter-container communicatio
 
 ```yaml
 services:
-  nexus:
+  nekzus:
     networks:
       - frontend
       - backend
@@ -510,7 +510,7 @@ networks:
 
 ```yaml
 services:
-  nexus:
+  nekzus:
     ports:
       - "8080:8080"  # Exposed to host
 ```
@@ -521,7 +521,7 @@ services:
 
 ```yaml
 services:
-  nexus:
+  nekzus:
     expose:
       - "8080"  # Only accessible within Docker network
     networks:
@@ -541,7 +541,7 @@ services:
 
 ```yaml
 services:
-  nexus:
+  nekzus:
     ports:
       - "127.0.0.1:8080:8080"  # Only localhost
       - "192.168.1.100:8080:8080"  # Specific IP
@@ -556,7 +556,7 @@ To enable automatic container discovery, mount the Docker socket:
 
 ```yaml
 services:
-  nexus:
+  nekzus:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
 ```
@@ -578,7 +578,7 @@ Define resource limits to prevent runaway containers:
 
 ```yaml
 services:
-  nexus:
+  nekzus:
     deploy:
       resources:
         limits:
@@ -593,7 +593,7 @@ services:
 
 | Service | Min CPU | Max CPU | Min Memory | Max Memory |
 |---------|---------|---------|------------|------------|
-| Nexus | 0.5 | 2.0 | 256 MB | 1 GB |
+| Nekzus | 0.5 | 2.0 | 256 MB | 1 GB |
 | Caddy | 0.25 | 1.0 | 64 MB | 256 MB |
 
 ### Logging Configuration
@@ -602,7 +602,7 @@ Prevent disk exhaustion with log rotation:
 
 ```yaml
 services:
-  nexus:
+  nekzus:
     logging:
       driver: "json-file"
       options:
@@ -620,7 +620,7 @@ Nekzus includes a built-in health check endpoint:
 
 ```yaml
 services:
-  nexus:
+  nekzus:
     healthcheck:
       test: ["/app/nekzus", "--health"]
       interval: 30s
@@ -644,14 +644,14 @@ Wait for dependencies to be healthy before starting:
 
 ```yaml
 services:
-  nexus:
+  nekzus:
     depends_on:
       database:
         condition: service_healthy
 
   caddy:
     depends_on:
-      nexus:
+      nekzus:
         condition: service_healthy
 ```
 
@@ -672,13 +672,13 @@ docker inspect nekzus --format='{{json .State.Health.Log}}' | jq
 
 ## Multi-Service Examples
 
-### Nexus with Monitoring Stack
+### Nekzus with Monitoring Stack
 
 Deploy Nekzus with Prometheus and Grafana for observability:
 
 ```yaml title="docker-compose.monitoring.yml"
 services:
-  nexus:
+  nekzus:
     image: nstalgic/nekzus:latest
     container_name: nekzus
     networks:
@@ -689,7 +689,7 @@ services:
       NEKZUS_BOOTSTRAP_TOKEN: "${NEKZUS_BOOTSTRAP_TOKEN}"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - nexus-data:/app/data
+      - nekzus-data:/app/data
     restart: unless-stopped
     healthcheck:
       test: ["/app/nekzus", "--health"]
@@ -732,7 +732,7 @@ networks:
     driver: bridge
 
 volumes:
-  nexus-data:
+  nekzus-data:
   prometheus-data:
   grafana-data:
 ```
@@ -743,22 +743,22 @@ global:
   evaluation_interval: 15s
 
 scrape_configs:
-  - job_name: 'nexus'
+  - job_name: 'nekzus'
     static_configs:
-      - targets: ['nexus:8080']
+      - targets: ['nekzus:8080']
     metrics_path: /metrics
 ```
 
 ### Federation Cluster
 
-Deploy multiple Nexus instances for high availability and distributed service discovery:
+Deploy multiple Nekzus instances for high availability and distributed service discovery:
 
 ```yaml title="docker-compose.federation.yml"
 services:
-  nexus-1:
+  nekzus-1:
     image: nstalgic/nekzus:latest
     container_name: nekzus-1
-    hostname: nexus-1
+    hostname: nekzus-1
     networks:
       - federation
     ports:
@@ -766,7 +766,7 @@ services:
       - "7946:7946/tcp"
       - "7946:7946/udp"
     environment:
-      NEKZUS_ID: "nexus-instance-1"
+      NEKZUS_ID: "nekzus-instance-1"
       NEKZUS_JWT_SECRET: "${NEKZUS_JWT_SECRET}"
       NEKZUS_BOOTSTRAP_TOKEN: "${NEKZUS_BOOTSTRAP_TOKEN}"
       NEKZUS_FEDERATION_ENABLED: "true"
@@ -778,10 +778,10 @@ services:
       - federation-data-1:/app/data
     restart: unless-stopped
 
-  nexus-2:
+  nekzus-2:
     image: nstalgic/nekzus:latest
     container_name: nekzus-2
-    hostname: nexus-2
+    hostname: nekzus-2
     networks:
       - federation
     ports:
@@ -789,7 +789,7 @@ services:
       - "7947:7946/tcp"
       - "7947:7946/udp"
     environment:
-      NEKZUS_ID: "nexus-instance-2"
+      NEKZUS_ID: "nekzus-instance-2"
       NEKZUS_JWT_SECRET: "${NEKZUS_JWT_SECRET}"
       NEKZUS_BOOTSTRAP_TOKEN: "${NEKZUS_BOOTSTRAP_TOKEN}"
       NEKZUS_FEDERATION_ENABLED: "true"
@@ -800,7 +800,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - federation-data-2:/app/data
     depends_on:
-      - nexus-1
+      - nekzus-1
     restart: unless-stopped
 
 networks:
@@ -829,7 +829,7 @@ volumes:
 **Check the logs:**
 
 ```bash
-docker compose logs nexus
+docker compose logs nekzus
 ```
 
 **Common causes:**
@@ -862,7 +862,7 @@ ls -la ./data
 **Verify Docker socket is mounted:**
 
 ```bash
-docker compose exec nexus ls -la /var/run/docker.sock
+docker compose exec nekzus ls -la /var/run/docker.sock
 ```
 
 **Check discovery status:**
@@ -972,7 +972,7 @@ docker compose logs caddy
 ```title="Caddyfile"
 # Use internal certificates for local network
 :8443 {
-    reverse_proxy nexus:8080
+    reverse_proxy nekzus:8080
     tls internal
 }
 ```
@@ -988,7 +988,7 @@ docker compose logs caddy
 
 ```bash
 ls -la ./data
-docker compose exec nexus ls -la /app/data
+docker compose exec nekzus ls -la /app/data
 ```
 
 **Fix permissions:**
@@ -1011,7 +1011,7 @@ sudo chown -R 0:0 ./data
 docker compose logs -f
 
 # Execute shell in container
-docker compose exec nexus sh
+docker compose exec nekzus sh
 
 # Check container resource usage
 docker stats nekzus
@@ -1026,10 +1026,10 @@ docker network inspect nekzus-network
 docker volume ls | grep nekzus
 
 # Restart specific service
-docker compose restart nexus
+docker compose restart nekzus
 
 # Rebuild and restart
-docker compose up -d --build nexus
+docker compose up -d --build nekzus
 
 # Clean restart (removes volumes)
 docker compose down -v && docker compose up -d
@@ -1039,16 +1039,16 @@ docker compose down -v && docker compose up -d
 
 ```bash
 # Filter logs by severity
-docker compose logs nexus 2>&1 | grep -i error
+docker compose logs nekzus 2>&1 | grep -i error
 
 # Follow logs with timestamps
-docker compose logs -f -t nexus
+docker compose logs -f -t nekzus
 
 # Last 100 lines
-docker compose logs --tail 100 nexus
+docker compose logs --tail 100 nekzus
 
 # Export logs to file
-docker compose logs nexus > nexus.log 2>&1
+docker compose logs nekzus > nekzus.log 2>&1
 ```
 
 ---
