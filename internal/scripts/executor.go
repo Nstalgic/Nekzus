@@ -78,6 +78,10 @@ func (e *Executor) Execute(ctx context.Context, script *Script, params map[strin
 		cmd = exec.CommandContext(execCtx, scriptPath)
 	}
 
+	// Ensure cmd.Wait returns promptly after the process is killed,
+	// even if child processes still hold I/O pipes open.
+	cmd.WaitDelay = 500 * time.Millisecond
+
 	// Build environment
 	cmd.Env = e.manager.BuildEnvironment(script, params, dryRun)
 

@@ -111,16 +111,16 @@ func (r *Runner) Stop() {
 	r.started = false
 	r.mu.Unlock()
 
-	// Signal workers to stop
-	if r.cancel != nil {
-		r.cancel()
-	}
-
 	// Close queue to stop accepting new jobs
 	close(r.queue)
 
 	// Wait for workers to finish current jobs
 	r.wg.Wait()
+
+	// Cancel context after all workers are done
+	if r.cancel != nil {
+		r.cancel()
+	}
 
 	runnerLog.Info("runner stopped")
 }
