@@ -224,59 +224,59 @@ func TestCookieResponseWriter_FlushPassesThrough(t *testing.T) {
 // TestRewriteCookieDomain tests that Domain attribute is rewritten or removed
 func TestRewriteCookieDomain(t *testing.T) {
 	testCases := []struct {
-		name        string
-		cookie      string
-		proxyHost   string
-		shouldHave  []string
+		name          string
+		cookie        string
+		proxyHost     string
+		shouldHave    []string
 		shouldNotHave []string
 	}{
 		{
-			name:        "remove domain pointing to backend",
-			cookie:      "session=abc; Domain=backend.local; Path=/",
-			proxyHost:   "nexus.local",
-			shouldHave:  []string{"session=abc", "Path=/"},
+			name:          "remove domain pointing to backend",
+			cookie:        "session=abc; Domain=backend.local; Path=/",
+			proxyHost:     "nexus.local",
+			shouldHave:    []string{"session=abc", "Path=/"},
 			shouldNotHave: []string{"Domain=backend.local"},
 		},
 		{
-			name:        "rewrite domain to proxy host",
-			cookie:      "session=abc; Domain=192.168.1.50; Path=/",
-			proxyHost:   "nexus.local",
-			shouldHave:  []string{"session=abc", "Path=/", "Domain=nexus.local"},
+			name:          "rewrite domain to proxy host",
+			cookie:        "session=abc; Domain=192.168.1.50; Path=/",
+			proxyHost:     "nexus.local",
+			shouldHave:    []string{"session=abc", "Path=/", "Domain=nexus.local"},
 			shouldNotHave: []string{"Domain=192.168.1.50"},
 		},
 		{
-			name:        "preserve domain if it matches proxy",
-			cookie:      "session=abc; Domain=nexus.local; Path=/",
-			proxyHost:   "nexus.local",
-			shouldHave:  []string{"session=abc", "Domain=nexus.local", "Path=/"},
+			name:          "preserve domain if it matches proxy",
+			cookie:        "session=abc; Domain=nexus.local; Path=/",
+			proxyHost:     "nexus.local",
+			shouldHave:    []string{"session=abc", "Domain=nexus.local", "Path=/"},
 			shouldNotHave: []string{},
 		},
 		{
-			name:        "handle domain with leading dot",
-			cookie:      "session=abc; Domain=.backend.local; Path=/",
-			proxyHost:   "nexus.local",
-			shouldHave:  []string{"session=abc", "Path=/", "Domain=nexus.local"},
+			name:          "handle domain with leading dot",
+			cookie:        "session=abc; Domain=.backend.local; Path=/",
+			proxyHost:     "nexus.local",
+			shouldHave:    []string{"session=abc", "Path=/", "Domain=nexus.local"},
 			shouldNotHave: []string{"Domain=.backend.local"},
 		},
 		{
-			name:        "no domain attribute - leave as is",
-			cookie:      "session=abc; Path=/; HttpOnly",
-			proxyHost:   "nexus.local",
-			shouldHave:  []string{"session=abc", "Path=/", "HttpOnly"},
+			name:          "no domain attribute - leave as is",
+			cookie:        "session=abc; Path=/; HttpOnly",
+			proxyHost:     "nexus.local",
+			shouldHave:    []string{"session=abc", "Path=/", "HttpOnly"},
 			shouldNotHave: []string{},
 		},
 		{
-			name:        "case insensitive DOMAIN",
-			cookie:      "session=abc; DOMAIN=backend.local; Path=/",
-			proxyHost:   "nexus.local",
-			shouldHave:  []string{"session=abc", "Path=/", "Domain=nexus.local"},
+			name:          "case insensitive DOMAIN",
+			cookie:        "session=abc; DOMAIN=backend.local; Path=/",
+			proxyHost:     "nexus.local",
+			shouldHave:    []string{"session=abc", "Path=/", "Domain=nexus.local"},
 			shouldNotHave: []string{"DOMAIN=backend.local"},
 		},
 		{
-			name:        "preserve other attributes when rewriting domain",
-			cookie:      "session=abc; Domain=backend.local; Path=/; Secure; HttpOnly; SameSite=Strict",
-			proxyHost:   "nexus.local",
-			shouldHave:  []string{"session=abc", "Path=/", "Secure", "HttpOnly", "SameSite=Strict", "Domain=nexus.local"},
+			name:          "preserve other attributes when rewriting domain",
+			cookie:        "session=abc; Domain=backend.local; Path=/; Secure; HttpOnly; SameSite=Strict",
+			proxyHost:     "nexus.local",
+			shouldHave:    []string{"session=abc", "Path=/", "Secure", "HttpOnly", "SameSite=Strict", "Domain=nexus.local"},
 			shouldNotHave: []string{"Domain=backend.local"},
 		},
 	}

@@ -369,8 +369,8 @@ func TestKubernetesWorker_SmartLabelInference(t *testing.T) {
 		{
 			name: "Explicit nekzus label takes precedence",
 			labels: map[string]string{
-				"nekzus.enable":      "true",
-				"nekzus.app.id":      "custom-id",
+				"nekzus.enable":          "true",
+				"nekzus.app.id":          "custom-id",
 				"app.kubernetes.io/name": "grafana",
 			},
 			annotations: map[string]string{
@@ -432,7 +432,7 @@ func TestKubernetesWorker_SmartLabelInference(t *testing.T) {
 		{
 			name: "Explicit disable takes precedence",
 			labels: map[string]string{
-				"nekzus.enable":           "false",
+				"nekzus.enable":               "false",
 				"app.kubernetes.io/component": "frontend",
 			},
 			serviceType:    v1.ServiceTypeLoadBalancer,
@@ -1038,7 +1038,7 @@ func TestKubernetesWorker_NamespaceLabels(t *testing.T) {
 			},
 			serviceLabels: map[string]string{
 				"app.kubernetes.io/name": "webapp",
-				"nekzus.app.tags":    "service-tag",
+				"nekzus.app.tags":        "service-tag",
 			},
 			shouldDiscover: true,
 			expectedTags:   []string{"kubernetes", "service-tag"}, // Service tag overrides namespace tag
@@ -1060,7 +1060,7 @@ func TestKubernetesWorker_NamespaceLabels(t *testing.T) {
 				"nekzus.enable": "true",
 			},
 			serviceLabels: map[string]string{
-				"app":               "backend",
+				"app":           "backend",
 				"nekzus.enable": "false",
 			},
 			shouldDiscover: false, // Service explicitly disabled

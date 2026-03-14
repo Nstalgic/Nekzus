@@ -367,9 +367,9 @@ func (app *Application) handleRenewCertificate(w http.ResponseWriter, r *http.Re
 			"fingerprint": result.NewCert.Metadata.Fingerprint,
 		},
 		"rotation": map[string]interface{}{
-			"old_spki":      result.OldSPKI,
-			"new_spki":      result.NewSPKI,
-			"spki_changed":  result.SPKIChanged,
+			"old_spki":         result.OldSPKI,
+			"new_spki":         result.NewSPKI,
+			"spki_changed":     result.SPKIChanged,
 			"devices_notified": devicesNotified,
 		},
 	})

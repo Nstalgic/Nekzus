@@ -45,7 +45,7 @@ func TestKubernetesRuntime_List(t *testing.T) {
 				Namespace: "default",
 				Labels: map[string]string{
 					"nekzus.app.id": "nginx",
-					"app":               "nginx",
+					"app":           "nginx",
 				},
 				CreationTimestamp: metav1.NewTime(time.Now().Add(-1 * time.Hour)),
 			},

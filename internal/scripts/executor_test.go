@@ -63,8 +63,8 @@ func TestExecutor_ExecuteScript_Success(t *testing.T) {
 	scriptsDir := setupExecutorTestDir(t)
 	manager := NewManager(scriptsDir)
 	executor := NewExecutor(manager, ExecutorConfig{
-		DefaultTimeout:  30 * time.Second,
-		MaxOutputBytes:  1024 * 1024,
+		DefaultTimeout: 30 * time.Second,
+		MaxOutputBytes: 1024 * 1024,
 	})
 
 	script := &Script{

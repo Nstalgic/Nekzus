@@ -25,11 +25,11 @@ type DockerClientForExecution interface {
 
 // ContainerExecutorConfig holds configuration for container-based script execution.
 type ContainerExecutorConfig struct {
-	DefaultTimeout time.Duration // Default execution timeout
-	MaxOutputBytes int           // Maximum output size before truncation
-	ShellImage     string        // Docker image for shell scripts (default: alpine:3.20)
-	PythonImage    string        // Docker image for Python scripts (default: python:3.12-alpine)
-	ScriptsMountPath string      // Mount path for scripts inside container (default: /scripts)
+	DefaultTimeout   time.Duration // Default execution timeout
+	MaxOutputBytes   int           // Maximum output size before truncation
+	ShellImage       string        // Docker image for shell scripts (default: alpine:3.20)
+	PythonImage      string        // Docker image for Python scripts (default: python:3.12-alpine)
+	ScriptsMountPath string        // Mount path for scripts inside container (default: /scripts)
 }
 
 // ContainerExecutor executes scripts inside Docker containers.
@@ -235,7 +235,7 @@ func (e *ContainerExecutor) buildContainerConfig(script *Script, params map[stri
 		Binds: []string{
 			fmt.Sprintf("%s:%s:ro", e.scriptsDir, e.config.ScriptsMountPath),
 		},
-		AutoRemove:  false, // We remove manually after getting logs
+		AutoRemove:  false,  // We remove manually after getting logs
 		NetworkMode: "none", // Isolate script from network by default
 	}
 

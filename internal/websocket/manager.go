@@ -21,8 +21,8 @@ type Client struct {
 	conn          *websocket.Conn
 	sendChan      chan types.WebSocketMessage
 	subscriptions map[string]SubscriptionOptions // topic pattern -> options
-	lastWill      *LastWill                       // message to publish on unexpected disconnect
-	subMu         sync.RWMutex                    // protects subscriptions and lastWill
+	lastWill      *LastWill                      // message to publish on unexpected disconnect
+	subMu         sync.RWMutex                   // protects subscriptions and lastWill
 	mu            sync.Mutex
 	chanClosed    bool // Guard flag to prevent double-close of sendChan
 	closeChanMu   sync.Mutex
@@ -181,7 +181,7 @@ var clientSlicePool = sync.Pool{
 // Manager manages WebSocket connections and message broadcasting
 type Manager struct {
 	clients           map[*Client]struct{}
-	clientsByDevice   map[string][]*Client   // deviceID -> clients (for quick lookup)
+	clientsByDevice   map[string][]*Client        // deviceID -> clients (for quick lookup)
 	retainedMessages  map[string]*RetainedMessage // topic -> retained message
 	mu                sync.RWMutex
 	retainedMu        sync.RWMutex

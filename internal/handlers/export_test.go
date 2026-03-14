@@ -285,7 +285,7 @@ func TestExportHandler_HandleExportContainer_ComplexContainer(t *testing.T) {
 						Retries:  3,
 					},
 					Labels: map[string]string{
-						"maintainer":          "test",
+						"maintainer":      "test",
 						"nekzus.app.id":   "plex",
 						"nekzus.app.name": "Plex",
 					},

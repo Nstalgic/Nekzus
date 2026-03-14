@@ -235,11 +235,11 @@ func (s *Scheduler) executeSchedule(schedule *Schedule) {
 
 // CronExpression represents a parsed cron expression.
 type CronExpression struct {
-	Minutes    []int // 0-59
-	Hours      []int // 0-23
+	Minutes     []int // 0-59
+	Hours       []int // 0-23
 	DaysOfMonth []int // 1-31
-	Months     []int // 1-12
-	DaysOfWeek []int // 0-6 (0 = Sunday)
+	Months      []int // 1-12
+	DaysOfWeek  []int // 0-6 (0 = Sunday)
 }
 
 // ParseCronExpression parses a cron expression string.

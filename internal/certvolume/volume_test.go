@@ -320,10 +320,10 @@ func TestGetCertEnvironment(t *testing.T) {
 	env := GetCertEnvironment()
 
 	expected := map[string]string{
-		"NEKZUS_CA_CERT":       "/certs/ca.crt",
-		"NEKZUS_CERT":          "/certs/cert.crt",
-		"NEKZUS_KEY":           "/certs/cert.key",
-		"NEKZUS_CERT_DIR":      "/certs",
+		"NEKZUS_CA_CERT":      "/certs/ca.crt",
+		"NEKZUS_CERT":         "/certs/cert.crt",
+		"NEKZUS_KEY":          "/certs/cert.key",
+		"NEKZUS_CERT_DIR":     "/certs",
 		"SSL_CERT_FILE":       "/certs/ca.crt",
 		"NODE_EXTRA_CA_CERTS": "/certs/ca.crt",
 	}

@@ -251,8 +251,8 @@ func (app *Application) handleWebSocketDisconnect(w http.ResponseWriter, r *http
 		"connections_closed", disconnected)
 
 	response := map[string]interface{}{
-		"deviceId":           deviceID,
-		"disconnectedCount":  disconnected,
+		"deviceId":          deviceID,
+		"disconnectedCount": disconnected,
 	}
 
 	if err := httputil.WriteJSON(w, http.StatusOK, response); err != nil {

@@ -27,12 +27,12 @@ type PairingConfig struct {
 
 // pairingCode represents a stored pairing code
 type pairingCode struct {
-	code         string
-	config       PairingConfig
-	expiresAt    time.Time
-	used         bool
-	failedCount  int       // Track failed attempts per code
-	lockedUntil  time.Time // Lock code after too many failures
+	code        string
+	config      PairingConfig
+	expiresAt   time.Time
+	used        bool
+	failedCount int       // Track failed attempts per code
+	lockedUntil time.Time // Lock code after too many failures
 }
 
 // PairingManager handles short pairing codes for the v2 QR flow
@@ -58,10 +58,10 @@ const (
 	codeCharset = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
 
 	// Rate limiting
-	maxFailedAttemptsPerCode = 5              // Lock code after 5 failures
+	maxFailedAttemptsPerCode = 5               // Lock code after 5 failures
 	codeLockDuration         = 5 * time.Minute // Lock duration per code
-	globalFailureThreshold   = 100            // Max global failures per window
-	globalFailureWindow      = time.Hour      // Global failure tracking window
+	globalFailureThreshold   = 100             // Max global failures per window
+	globalFailureWindow      = time.Hour       // Global failure tracking window
 )
 
 // NewPairingManager creates a new pairing code manager

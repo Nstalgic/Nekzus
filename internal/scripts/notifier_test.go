@@ -12,10 +12,10 @@ import (
 
 // mockWebSocketSender implements the WebSocketSender interface for testing
 type mockWebSocketSender struct {
-	mu          sync.Mutex
-	sentMsgs    []sentMessage
-	onlineDevs  map[string]bool
-	sendError   error
+	mu         sync.Mutex
+	sentMsgs   []sentMessage
+	onlineDevs map[string]bool
+	sendError  error
 }
 
 type sentMessage struct {

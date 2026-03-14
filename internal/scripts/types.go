@@ -14,20 +14,20 @@ type ScriptExecutor interface {
 // Script represents a registered script in the system.
 // Scripts are stored on the filesystem; this struct contains metadata.
 type Script struct {
-	ID             string              `json:"id"`
-	Name           string              `json:"name"`
-	Description    string              `json:"description,omitempty"`
-	Category       string              `json:"category"`
-	ScriptPath     string              `json:"scriptPath"`     // Relative path in scripts directory
-	ScriptType     ScriptType          `json:"scriptType"`     // shell, go_binary, python
-	TimeoutSeconds int                 `json:"timeoutSeconds"` // Execution timeout (default: 300)
-	Parameters     []ScriptParameter   `json:"parameters,omitempty"`
-	Environment    map[string]string   `json:"environment,omitempty"` // Default environment variables
-	AllowedScopes  []string            `json:"allowedScopes,omitempty"`
-	DryRunCommand  string              `json:"dryRunCommand,omitempty"` // Command/flag for dry run mode
-	CreatedBy      string              `json:"createdBy,omitempty"`
-	CreatedAt      time.Time           `json:"createdAt"`
-	UpdatedAt      time.Time           `json:"updatedAt"`
+	ID             string            `json:"id"`
+	Name           string            `json:"name"`
+	Description    string            `json:"description,omitempty"`
+	Category       string            `json:"category"`
+	ScriptPath     string            `json:"scriptPath"`     // Relative path in scripts directory
+	ScriptType     ScriptType        `json:"scriptType"`     // shell, go_binary, python
+	TimeoutSeconds int               `json:"timeoutSeconds"` // Execution timeout (default: 300)
+	Parameters     []ScriptParameter `json:"parameters,omitempty"`
+	Environment    map[string]string `json:"environment,omitempty"` // Default environment variables
+	AllowedScopes  []string          `json:"allowedScopes,omitempty"`
+	DryRunCommand  string            `json:"dryRunCommand,omitempty"` // Command/flag for dry run mode
+	CreatedBy      string            `json:"createdBy,omitempty"`
+	CreatedAt      time.Time         `json:"createdAt"`
+	UpdatedAt      time.Time         `json:"updatedAt"`
 }
 
 // ScriptType represents the type of script.

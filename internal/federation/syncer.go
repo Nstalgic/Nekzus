@@ -19,7 +19,7 @@ type CatalogSyncer struct {
 	localPeerID   string
 	storage       *storage.Store
 	vectorClock   VectorClock
-	broadcastFunc func(msg []byte)                      // Callback to broadcast gossip messages
+	broadcastFunc func(msg []byte)                         // Callback to broadcast gossip messages
 	eventCallback func(eventType string, data interface{}) // Callback to publish events
 }
 

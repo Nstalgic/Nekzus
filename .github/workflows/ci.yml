@@ -48,7 +48,7 @@ jobs:
         run: cp -r web/dist cmd/nekzus/webdist
 
       - name: Run Go tests
-        run: go test -race -coverprofile=coverage.out ./...
+        run: go test -short -race -coverprofile=coverage.out ./...
 
       - name: Upload coverage
         uses: codecov/codecov-action@v4

@@ -1135,10 +1135,10 @@ func TestCreateContainerConfig_WithCertVolume(t *testing.T) {
 
 	// Verify cert environment variables are set
 	certEnvVars := map[string]bool{
-		"NEKZUS_CA_CERT":       false,
-		"NEKZUS_CERT":          false,
-		"NEKZUS_KEY":           false,
-		"NEKZUS_CERT_DIR":      false,
+		"NEKZUS_CA_CERT":      false,
+		"NEKZUS_CERT":         false,
+		"NEKZUS_KEY":          false,
+		"NEKZUS_CERT_DIR":     false,
 		"SSL_CERT_FILE":       false,
 		"NODE_EXTRA_CA_CERTS": false,
 	}

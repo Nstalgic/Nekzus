@@ -113,7 +113,7 @@ func (h *ToolboxHandler) DeployService(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Inject CustomPort using the actual port variable name from template
+	// Inject CustomPort as APP_PORT into EnvVars
 	if req.CustomPort > 0 {
 		// Validate port is in valid range (1-65535)
 		if req.CustomPort > 65535 {
@@ -121,14 +121,7 @@ func (h *ToolboxHandler) DeployService(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		portVarName := "APP_PORT" // Default fallback
-		for _, envVar := range template.EnvVars {
-			if strings.Contains(strings.ToUpper(envVar.Name), "PORT") && envVar.Type == "number" {
-				portVarName = envVar.Name
-				break
-			}
-		}
-		req.EnvVars[portVarName] = fmt.Sprintf("%d", req.CustomPort)
+		req.EnvVars["APP_PORT"] = fmt.Sprintf("%d", req.CustomPort)
 	}
 
 	// Validate deployment configuration

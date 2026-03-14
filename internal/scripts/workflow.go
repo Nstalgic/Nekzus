@@ -8,12 +8,12 @@ import (
 
 // WorkflowResult holds the result of a workflow execution.
 type WorkflowResult struct {
-	Status       ExecutionStatus
-	StepResults  []*ExecutionResult
-	FailedStep   int  // Index of failed step (-1 if none)
-	StepsRun     int  // Number of steps that were executed
-	HadFailure   bool // Whether any step failed
-	Duration     time.Duration
+	Status      ExecutionStatus
+	StepResults []*ExecutionResult
+	FailedStep  int  // Index of failed step (-1 if none)
+	StepsRun    int  // Number of steps that were executed
+	HadFailure  bool // Whether any step failed
+	Duration    time.Duration
 }
 
 // WorkflowRunner executes workflows (sequences of scripts).

@@ -46,16 +46,16 @@ type ExecutionNotifier interface {
 
 // Runner manages async script execution with a worker pool.
 type Runner struct {
-	executor  ScriptExecutor
-	storage   Storage
-	notifier  ExecutionNotifier
-	config    RunnerConfig
-	queue     chan *ExecutionJob
-	ctx       context.Context
-	cancel    context.CancelFunc
-	wg        sync.WaitGroup
-	started   bool
-	mu        sync.RWMutex
+	executor ScriptExecutor
+	storage  Storage
+	notifier ExecutionNotifier
+	config   RunnerConfig
+	queue    chan *ExecutionJob
+	ctx      context.Context
+	cancel   context.CancelFunc
+	wg       sync.WaitGroup
+	started  bool
+	mu       sync.RWMutex
 }
 
 // NewRunner creates a new script runner.

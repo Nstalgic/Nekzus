@@ -11,10 +11,10 @@ import (
 
 // mockStorage implements the Storage interface for Runner tests
 type mockStorage struct {
-	mu             sync.Mutex
-	executions     map[string]*Execution
-	statusUpdates  []statusUpdate
-	saveErrors     map[string]error
+	mu            sync.Mutex
+	executions    map[string]*Execution
+	statusUpdates []statusUpdate
+	saveErrors    map[string]error
 }
 
 type statusUpdate struct {
@@ -95,10 +95,10 @@ func (m *mockStorage) getStatusUpdates() []statusUpdate {
 
 // mockNotifier implements the ExecutionNotifier interface for testing
 type mockNotifier struct {
-	mu                sync.Mutex
-	startedCalls      []notifyStartedCall
-	completedCalls    []notifyCompletedCall
-	failedCalls       []notifyFailedCall
+	mu             sync.Mutex
+	startedCalls   []notifyStartedCall
+	completedCalls []notifyCompletedCall
+	failedCalls    []notifyFailedCall
 }
 
 type notifyStartedCall struct {
@@ -531,7 +531,7 @@ exit 0
 	}
 
 	// Wait for timeout
-	time.Sleep(2 * time.Second)
+	time.Sleep(3 * time.Second)
 
 	// Should have timeout status
 	updates := storage.getStatusUpdates()

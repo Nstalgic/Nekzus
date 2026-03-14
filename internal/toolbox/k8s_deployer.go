@@ -59,7 +59,7 @@ func (d *KubernetesDeployer) Deploy(ctx context.Context, template *types.Service
 
 	// Create labels
 	labels := map[string]string{
-		"app":                         name,
+		"app":                     name,
 		"nekzus.toolbox":          "true",
 		"nekzus.toolbox.template": template.ID,
 	}

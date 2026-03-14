@@ -164,9 +164,19 @@ func TestScheduler_ManualBackup(t *testing.T) {
 	assert.NotNil(t, backup)
 	assert.Equal(t, "manual backup", backup.Description)
 
-	// Verify backup was saved
+	// Verify backup was saved (Start() also creates an initial automatic backup)
 	backups, _ := manager.ListBackups()
-	assert.Len(t, backups, 1)
+	assert.GreaterOrEqual(t, len(backups), 1, "Should have at least 1 backup")
+
+	// Verify the manual backup exists in the list
+	found := false
+	for _, b := range backups {
+		if b.Description == "manual backup" {
+			found = true
+			break
+		}
+	}
+	assert.True(t, found, "Manual backup should be present in backup list")
 }
 
 // Test 8: Get scheduler status
