@@ -1,21 +1,14 @@
-# CI Workflow - Runs tests on push and pull requests
-#
-# uncomment to enable
-#
 name: CI
 
 on:
-  # Uncomment these triggers to enable CI on push/PR:
-  # push:
-  #   branches: [main]
-  # pull_request:
-  #   branches: [main]
-
-  # Manual trigger only (for testing the workflow)
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 env:
-  GO_VERSION: '1.22'
+  GO_VERSION: '1.25'
   NODE_VERSION: '20'
 
 jobs:
@@ -76,6 +69,22 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
           cache: true
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
+
+      - name: Build web UI
+        working-directory: web
+        run: |
+          npm ci
+          npm run build
+
+      - name: Copy web dist for embedding
+        run: cp -r web/dist cmd/nekzus/webdist
 
       - name: Run go fmt
         run: |
