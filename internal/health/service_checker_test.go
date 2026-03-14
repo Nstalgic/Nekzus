@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -717,11 +718,11 @@ func (m *mockWebSocketManager) WaitForNotification(timeout time.Duration) bool {
 
 func TestServiceHealthChecker_HealthChangeNotification(t *testing.T) {
 	// Create a test server that transitions from healthy to unhealthy
-	requestCount := 0
+	var requestCount atomic.Int32
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		requestCount++
-		if requestCount <= 2 {
-			// First 2 requests: healthy
+		count := requestCount.Add(1)
+		if count <= 3 {
+			// First 3 requests: healthy
 			w.WriteHeader(http.StatusOK)
 		} else {
 			// After that: unhealthy
@@ -732,7 +733,7 @@ func TestServiceHealthChecker_HealthChangeNotification(t *testing.T) {
 
 	config := types.HealthChecksConfig{
 		Enabled:            true,
-		Interval:           "50ms",
+		Interval:           "100ms",
 		Timeout:            "1s",
 		UnhealthyThreshold: 2, // Require 2 consecutive failures
 		Path:               "/health",
@@ -763,7 +764,7 @@ func TestServiceHealthChecker_HealthChangeNotification(t *testing.T) {
 	defer checker.Stop()
 
 	// Wait for initial healthy checks
-	time.Sleep(150 * time.Millisecond)
+	time.Sleep(350 * time.Millisecond)
 
 	// Verify service is healthy
 	status, ok := checker.GetServiceHealth("app1")
@@ -775,7 +776,7 @@ func TestServiceHealthChecker_HealthChangeNotification(t *testing.T) {
 	}
 
 	// Wait for unhealthy checks (need 2 failures based on threshold)
-	time.Sleep(200 * time.Millisecond)
+	time.Sleep(500 * time.Millisecond)
 
 	// Verify service became unhealthy
 	status, ok = checker.GetServiceHealth("app1")
