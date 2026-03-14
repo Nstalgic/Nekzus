@@ -83,6 +83,16 @@ This spins up Nekzus alongside example services so you can explore the dashboard
 - **Webhook Tester** - Test webhook endpoints with request/response inspection
 - **Responsive** - Desktop, tablet, and mobile support
 
+### Mobile App (PRTL)
+PRTL is a companion mobile app for managing your Nekzus instance from iOS and Android.
+- **App & Service Management** - Browse, manage, and launch apps from your Nekzus catalog
+- **Real-time Monitoring** - Container health, service controls, and log viewing via WebSocket
+- **Push Notifications** - Alerts for proposals, discoveries, and webhook events
+- **QR Code Pairing** - 2-step device verification with certificate pinning
+- **Biometric Auth** - Face ID, Touch ID, and fingerprint support
+- **10+ Themes** - Cyberpunk, Catppuccin, Retro Futurism, Neubrutalism, and more with 13 alternate app icons
+- **Offline Support** - Background sync for uninterrupted access
+
 ## Quick Start
 
 ### Docker (Recommended)
