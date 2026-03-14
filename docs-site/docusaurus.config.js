@@ -9,8 +9,8 @@ const config = {
     "Secure API gateway for homelab with auto-discovery, reverse proxy, and web dashboard",
   favicon: "img/favicon.ico",
 
-  url: "https://nstalgic.github.io",
-  baseUrl: "/Nekzus/",
+  url: "https://docs.nekzus.io",
+  baseUrl: "/",
 
   organizationName: "nstalgic",
   projectName: "nekzus",
