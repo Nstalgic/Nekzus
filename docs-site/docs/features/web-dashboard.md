@@ -34,29 +34,7 @@ After starting Nekzus, access the dashboard at:
 
 The dashboard uses a three-section layout optimized for operational efficiency:
 
-```
-+--------------------------------------------------+
-|  HEADER: NXUS  |  username  |  notifications  |  exit  |
-+--------------------------------------------------+
-|                                                  |
-|  +------------+  +------------+  +------------+  |
-|  |  OVERVIEW  |  |  ACTIVITY  |  |   HEALTH   |  |
-|  +------------+  +------------+  +------------+  |
-|                                                  |
-|  +----------------------------------------------+|
-|  |           SERVER RESOURCES (GRAPHS)          ||
-|  +----------------------------------------------+|
-|                                                  |
-|  +----------------------------------------------+|
-|  |   MANAGEMENT CONSOLE (TABBED INTERFACE)      ||
-|  |  [ROUTES] [DISCOVERY] [DEVICES] [CONTAINERS] ||
-|  |  [SCRIPTS] [METRICS] [SETTINGS]              ||
-|  +----------------------------------------------+|
-|                                                  |
-+--------------------------------------------------+
-|  FOOTER: Version | Timestamp                     |
-+--------------------------------------------------+
-```
+![Dashboard Layout](/dashboard-full.webp)
 
 ---
 
