@@ -487,7 +487,7 @@ func TestCleanupOldBackups(t *testing.T) {
 func setupTestStore(t *testing.T) (*storage.Store, func()) {
 	t.Helper()
 	store, err := storage.NewStore(storage.Config{
-		DatabasePath: ":memory:",
+		DatabasePath: "file::memory:?cache=shared",
 	})
 	require.NoError(t, err)
 	return store, func() { store.Close() }
