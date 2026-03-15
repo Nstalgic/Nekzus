@@ -56,6 +56,7 @@ FROM gcr.io/distroless/base-debian12:nonroot
 
 WORKDIR /app
 COPY --from=build /out/nekzus /app/nekzus
+COPY --from=build /src/LICENSE /app/LICENSE
 
 # Run as root to access Docker socket
 # TODO: In production, use Docker socket proxy or add user to docker group
