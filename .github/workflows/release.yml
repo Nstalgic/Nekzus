@@ -1,14 +1,11 @@
 # Release Workflow - Builds and pushes Docker images, creates GitHub releases
-#
-# uncomment to enable
-#
+
 name: Release
 
 on:
-  # Uncomment this trigger to enable automatic releases on version tags:
-  # push:
-  #   tags:
-  #     - 'v*'
+  push:
+    tags:
+      - 'v*'
 
   # Manual trigger only (for testing the workflow)
   workflow_dispatch:
@@ -110,14 +107,18 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            # Tag: latest (only for stable releases)
+            # Exact version: 1.2.3 (always)
+            type=semver,pattern={{version}},value=${{ steps.version.outputs.version }}
+            # Minor floating: 1.2 (stable only)
+            type=semver,pattern={{major}}.{{minor}},value=${{ steps.version.outputs.version }},enable=${{ !contains(steps.version.outputs.version, '-') }}
+            # Major floating: 1 (stable only)
+            type=semver,pattern={{major}},value=${{ steps.version.outputs.version }},enable=${{ !contains(steps.version.outputs.version, '-') }}
+            # latest (stable only)
             type=raw,value=latest,enable=${{ !contains(steps.version.outputs.version, '-') }}
-            # Tag: v1.2.3 (exact version)
-            type=raw,value=${{ steps.version.outputs.version }}
-            # Tag: v1.2 (minor version)
-            type=raw,value=v${{ steps.version.outputs.version_short }},enable=${{ !contains(steps.version.outputs.version, '-') }}
-            # Tag: v1 (major version)
-            type=semver,pattern=v{{major}},value=${{ steps.version.outputs.version }}
+            # beta channel (pre-releases only)
+            type=raw,value=beta,enable=${{ contains(steps.version.outputs.version, '-') }}
+            # Commit SHA for traceability
+            type=sha,prefix=sha-,format=short
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
