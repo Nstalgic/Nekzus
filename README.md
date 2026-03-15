@@ -1,8 +1,10 @@
 # Nekzus
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
+[![CI](https://github.com/Nstalgic/Nekzus/actions/workflows/ci.yml/badge.svg)](https://github.com/Nstalgic/Nekzus/actions/workflows/ci.yml)
 [![Go](https://img.shields.io/badge/Go-1.25+-00ADD8?logo=go&logoColor=white)](https://go.dev)
-[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/r/nstalgic/nekzus)
+[![Docker Image Version](https://img.shields.io/docker/v/nstalgic/nekzus?sort=semver&logo=docker&label=version)](https://hub.docker.com/r/nstalgic/nekzus)
+[![Docker Image Size](https://img.shields.io/docker/image-size/nstalgic/nekzus?sort=semver&logo=docker)](https://hub.docker.com/r/nstalgic/nekzus)
 
 A secure API gateway and reverse proxy for local network services with auto-discovery, JWT authentication, WebSocket support, and a modern web dashboard.
 
