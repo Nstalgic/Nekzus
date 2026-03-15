@@ -109,9 +109,16 @@ func TestSessionCookiesHandler_List(t *testing.T) {
 		t.Errorf("List() sessions = %d, want 2", len(response.Sessions))
 	}
 
-	// Verify first session
-	if response.Sessions[0].AppID != "grafana" {
-		t.Errorf("Sessions[0].AppID = %s, want grafana", response.Sessions[0].AppID)
+	// Verify both apps are present (map iteration order is non-deterministic)
+	appIDs := map[string]bool{}
+	for _, s := range response.Sessions {
+		appIDs[s.AppID] = true
+	}
+	if !appIDs["grafana"] {
+		t.Error("expected grafana session in response")
+	}
+	if !appIDs["pihole"] {
+		t.Error("expected pihole session in response")
 	}
 }
 

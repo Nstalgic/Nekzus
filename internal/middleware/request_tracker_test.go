@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -397,19 +398,19 @@ func TestRequestTracker_ImplementsFlusher(t *testing.T) {
 	// Arrange
 	mock := newMockStorage()
 
-	flusherAvailable := false
-	flushCalled := false
+	var flusherAvailable atomic.Bool
+	var flushCalled atomic.Bool
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Check if Flusher interface is available
 		flusher, ok := w.(http.Flusher)
-		flusherAvailable = ok
+		flusherAvailable.Store(ok)
 
 		if ok {
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte("event: test\ndata: hello\n\n"))
 			flusher.Flush() // For SSE, we need to flush immediately
-			flushCalled = true
+			flushCalled.Store(true)
 		} else {
 			t.Error("ResponseWriter does not implement http.Flusher - SSE/streaming will break")
 			http.Error(w, "flushing not supported", http.StatusInternalServerError)
@@ -431,8 +432,8 @@ func TestRequestTracker_ImplementsFlusher(t *testing.T) {
 	defer resp.Body.Close()
 
 	// Assert
-	assert.True(t, flusherAvailable, "ResponseWriter should implement http.Flusher for SSE/streaming")
-	assert.True(t, flushCalled, "Flush should be callable")
+	assert.True(t, flusherAvailable.Load(), "ResponseWriter should implement http.Flusher for SSE/streaming")
+	assert.True(t, flushCalled.Load(), "Flush should be callable")
 }
 
 // Test SSE streaming scenario
