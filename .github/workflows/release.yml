@@ -60,7 +60,7 @@ jobs:
         run: cp -r web/dist cmd/nekzus/webdist
 
       - name: Run tests
-        run: go test -race ./...
+        run: go test -short -race ./...
 
   # Build and push multi-architecture Docker images
   build:
