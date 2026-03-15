@@ -10,6 +10,8 @@ A secure API gateway and reverse proxy for local network services with auto-disc
 
 **[Website](https://nekzus.io)** | **[Documentation](https://docs.nekzus.io)**
 
+> **Note:** The mobile companion app is currently in testing and not yet publicly available.
+
 ## How It Works
 
 Nekzus sits between your clients (browsers, mobile apps) and your backend services. It automatically discovers services running in Docker and Kubernetes, then proposes them for approval before routing traffic. mDNS/Bonjour discovery is scaffolded and planned for a future release. All requests pass through the gateway where they are authenticated (JWT or API key), proxied to the correct backend, and monitored for health. The web dashboard gives you full visibility and control over routes, devices, containers, and certificates.
