@@ -8,14 +8,25 @@ COPY web/ ./
 RUN npm run build
 
 # --- Go Build stage
-# Use Debian-based image for better compatibility with distroless runtime
-FROM golang:1.25-bookworm AS build
+# Run on the build platform natively, cross-compile for target arch
+FROM --platform=$BUILDPLATFORM golang:1.25-bookworm AS build
 
-# Install build dependencies for CGO and SQLite
+ARG TARGETPLATFORM
+ARG TARGETARCH
+
+# Install build dependencies for CGO and SQLite (native + cross-compile)
 RUN apt-get update && apt-get install -y \
     gcc \
     libc6-dev \
     libsqlite3-dev \
+    && if [ "$TARGETARCH" = "arm64" ] && [ "$(dpkg --print-architecture)" != "arm64" ]; then \
+        dpkg --add-architecture arm64 && \
+        apt-get update && \
+        apt-get install -y \
+            gcc-aarch64-linux-gnu \
+            libc6-dev-arm64-cross \
+            libsqlite3-dev:arm64; \
+    fi \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /src
@@ -29,9 +40,15 @@ COPY --from=web-build /web/dist ./cmd/nekzus/webdist
 RUN go mod tidy
 
 # Build with CGO enabled (required for SQLite)
+# Use cross-compiler for arm64 to avoid slow QEMU emulation
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
-    CGO_ENABLED=1 go build -o /out/nekzus ./cmd/nekzus
+    if [ "$TARGETARCH" = "arm64" ] && [ "$(dpkg --print-architecture)" != "arm64" ]; then \
+        CC=aarch64-linux-gnu-gcc CGO_ENABLED=1 GOOS=linux GOARCH=arm64 \
+        go build -o /out/nekzus ./cmd/nekzus; \
+    else \
+        CGO_ENABLED=1 go build -o /out/nekzus ./cmd/nekzus; \
+    fi
 
 # --- Runtime stage
 # Using base-debian12 with libc for SQLite support
