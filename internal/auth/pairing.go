@@ -112,9 +112,15 @@ func (pm *PairingManager) GenerateCode(config PairingConfig) (string, error) {
 func (pm *PairingManager) RedeemCode(code string) (*PairingConfig, error) {
 	code = strings.ToUpper(strings.TrimSpace(code))
 
+	pairingLog.Debug("redeem attempt",
+		"code_hash", hashCodeForLog(code),
+		"code_length", len(code),
+		"total_stored_codes", len(pm.codes))
+
 	// Check global rate limit first
 	if pm.isGloballyRateLimited() {
-		pairingLog.Warn("global rate limit exceeded for pairing attempts")
+		pairingLog.Warn("global rate limit exceeded for pairing attempts",
+			"global_failures", pm.globalFailures.Load())
 		return nil, fmt.Errorf("too many pairing attempts, please try again later")
 	}
 
@@ -137,16 +143,23 @@ func (pm *PairingManager) RedeemCode(code string) (*PairingConfig, error) {
 	// Simulate work for non-matching codes to ensure constant timing
 	if matchedCode == nil {
 		pm.recordGlobalFailure()
-		pairingLog.Warn("pairing code not found", "code_hash", hashCodeForLog(code))
+		pairingLog.Warn("pairing code not found",
+			"code_hash", hashCodeForLog(code),
+			"stored_code_count", len(pm.codes))
 		// Add small delay to normalize timing
 		time.Sleep(time.Millisecond * time.Duration(1+randInt(5)))
 		return nil, fmt.Errorf("invalid pairing code")
 	}
 
+	now := time.Now()
+
 	// Check if code is locked due to too many failures
-	if time.Now().Before(matchedCode.lockedUntil) {
+	if now.Before(matchedCode.lockedUntil) {
 		pm.recordGlobalFailure()
-		pairingLog.Warn("pairing code is locked", "code_hash", hashCodeForLog(code))
+		pairingLog.Warn("pairing code is locked",
+			"code_hash", hashCodeForLog(code),
+			"locked_until", matchedCode.lockedUntil.Format(time.RFC3339),
+			"failed_count", matchedCode.failedCount)
 		return nil, fmt.Errorf("invalid pairing code")
 	}
 
@@ -154,18 +167,29 @@ func (pm *PairingManager) RedeemCode(code string) (*PairingConfig, error) {
 		pm.recordGlobalFailure()
 		matchedCode.failedCount++
 		if matchedCode.failedCount >= maxFailedAttemptsPerCode {
-			matchedCode.lockedUntil = time.Now().Add(codeLockDuration)
+			matchedCode.lockedUntil = now.Add(codeLockDuration)
 		}
-		pairingLog.Warn("pairing code already used", "code_hash", hashCodeForLog(code))
+		pairingLog.Warn("pairing code already used",
+			"code_hash", hashCodeForLog(code),
+			"failed_count", matchedCode.failedCount)
 		return nil, fmt.Errorf("invalid pairing code")
 	}
 
-	if time.Now().After(matchedCode.expiresAt) {
+	if now.After(matchedCode.expiresAt) {
 		pm.recordGlobalFailure()
-		pairingLog.Warn("pairing code expired", "code_hash", hashCodeForLog(code))
+		ttlAgo := now.Sub(matchedCode.expiresAt)
+		pairingLog.Warn("pairing code expired",
+			"code_hash", hashCodeForLog(code),
+			"expired_ago", ttlAgo.String(),
+			"expires_at", matchedCode.expiresAt.Format(time.RFC3339))
 		delete(pm.codes, matchedKey)
 		return nil, fmt.Errorf("invalid pairing code")
 	}
+
+	pairingLog.Debug("pairing code validated",
+		"code_hash", hashCodeForLog(code),
+		"ttl_remaining", matchedCode.expiresAt.Sub(now).String(),
+		"base_url", matchedCode.config.BaseURL)
 
 	// Mark as used but keep for a short time to prevent replay
 	matchedCode.used = true

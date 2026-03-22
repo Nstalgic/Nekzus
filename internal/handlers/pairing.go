@@ -40,8 +40,18 @@ type PairingRequest struct {
 // Request body: {"code": "ABCD1234"}
 // Requires header: X-Pairing-Request: true
 func (h *PairingHandler) HandleRedeemPairingCode(w http.ResponseWriter, r *http.Request) {
+	clientIP := getClientIP(r)
+
+	pairLog.Debug("pairing redemption request received",
+		"method", r.Method,
+		"ip", clientIP,
+		"content_type", r.Header.Get("Content-Type"),
+		"has_pairing_header", r.Header.Get("X-Pairing-Request") == "true",
+		"user_agent", r.UserAgent())
+
 	// Only accept POST requests
 	if r.Method != http.MethodPost {
+		pairLog.Debug("pairing rejected: wrong method", "method", r.Method, "ip", clientIP)
 		apperrors.WriteJSON(w, apperrors.New(
 			"METHOD_NOT_ALLOWED",
 			"Use POST to redeem pairing codes",
@@ -52,6 +62,9 @@ func (h *PairingHandler) HandleRedeemPairingCode(w http.ResponseWriter, r *http.
 
 	// Require explicit pairing header to prevent CSRF
 	if r.Header.Get("X-Pairing-Request") != "true" {
+		pairLog.Debug("pairing rejected: missing X-Pairing-Request header",
+			"ip", clientIP,
+			"header_value", r.Header.Get("X-Pairing-Request"))
 		apperrors.WriteJSON(w, apperrors.New(
 			"MISSING_HEADER",
 			"X-Pairing-Request header required",
@@ -61,7 +74,6 @@ func (h *PairingHandler) HandleRedeemPairingCode(w http.ResponseWriter, r *http.
 	}
 
 	// Rate limit check
-	clientIP := getClientIP(r)
 	if !h.rateLimiter.Allow(clientIP) {
 		pairLog.Warn("rate limit exceeded for pairing", "ip", clientIP)
 		apperrors.WriteJSON(w, apperrors.ErrRateLimitExceeded)
@@ -71,6 +83,7 @@ func (h *PairingHandler) HandleRedeemPairingCode(w http.ResponseWriter, r *http.
 	// Parse request body
 	var req PairingRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		pairLog.Debug("pairing rejected: invalid request body", "ip", clientIP, "error", err)
 		apperrors.WriteJSON(w, apperrors.New(
 			"INVALID_REQUEST",
 			"Invalid request body",
@@ -81,6 +94,7 @@ func (h *PairingHandler) HandleRedeemPairingCode(w http.ResponseWriter, r *http.
 
 	code := strings.TrimSpace(req.Code)
 	if code == "" {
+		pairLog.Debug("pairing rejected: empty code", "ip", clientIP)
 		apperrors.WriteJSON(w, apperrors.New(
 			"INVALID_CODE",
 			"Pairing code required",
@@ -88,6 +102,12 @@ func (h *PairingHandler) HandleRedeemPairingCode(w http.ResponseWriter, r *http.
 		))
 		return
 	}
+
+	pairLog.Debug("attempting code redemption",
+		"code_hash", hashCode(code),
+		"code_length", len(code),
+		"ip", clientIP,
+		"active_codes", h.pairingManager.ActiveCodeCount())
 
 	// Redeem the code (single-use)
 	config, err := h.pairingManager.RedeemCode(code)
