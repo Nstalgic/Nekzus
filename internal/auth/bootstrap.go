@@ -59,16 +59,25 @@ func (bs *BootstrapStore) Validate(token string) bool {
 		return false
 	}
 
+	bs.mu.RLock()
+	shortLivedCount := len(bs.shortLivedTokens)
+	permanentCount := len(bs.permanentTokens)
+	bs.mu.RUnlock()
+
+	log.Debug("bootstrap validation attempt",
+		"token_prefix", token[:min(10, len(token))]+"...",
+		"short_lived_tokens", shortLivedCount,
+		"permanent_tokens", permanentCount,
+		"has_env_token", os.Getenv("NEKZUS_BOOTSTRAP_TOKEN") != "")
+
 	// Check short-lived tokens first
 	if bs.validateShortLived(token) {
-		// Log successful validation
 		log.Debug("Short-lived bootstrap token validated successfully")
 		return true
 	}
 
 	// Check permanent tokens
 	if bs.validatePermanent(token) {
-		// Log successful validation
 		log.Debug("Permanent bootstrap token validated successfully")
 		return true
 	}
@@ -87,8 +96,9 @@ func (bs *BootstrapStore) Validate(token string) bool {
 		return true
 	}
 
-	// Log failed validation
-	log.Warn("Bootstrap validation failed - invalid token")
+	log.Warn("Bootstrap validation failed - invalid token",
+		"checked_short_lived", shortLivedCount,
+		"checked_permanent", permanentCount)
 	return false
 }
 
@@ -97,19 +107,26 @@ func (bs *BootstrapStore) validateShortLived(token string) bool {
 	bs.mu.RLock()
 	expiry, exists := bs.shortLivedTokens[token]
 	isRateLimited := bs.rateLimited[token]
+	failedCount := bs.failedAttempts[token]
 	bs.mu.RUnlock()
 
 	// Check if rate limited (too many failed attempts)
 	if isRateLimited {
+		log.Debug("short-lived token rejected: rate limited",
+			"failed_attempts", failedCount)
 		return false
 	}
 
 	if !exists {
+		log.Debug("short-lived token not found in store")
 		return false
 	}
 
 	// Check if expired
-	if time.Now().After(expiry) {
+	now := time.Now()
+	if now.After(expiry) {
+		log.Debug("short-lived token expired",
+			"expired_ago", now.Sub(expiry).String())
 		// Clean up expired token
 		bs.mu.Lock()
 		delete(bs.shortLivedTokens, token)
@@ -119,6 +136,8 @@ func (bs *BootstrapStore) validateShortLived(token string) bool {
 		return false
 	}
 
+	log.Debug("short-lived token valid",
+		"ttl_remaining", expiry.Sub(now).String())
 	return true
 }
 

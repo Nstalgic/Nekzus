@@ -207,9 +207,18 @@ func (h *AuthHandler) HandlePair(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 	var platform string
 
+	clientIP := getClientIP(r)
+	authlog.Debug("pair request received",
+		"method", r.Method,
+		"ip", clientIP,
+		"has_auth_header", r.Header.Get("Authorization") != "",
+		"content_type", r.Header.Get("Content-Type"),
+		"user_agent", r.UserAgent())
+
 	// Extract bootstrap token
 	bootstrap := httputil.ExtractBearerToken(r)
 	if bootstrap == "" {
+		authlog.Debug("pair rejected: no bearer token", "ip", clientIP)
 		if h.metrics != nil {
 			h.metrics.RecordAuthPairing("error_no_token", "", time.Since(start))
 		}
@@ -217,8 +226,13 @@ func (h *AuthHandler) HandlePair(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	authlog.Debug("pair: bootstrap token extracted",
+		"ip", clientIP,
+		"token_prefix", bootstrap[:min(10, len(bootstrap))]+"...")
+
 	// Check if token is rate limited (too many failed attempts)
 	if h.authManager.IsBootstrapRateLimited(bootstrap) {
+		authlog.Debug("pair rejected: bootstrap token rate limited", "ip", clientIP)
 		if h.metrics != nil {
 			h.metrics.RecordAuthPairing("error_rate_limited", "", time.Since(start))
 		}
@@ -233,6 +247,7 @@ func (h *AuthHandler) HandlePair(w http.ResponseWriter, r *http.Request) {
 
 	// Validate bootstrap token
 	if !h.authManager.ValidateBootstrap(bootstrap) {
+		authlog.Debug("pair rejected: invalid bootstrap token", "ip", clientIP)
 		// Record failed attempt
 		h.authManager.RecordFailedPairing(bootstrap)
 		if h.metrics != nil {
@@ -242,9 +257,12 @@ func (h *AuthHandler) HandlePair(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	authlog.Debug("pair: bootstrap token valid, decoding request body", "ip", clientIP)
+
 	// Decode and validate request
 	req, err := httputil.DecodeAndValidate[PairRequest](r, w, MaxAuthRequestBodySize)
 	if err != nil {
+		authlog.Debug("pair rejected: request decode/validation failed", "ip", clientIP, "error", err)
 		// Determine error type for metrics
 		appErr, ok := err.(*apperrors.AppError)
 		if ok {

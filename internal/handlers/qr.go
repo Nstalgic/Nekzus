@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -121,6 +122,14 @@ func (h *QRHandler) HandleQRCode(w http.ResponseWriter, r *http.Request) {
 		"code", code,
 		"base_url", h.baseURL,
 		"pins_count", len(spkiPins))
+
+	qrlog.Debug("QR pairing details",
+		"code_hash", hashCode(code),
+		"code_length", len(code),
+		"bootstrap_token_prefix", bootstrapToken[:min(10, len(bootstrapToken))]+"...",
+		"nexus_id", h.nexusID,
+		"capabilities", fmt.Sprintf("%v", h.capabilities),
+		"hostname", hostname)
 
 	// Check if client wants QR code image
 	if r.URL.Query().Get("format") == "png" {
