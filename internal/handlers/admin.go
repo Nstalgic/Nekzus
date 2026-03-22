@@ -12,16 +12,16 @@ var adminlog = slog.With("package", "handlers")
 // AdminHandler handles admin endpoints
 type AdminHandler struct {
 	version      string
-	nexusID      string
+	nekzusID     string
 	capabilities []string
 	buildDate    string
 }
 
 // NewAdminHandler creates a new admin handler
-func NewAdminHandler(version, nexusID string, capabilities []string) *AdminHandler {
+func NewAdminHandler(version, nekzusID string, capabilities []string) *AdminHandler {
 	return &AdminHandler{
 		version:      version,
-		nexusID:      nexusID,
+		nekzusID:     nekzusID,
 		capabilities: capabilities,
 		buildDate:    "2025-10-13",
 	}
@@ -31,7 +31,7 @@ func NewAdminHandler(version, nexusID string, capabilities []string) *AdminHandl
 func (h *AdminHandler) HandleInfo(w http.ResponseWriter, r *http.Request) {
 	info := map[string]interface{}{
 		"version":      h.version,
-		"nexusId":      h.nexusID,
+		"nekzusId":     h.nekzusID,
 		"capabilities": h.capabilities,
 		"buildDate":    h.buildDate,
 	}

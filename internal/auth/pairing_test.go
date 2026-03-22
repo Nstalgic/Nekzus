@@ -16,7 +16,7 @@ func TestPairingManager_GenerateCode(t *testing.T) {
 		SPKIPins:       []string{"sha256/primary...", "sha256/backup..."},
 		BootstrapToken: "bootstrap_token_123",
 		Capabilities:   []string{"discovery", "websocket"},
-		NexusID:        "test-nexus-id",
+		NekzusID:       "test-nexus-id",
 	}
 
 	code, err := pm.GenerateCode(config)
@@ -49,7 +49,7 @@ func TestPairingManager_RedeemCode(t *testing.T) {
 		SPKIPins:       []string{"sha256/primary...", "sha256/backup..."},
 		BootstrapToken: "bootstrap_token_123",
 		Capabilities:   []string{"discovery"},
-		NexusID:        "test-nexus-id",
+		NekzusID:       "test-nexus-id",
 	}
 
 	code, err := pm.GenerateCode(config)
@@ -76,8 +76,8 @@ func TestPairingManager_RedeemCode(t *testing.T) {
 	if retrieved.BootstrapToken != config.BootstrapToken {
 		t.Errorf("BootstrapToken mismatch")
 	}
-	if retrieved.NexusID != config.NexusID {
-		t.Errorf("NexusID mismatch")
+	if retrieved.NekzusID != config.NekzusID {
+		t.Errorf("NekzusID mismatch")
 	}
 	if retrieved.ExpiresAt == 0 {
 		t.Error("ExpiresAt should be set")

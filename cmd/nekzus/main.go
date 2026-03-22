@@ -79,7 +79,7 @@ type Application struct {
 
 	// Metadata
 	metricsEnabled atomic.Bool // Thread-safe flag for enabling/disabling metrics endpoint
-	nexusID        string
+	nekzusID       string
 	baseURL        string
 	version        string
 	capabilities   []string
@@ -187,7 +187,7 @@ func NewApplication(cfg types.ServerConfig, configPath string) (*Application, er
 	}
 
 	// Generate unique instance ID
-	nexusID := "nxs_" + randToken(12)
+	nekzusID := "nkz_" + randToken(12)
 
 	// Resolve base URL with priority: env var > config file > auto-detect
 	resolver := config.NewResolver()
@@ -239,7 +239,7 @@ func NewApplication(cfg types.ServerConfig, configPath string) (*Application, er
 		certMgr, // certificate manager for SPKI calculation
 		baseURL,
 		cfg.Server.TLSCert,
-		nexusID,
+		nekzusID,
 		version,
 		capabilities,
 	)
@@ -291,7 +291,7 @@ func NewApplication(cfg types.ServerConfig, configPath string) (*Application, er
 		metrics:      m,
 		proxyCache:   proxy.NewCache(),
 		dockerClient: dockerClient,
-		nexusID:      nexusID,
+		nekzusID:     nekzusID,
 		baseURL:      baseURL,
 		version:      version,
 		capabilities: capabilities,
@@ -313,7 +313,7 @@ func NewApplication(cfg types.ServerConfig, configPath string) (*Application, er
 		app.limiters.QR,
 		baseURL,
 		cfg.Server.TLSCert,
-		nexusID,
+		nekzusID,
 		capabilities,
 	)
 	app.handlers.QR.SetPairingManager(app.managers.Pairing)
@@ -339,7 +339,7 @@ func NewApplication(cfg types.ServerConfig, configPath string) (*Application, er
 		certMgr,         // certificate manager for SPKI calculation
 		baseURL,
 		cfg.Server.TLSCert,
-		nexusID,
+		nekzusID,
 		version,
 		capabilities,
 	)
@@ -543,7 +543,7 @@ func NewApplication(cfg types.ServerConfig, configPath string) (*Application, er
 	}
 
 	// Initialize federation (P2P service discovery)
-	app.managers.Peers, _ = componentBuilder.BuildFederationPeerManager(app.nexusID, app.managers.WebSocket)
+	app.managers.Peers, _ = componentBuilder.BuildFederationPeerManager(app.nekzusID, app.managers.WebSocket)
 
 	// Wire federation catalog sync callbacks
 	WireFederationCallbacks(app.managers.Peers, app.managers.Router)

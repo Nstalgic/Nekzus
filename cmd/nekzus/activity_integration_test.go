@@ -56,7 +56,7 @@ func TestActivityTracking_DevicePairing(t *testing.T) {
 		nil, // no cert manager for tests
 		app.baseURL,
 		"",
-		app.nexusID,
+		app.nekzusID,
 		app.version,
 		app.capabilities,
 	)
@@ -500,7 +500,7 @@ func TestActivityTracking_MultipleEvents(t *testing.T) {
 		nil, // no cert manager for tests
 		app.baseURL,
 		"",
-		app.nexusID,
+		app.nekzusID,
 		app.version,
 		app.capabilities,
 	)

@@ -197,7 +197,7 @@ func (app *Application) handleRouteActions(w http.ResponseWriter, r *http.Reques
 func (app *Application) handleAdminInfo(w http.ResponseWriter, r *http.Request) {
 	info := map[string]interface{}{
 		"version":      app.version,
-		"nexusId":      app.nexusID,
+		"nekzusId":     app.nekzusID,
 		"capabilities": app.capabilities,
 		"buildDate":    "2025-10-13",
 	}

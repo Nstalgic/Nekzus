@@ -477,7 +477,7 @@ func (app *Application) handleRemoteProxy(w http.ResponseWriter, r *http.Request
 	r.Header.Del("Authorization") // Remove client auth
 	r.Header.Set("X-Forwarded-For", clientIP)
 	r.Header.Set("X-Forwarded-Host", r.Host)
-	r.Header.Set("X-Federated-From", app.nexusID) // Indicate federation hop
+	r.Header.Set("X-Federated-From", app.nekzusID) // Indicate federation hop
 	if r.TLS != nil {
 		r.Header.Set("X-Forwarded-Proto", "https")
 	} else {

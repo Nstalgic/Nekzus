@@ -178,7 +178,7 @@ func (app *Application) handleWebSocket(w http.ResponseWriter, r *http.Request) 
 		Type: types.WSMsgTypeHello,
 		Data: map[string]interface{}{
 			"message":   "connected",
-			"nexusId":   app.nexusID,
+			"nekzusId":  app.nekzusID,
 			"version":   app.version,
 			"timestamp": time.Now().Unix(),
 		},

@@ -86,7 +86,7 @@ func newTestAppWithCertManager(t *testing.T) (*Application, func()) {
 		storage:      store,
 		metrics:      testMetrics,
 		proxyCache:   proxy.NewCache(),
-		nexusID:      "test-nexus",
+		nekzusID:     "test-nekzus",
 		baseURL:      "http://localhost:8443",
 		version:      "1.0.0-test",
 		capabilities: []string{"catalog", "events", "proxy"},
@@ -822,7 +822,7 @@ func TestQRCode_IncludesSPKIAfterCertGeneration(t *testing.T) {
 		app.services.Certs, // cert manager for SPKI calculation
 		app.baseURL,
 		"", // no file path
-		app.nexusID,
+		app.nekzusID,
 		app.version,
 		app.capabilities,
 	)
