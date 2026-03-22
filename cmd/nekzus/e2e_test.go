@@ -124,7 +124,7 @@ func testQRCodeGeneration(t *testing.T, client *http.Client, baseURL string) {
 		SPKI           string   `json:"spki"`
 		BootstrapToken string   `json:"bootstrapToken"`
 		Capabilities   []string `json:"capabilities"`
-		NexusID        string   `json:"nexusId"`
+		NekzusID       string   `json:"nekzusId"`
 	}
 
 	if err := json.NewDecoder(resp.Body).Decode(&qrPayload); err != nil {
@@ -141,18 +141,18 @@ func testQRCodeGeneration(t *testing.T, client *http.Client, baseURL string) {
 	if !strings.HasPrefix(qrPayload.BootstrapToken, "temp_") {
 		t.Errorf("Bootstrap token should start with 'temp_', got: %s", qrPayload.BootstrapToken)
 	}
-	if qrPayload.NexusID == "" {
-		t.Error("QR payload missing nexusId")
+	if qrPayload.NekzusID == "" {
+		t.Error("QR payload missing nekzusId")
 	}
-	if !strings.HasPrefix(qrPayload.NexusID, "nxs_") {
-		t.Errorf("Nexus ID should start with 'nxs_', got: %s", qrPayload.NexusID)
+	if !strings.HasPrefix(qrPayload.NekzusID, "nkz_") {
+		t.Errorf("Nekzus ID should start with 'nkz_', got: %s", qrPayload.NekzusID)
 	}
 	if len(qrPayload.Capabilities) == 0 {
 		t.Error("QR payload missing capabilities")
 	}
 
 	t.Logf("✓ QR code generated with bootstrap token: %s", qrPayload.BootstrapToken[:20]+"...")
-	t.Logf("  Nexus ID: %s", qrPayload.NexusID)
+	t.Logf("  Nekzus ID: %s", qrPayload.NekzusID)
 	t.Logf("  Capabilities: %v", qrPayload.Capabilities)
 	if qrPayload.SPKI != "" {
 		t.Logf("  SPKI: %s...", qrPayload.SPKI[:20])
@@ -239,7 +239,7 @@ func testAdminInfo(t *testing.T, client *http.Client, baseURL, jwt string) {
 
 	var adminInfo struct {
 		Version      string   `json:"version"`
-		NexusID      string   `json:"nexusId"`
+		NekzusID     string   `json:"nekzusId"`
 		Capabilities []string `json:"capabilities"`
 		BuildDate    string   `json:"buildDate"`
 	}
@@ -251,8 +251,8 @@ func testAdminInfo(t *testing.T, client *http.Client, baseURL, jwt string) {
 	if adminInfo.Version == "" {
 		t.Error("Admin info missing version")
 	}
-	if adminInfo.NexusID == "" {
-		t.Error("Admin info missing nexusId")
+	if adminInfo.NekzusID == "" {
+		t.Error("Admin info missing nekzusId")
 	}
 	if len(adminInfo.Capabilities) == 0 {
 		t.Error("Admin info missing capabilities")
@@ -260,7 +260,7 @@ func testAdminInfo(t *testing.T, client *http.Client, baseURL, jwt string) {
 
 	t.Logf("✓ Admin info retrieved")
 	t.Logf("  Version: %s", adminInfo.Version)
-	t.Logf("  Nexus ID: %s", adminInfo.NexusID)
+	t.Logf("  Nekzus ID: %s", adminInfo.NekzusID)
 	t.Logf("  Capabilities: %v", adminInfo.Capabilities)
 }
 

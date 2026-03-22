@@ -482,7 +482,7 @@ func (cb *ComponentBuilder) BuildScriptsComponents(dockerClient *client.Client) 
 }
 
 // BuildFederationPeerManager creates the federation peer manager
-func (cb *ComponentBuilder) BuildFederationPeerManager(nexusID string, wsManager *websocket.Manager) (*federation.PeerManager, error) {
+func (cb *ComponentBuilder) BuildFederationPeerManager(nekzusID string, wsManager *websocket.Manager) (*federation.PeerManager, error) {
 	if !cb.cfg.Federation.Enabled {
 		return nil, nil
 	}
@@ -514,7 +514,7 @@ func (cb *ComponentBuilder) BuildFederationPeerManager(nexusID string, wsManager
 
 	// Create federation config
 	fedConfig := federation.Config{
-		LocalPeerID:         nexusID,
+		LocalPeerID:         nekzusID,
 		LocalPeerName:       "Nekzus Instance",
 		APIAddress:          apiAddr,
 		GossipBindAddr:      "0.0.0.0",
@@ -538,7 +538,7 @@ func (cb *ComponentBuilder) BuildFederationPeerManager(nexusID string, wsManager
 		return nil, err
 	}
 
-	log.Info("peer manager created", "peer_id", nexusID, "gossip_port", gossipPort)
+	log.Info("peer manager created", "peer_id", nekzusID, "gossip_port", gossipPort)
 	return peerManager, nil
 }
 

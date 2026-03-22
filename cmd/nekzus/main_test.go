@@ -82,7 +82,7 @@ func newTestApplication(t *testing.T) *Application {
 		storage:      nil,            // No storage for tests
 		metrics:      testMetrics,    // Use shared metrics instance
 		proxyCache:   proxy.NewCache(),
-		nexusID:      "test-nexus",
+		nekzusID:     "test-nekzus",
 		baseURL:      "http://localhost:8443",
 		version:      "1.0.0-test",
 		capabilities: []string{"catalog", "events", "proxy"},

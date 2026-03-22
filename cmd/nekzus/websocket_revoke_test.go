@@ -46,10 +46,10 @@ func TestWebSocketRevokedDeviceCannotConnect(t *testing.T) {
 		managers: &ManagerRegistry{
 			WebSocket: wsManager,
 		},
-		jobs:    &JobRegistry{}, // Empty jobs registry for tests
-		metrics: m,
-		nexusID: "test-nexus",
-		version: "1.0.0",
+		jobs:     &JobRegistry{}, // Empty jobs registry for tests
+		metrics:  m,
+		nekzusID: "test-nekzus",
+		version:  "1.0.0",
 	}
 
 	// Create a test device
@@ -192,10 +192,10 @@ func TestWebSocketRevokeWhileConnected(t *testing.T) {
 		managers: &ManagerRegistry{
 			WebSocket: wsManager,
 		},
-		jobs:    &JobRegistry{}, // Empty jobs registry for tests
-		metrics: m,
-		nexusID: "test-nexus",
-		version: "1.0.0",
+		jobs:     &JobRegistry{}, // Empty jobs registry for tests
+		metrics:  m,
+		nekzusID: "test-nekzus",
+		version:  "1.0.0",
 	}
 
 	// Create a test device
@@ -311,10 +311,10 @@ func TestWebSocketAuthWithoutStorage(t *testing.T) {
 		managers: &ManagerRegistry{
 			WebSocket: wsManager,
 		},
-		jobs:    &JobRegistry{}, // Empty jobs registry for tests
-		metrics: m,
-		nexusID: "test-nexus",
-		version: "1.0.0",
+		jobs:     &JobRegistry{}, // Empty jobs registry for tests
+		metrics:  m,
+		nekzusID: "test-nekzus",
+		version:  "1.0.0",
 	}
 
 	// Generate JWT

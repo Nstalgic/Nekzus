@@ -92,7 +92,7 @@ func setupAuthTestApp(t *testing.T) *Application {
 		metrics:      testMetrics,    // Use shared metrics from main_test.go
 		proxyCache:   proxy.NewCache(),
 		version:      "1.0.0-test",
-		nexusID:      "test-nexus-id",
+		nekzusID:     "test-nekzus-id",
 		baseURL:      "http://localhost:8080",
 		capabilities: []string{"catalog", "events", "proxy", "discovery"},
 	}

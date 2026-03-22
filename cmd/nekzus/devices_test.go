@@ -97,7 +97,7 @@ func newTestApplicationWithStorage(t *testing.T) (*Application, func()) {
 		storage:      store,
 		metrics:      testMetrics,
 		proxyCache:   proxy.NewCache(),
-		nexusID:      "test-nexus",
+		nekzusID:     "test-nekzus",
 		baseURL:      "http://localhost:8443",
 		version:      "1.0.0-test",
 		capabilities: []string{"catalog", "events", "proxy"},

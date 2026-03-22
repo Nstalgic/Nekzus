@@ -82,13 +82,13 @@ type AuthHandler struct {
 	wsDisconnecter WebSocketDisconnecter
 	baseURL        string
 	tlsCertPath    string
-	nexusID        string
+	nekzusID       string
 	capabilities   []string
 	version        string
 }
 
 // NewAuthHandler creates a new auth handler
-func NewAuthHandler(authMgr *auth.Manager, store *storage.Store, m MetricsRecorder, events EventPublisher, activity ActivityTracker, qrLimiter *ratelimit.Limiter, certMgr CertificateManager, baseURL, tlsCertPath, nexusID, version string, capabilities []string) *AuthHandler {
+func NewAuthHandler(authMgr *auth.Manager, store *storage.Store, m MetricsRecorder, events EventPublisher, activity ActivityTracker, qrLimiter *ratelimit.Limiter, certMgr CertificateManager, baseURL, tlsCertPath, nekzusID, version string, capabilities []string) *AuthHandler {
 	return &AuthHandler{
 		authManager:  authMgr,
 		storage:      store,
@@ -99,7 +99,7 @@ func NewAuthHandler(authMgr *auth.Manager, store *storage.Store, m MetricsRecord
 		certManager:  certMgr,
 		baseURL:      baseURL,
 		tlsCertPath:  tlsCertPath,
-		nexusID:      nexusID,
+		nekzusID:     nekzusID,
 		capabilities: capabilities,
 		version:      version,
 	}
@@ -107,7 +107,7 @@ func NewAuthHandler(authMgr *auth.Manager, store *storage.Store, m MetricsRecord
 
 // NewAuthHandlerWithBackupCert creates a new auth handler with backup certificate support
 // for SPKI pin rotation. The certMgr should implement CertificateManagerWithBackup.
-func NewAuthHandlerWithBackupCert(authMgr *auth.Manager, store *storage.Store, m MetricsRecorder, events EventPublisher, activity ActivityTracker, qrLimiter *ratelimit.Limiter, certMgr CertificateManagerWithBackup, baseURL, tlsCertPath, nexusID, version string, capabilities []string) *AuthHandler {
+func NewAuthHandlerWithBackupCert(authMgr *auth.Manager, store *storage.Store, m MetricsRecorder, events EventPublisher, activity ActivityTracker, qrLimiter *ratelimit.Limiter, certMgr CertificateManagerWithBackup, baseURL, tlsCertPath, nekzusID, version string, capabilities []string) *AuthHandler {
 	return &AuthHandler{
 		authManager:  authMgr,
 		storage:      store,
@@ -118,7 +118,7 @@ func NewAuthHandlerWithBackupCert(authMgr *auth.Manager, store *storage.Store, m
 		certManager:  certMgr,
 		baseURL:      baseURL,
 		tlsCertPath:  tlsCertPath,
-		nexusID:      nexusID,
+		nekzusID:     nekzusID,
 		capabilities: capabilities,
 		version:      version,
 	}
@@ -884,7 +884,7 @@ func (h *AuthHandler) HandleQRCode(w http.ResponseWriter, r *http.Request) {
 		"spkiBackup":     spkiBackup,
 		"bootstrapToken": bootstrapToken,
 		"capabilities":   h.capabilities,
-		"nexusId":        h.nexusID,
+		"nekzusId":       h.nekzusID,
 	}
 
 	// Check if client wants QR code image
@@ -1032,7 +1032,7 @@ func (h *AuthHandler) HandlePairWebUI(w http.ResponseWriter, r *http.Request) {
 
         <div class="info">
             <p><strong>Instance:</strong> ` + hostname + `</p>
-            <p><strong>Nexus ID:</strong> ` + h.nexusID + `</p>
+            <p><strong>Nekzus ID:</strong> ` + h.nekzusID + `</p>
             <p><strong>Base URL:</strong> ` + h.baseURL + `</p>
         </div>
 

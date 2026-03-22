@@ -9,7 +9,8 @@ RUN npm run build
 
 # --- Go Build stage
 # Run on the build platform natively, cross-compile for target arch
-FROM --platform=$BUILDPLATFORM golang:1.25-bookworm AS build
+ARG BUILDPLATFORM
+FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.25-bookworm AS build
 
 ARG TARGETPLATFORM
 ARG TARGETARCH

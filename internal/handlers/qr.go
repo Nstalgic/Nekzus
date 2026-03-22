@@ -29,17 +29,17 @@ type QRHandler struct {
 	rateLimiter    *ratelimit.Limiter
 	spkiProvider   SPKIProvider
 	baseURL        string
-	nexusID        string
+	nekzusID       string
 	capabilities   []string
 }
 
 // NewQRHandler creates a new QR handler
-func NewQRHandler(authMgr *auth.Manager, limiter *ratelimit.Limiter, baseURL, tlsCertPath, nexusID string, capabilities []string) *QRHandler {
+func NewQRHandler(authMgr *auth.Manager, limiter *ratelimit.Limiter, baseURL, tlsCertPath, nekzusID string, capabilities []string) *QRHandler {
 	return &QRHandler{
 		authManager:  authMgr,
 		rateLimiter:  limiter,
 		baseURL:      baseURL,
-		nexusID:      nexusID,
+		nekzusID:     nekzusID,
 		capabilities: capabilities,
 	}
 }
@@ -101,7 +101,7 @@ func (h *QRHandler) HandleQRCode(w http.ResponseWriter, r *http.Request) {
 		SPKIPins:       spkiPins,
 		BootstrapToken: bootstrapToken,
 		Capabilities:   h.capabilities,
-		NexusID:        h.nexusID,
+		NekzusID:       h.nekzusID,
 	}
 
 	// Generate pairing code
@@ -127,7 +127,7 @@ func (h *QRHandler) HandleQRCode(w http.ResponseWriter, r *http.Request) {
 		"code_hash", hashCode(code),
 		"code_length", len(code),
 		"bootstrap_token_prefix", bootstrapToken[:min(10, len(bootstrapToken))]+"...",
-		"nexus_id", h.nexusID,
+		"nekzus_id", h.nekzusID,
 		"capabilities", fmt.Sprintf("%v", h.capabilities),
 		"hostname", hostname)
 

@@ -136,7 +136,7 @@ func newTestApplicationWithFederation(t *testing.T, localPeerID string) (*Applic
 		storage:      store,
 		metrics:      testMetrics,
 		proxyCache:   proxy.NewCache(),
-		nexusID:      localPeerID,
+		nekzusID:     localPeerID,
 		baseURL:      "http://localhost:8443",
 		version:      "1.0.0-test",
 		capabilities: []string{"catalog", "events", "proxy"},

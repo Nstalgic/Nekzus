@@ -21,7 +21,7 @@ type PairingConfig struct {
 	SPKIPins       []string `json:"spkiPins"`
 	BootstrapToken string   `json:"bootstrapToken"`
 	Capabilities   []string `json:"capabilities"`
-	NexusID        string   `json:"nexusId"`
+	NekzusID       string   `json:"nekzusId"`
 	ExpiresAt      int64    `json:"expiresAt"`
 }
 
