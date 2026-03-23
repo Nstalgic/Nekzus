@@ -142,6 +142,97 @@ func (m *Manager) ParseJWT(tokenString string) (*jwt.Token, jwt.MapClaims, error
 	return token, claims, nil
 }
 
+// RefreshGracePeriod is the maximum age of an expired token that can still be refreshed.
+// Tokens expired longer than this require re-pairing.
+const RefreshGracePeriod = 7 * 24 * time.Hour
+
+// ParseJWTForRefresh validates a JWT token for the refresh flow.
+// Unlike ParseJWT, this accepts expired tokens within the grace period,
+// allowing overnight/multi-day background sessions to recover without re-pairing.
+// Signature, issuer, audience, and revocation are still fully validated.
+func (m *Manager) ParseJWTForRefresh(tokenString string) (*jwt.Token, jwt.MapClaims, error) {
+	if tokenString == "" {
+		return nil, nil, apperrors.ErrInvalidToken
+	}
+
+	// Parse without expiration validation — we'll check the grace period manually
+	parser := jwt.NewParser(
+		jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Name}),
+		jwt.WithoutClaimsValidation(),
+	)
+	var claims jwt.MapClaims
+
+	token, err := parser.ParseWithClaims(tokenString, &claims, func(t *jwt.Token) (interface{}, error) {
+		return m.jwtSecret, nil
+	})
+
+	if err != nil {
+		return nil, nil, apperrors.Wrap(err, "INVALID_TOKEN", "Failed to parse token", 401)
+	}
+
+	// Verify signature is valid (ParseWithClaims already does this, but check token.Valid
+	// which with WithoutClaimsValidation only checks signature)
+	if !token.Valid {
+		return nil, nil, apperrors.ErrInvalidToken
+	}
+
+	// Verify issuer
+	if iss, ok := claims["iss"].(string); !ok || iss != m.issuer {
+		return nil, nil, apperrors.Wrap(
+			fmt.Errorf("expected issuer %s, got %s", m.issuer, iss),
+			"INVALID_ISSUER",
+			"Token issuer mismatch",
+			401,
+		)
+	}
+
+	// Verify audience
+	if aud, ok := claims["aud"].(string); !ok || aud != m.audience {
+		return nil, nil, apperrors.Wrap(
+			fmt.Errorf("expected audience %s, got %s", m.audience, aud),
+			"INVALID_AUDIENCE",
+			"Token audience mismatch",
+			401,
+		)
+	}
+
+	// Check grace period — token must not have expired more than RefreshGracePeriod ago
+	if exp, ok := claims["exp"].(float64); ok {
+		expTime := time.Unix(int64(exp), 0)
+		if time.Since(expTime) > RefreshGracePeriod {
+			return nil, nil, apperrors.New(
+				"TOKEN_EXPIRED_BEYOND_GRACE",
+				"Token expired too long ago to refresh. Please re-pair your device.",
+				401,
+			)
+		}
+	}
+
+	// Check if token is revoked
+	if m.revocation != nil && m.revocation.IsRevoked(tokenString) {
+		return nil, nil, apperrors.NewWithCode(
+			"TOKEN_REVOKED",
+			apperrors.CodeTokenRevoked,
+			"This token has been revoked",
+			401,
+		)
+	}
+
+	// Check if device is revoked
+	if deviceID, ok := claims["sub"].(string); ok && deviceID != "" {
+		if m.revocation != nil && m.revocation.IsDeviceRevoked(deviceID) {
+			return nil, nil, apperrors.NewWithCode(
+				"DEVICE_REVOKED",
+				apperrors.CodeDeviceRevoked,
+				"This device has been revoked",
+				401,
+			)
+		}
+	}
+
+	return token, claims, nil
+}
+
 // ValidateBootstrap validates a bootstrap token
 func (m *Manager) ValidateBootstrap(token string) bool {
 	m.mu.RLock()
