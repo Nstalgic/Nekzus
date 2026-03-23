@@ -349,6 +349,9 @@ func NewApplication(cfg types.ServerConfig, configPath string) (*Application, er
 		app.handlers.Auth.SetWebSocketDisconnecter(app.managers.WebSocket)
 	}
 
+	// Set pairing manager so auth handler can consume codes after successful pairing
+	app.handlers.Auth.SetPairingManager(app.managers.Pairing)
+
 	// Initialize service health checker (now that we have the router)
 	if cfg.HealthChecks.Enabled {
 		app.jobs.ServiceHealth = health.NewServiceHealthChecker(
