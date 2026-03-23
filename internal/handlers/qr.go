@@ -128,10 +128,15 @@ func (h *QRHandler) HandleQRCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Compute verification hash for TOFU protection
+	// The pairing code (embedded in QR) acts as the shared secret
+	configHash := auth.ComputeConfigHash(code, config)
+
 	// Build minimal QR payload
 	payload := map[string]interface{}{
-		"u": h.baseURL, // base URL
-		"c": code,      // pairing code
+		"u": h.baseURL,  // base URL
+		"c": code,       // pairing code
+		"v": configHash, // verification hash for TOFU protection
 	}
 
 	qrlog.Info("generated QR code",
