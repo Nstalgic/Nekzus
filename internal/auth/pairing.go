@@ -392,6 +392,17 @@ func (pm *PairingManager) GetCodeStatus(code string) CodeStatus {
 	return CodeStatus{Valid: false}
 }
 
+// ComputeConfigHash computes a keyed SHA-256 hash of the pairing config fields.
+// The pairing code is used as the key — since it's embedded in the QR code,
+// an attacker who can't read the QR cannot forge this hash.
+// This allows the mobile app to verify the TOFU response wasn't tampered with.
+func ComputeConfigHash(pairingCode string, config PairingConfig) string {
+	message := pairingCode + ":" + config.BaseURL + config.NekzusID + config.BootstrapToken + strings.Join(config.SPKIPins, ",")
+	hash := sha256.Sum256([]byte(message))
+	// Use first 16 bytes (32 hex chars) to keep QR payload small
+	return fmt.Sprintf("%x", hash[:16])
+}
+
 // hashCodeForLog returns a truncated hash of the code for safe logging
 func hashCodeForLog(code string) string {
 	hash := sha256.Sum256([]byte(code))
