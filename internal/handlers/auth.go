@@ -402,8 +402,8 @@ func (h *AuthHandler) HandleRefresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse and validate old token
-	_, claims, err := h.authManager.ParseJWT(oldToken)
+	// Parse and validate old token (allows expired tokens within grace period)
+	_, claims, err := h.authManager.ParseJWTForRefresh(oldToken)
 	if err != nil {
 		if h.metrics != nil {
 			h.metrics.RecordAuthRefresh("error_invalid_token")
