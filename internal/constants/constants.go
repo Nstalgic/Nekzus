@@ -9,7 +9,7 @@ package constants
 const (
 	// QR Code generation is computationally expensive - strict limits prevent abuse
 	QRLimitRate  = 1.0 // 1 request per second
-	QRLimitBurst = 5   // Allow burst of 5 requests
+	QRLimitBurst = 3   // Allow burst of 3 requests
 
 	// Auth endpoints need protection but should allow reasonable retries
 	AuthLimitRate  = 0.167 // 10 requests per minute (1/60*10 ≈ 0.167)

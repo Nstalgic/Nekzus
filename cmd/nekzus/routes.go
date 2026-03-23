@@ -106,9 +106,8 @@ func (rb *RouteBuilder) registerHealthRoutes() {
 func (rb *RouteBuilder) registerAuthRoutes() {
 	app := rb.app
 
-	// Public endpoints (no auth required, with rate limiting)
-	// QR code generation for mobile pairing
-	rb.mux.HandleFunc("/api/v1/auth/qr", app.handlers.QR.HandleQRCode)
+	// QR code generation for mobile pairing (admin-only, rate limited)
+	rb.mux.Handle("/api/v1/auth/qr", middleware.RateLimit(app.limiters.QR)(rb.ipAuth(http.HandlerFunc(app.handlers.QR.HandleQRCode))))
 	rb.mux.Handle("/api/v1/auth/pair", middleware.RateLimit(app.limiters.Auth)(http.HandlerFunc(app.handlePair)))
 	rb.mux.Handle("/api/v1/auth/refresh", middleware.RateLimit(app.limiters.Auth)(http.HandlerFunc(app.handleRefresh)))
 	rb.mux.Handle("/pair", middleware.RateLimit(app.limiters.QR)(http.HandlerFunc(app.handlePairWebUI)))
