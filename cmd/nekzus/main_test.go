@@ -422,11 +422,11 @@ func TestTokenRefresh_InvalidToken(t *testing.T) {
 	}
 }
 
-func TestTokenRefresh_ExpiredToken(t *testing.T) {
+func TestTokenRefresh_RecentlyExpiredToken(t *testing.T) {
 	app := newTestApplication(t)
 
-	// Create an expired token (negative duration)
-	expiredToken, err := app.services.Auth.SignJWT("test-device", []string{"read:apps"}, -1*time.Hour)
+	// Create a recently expired token (1 hour ago) — within 7-day grace period
+	recentlyExpiredToken, err := app.services.Auth.SignJWT("test-device", []string{"read:apps"}, -1*time.Hour)
 	if err != nil {
 		t.Fatalf("failed to sign expired token: %v", err)
 	}
@@ -436,12 +436,11 @@ func TestTokenRefresh_ExpiredToken(t *testing.T) {
 	srv := httptest.NewServer(mux)
 	defer srv.Close()
 
-	// Wait a moment to ensure token is truly expired
 	time.Sleep(100 * time.Millisecond)
 
-	// Request with expired token
+	// Recently expired token should refresh successfully (grace period)
 	req, _ := http.NewRequest("POST", srv.URL+"/api/v1/auth/refresh", nil)
-	req.Header.Set("Authorization", "Bearer "+expiredToken)
+	req.Header.Set("Authorization", "Bearer "+recentlyExpiredToken)
 	req.Header.Set("Content-Type", "application/json")
 
 	res, err := http.DefaultClient.Do(req)
@@ -450,9 +449,9 @@ func TestTokenRefresh_ExpiredToken(t *testing.T) {
 	}
 	defer res.Body.Close()
 
-	if res.StatusCode != http.StatusUnauthorized {
+	if res.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(res.Body)
-		t.Fatalf("expected status 401 for expired token, got %d, body: %s", res.StatusCode, string(body))
+		t.Fatalf("expected status 200 for recently expired token (within grace period), got %d, body: %s", res.StatusCode, string(body))
 	}
 }
 
