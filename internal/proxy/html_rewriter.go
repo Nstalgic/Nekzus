@@ -1016,11 +1016,11 @@ func injectBaseTag(html string, pathPrefix string, requestPath string) string {
 			if len(submatches) < 6 {
 				return match
 			}
-			prefix := submatches[1]  // `<base href=`
-			quote := submatches[2]   // opening quote
-			href := submatches[3]    // existing href value
-			_ = submatches[4]        // closing quote (same as opening)
-			suffix := submatches[5]  // rest of tag + >
+			prefix := submatches[1] // `<base href=`
+			quote := submatches[2]  // opening quote
+			href := submatches[3]   // existing href value
+			_ = submatches[4]       // closing quote (same as opening)
+			suffix := submatches[5] // rest of tag + >
 
 			// Already prefixed — leave alone
 			if strings.HasPrefix(href, pathPrefix) {
