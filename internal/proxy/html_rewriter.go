@@ -34,6 +34,7 @@ type HTMLRewritingResponseWriter struct {
 	buffer          *bytes.Buffer
 	statusCode      int
 	isHTML          bool
+	isCSS           bool
 	headerSent      bool
 	contentEncoding string // gzip, deflate, or empty
 }
@@ -144,16 +145,17 @@ func (rw *HTMLRewritingResponseWriter) WriteHeader(statusCode int) {
 		}
 	}
 
-	// Check if this is HTML content that should be rewritten
-	// Only buffer HTML if rewriteBody is enabled
+	// Check if this is HTML or CSS content that should be rewritten
+	// Only buffer if rewriteBody is enabled
 	contentType := rw.ResponseWriter.Header().Get("Content-Type")
 	rw.isHTML = rw.rewriteBody && strings.HasPrefix(contentType, "text/html")
+	rw.isCSS = rw.rewriteBody && strings.HasPrefix(contentType, "text/css")
 
 	// Capture content encoding for decompression during rewrite
 	rw.contentEncoding = strings.ToLower(rw.ResponseWriter.Header().Get("Content-Encoding"))
 
-	// If not HTML, write headers immediately and don't buffer
-	if !rw.isHTML {
+	// If not HTML or CSS, write headers immediately and don't buffer
+	if !rw.isHTML && !rw.isCSS {
 		rw.ResponseWriter.WriteHeader(statusCode)
 		rw.headerSent = true
 	}
@@ -388,31 +390,31 @@ func (rw *HTMLRewritingResponseWriter) Write(data []byte) (int, error) {
 		rw.WriteHeader(http.StatusOK)
 	}
 
-	// If not HTML, write directly
-	if !rw.isHTML {
+	// If not HTML or CSS, write directly
+	if !rw.isHTML && !rw.isCSS {
 		return rw.ResponseWriter.Write(data)
 	}
 
-	// Buffer HTML content
+	// Buffer HTML/CSS content for rewriting
 	return rw.buffer.Write(data)
 }
 
-// FlushHTML rewrites HTML and sends the final response
+// FlushHTML rewrites HTML/CSS and sends the final response
 func (rw *HTMLRewritingResponseWriter) FlushHTML() error {
-	// If not HTML or already sent, nothing to do
-	if !rw.isHTML || rw.headerSent {
+	// If not HTML/CSS or already sent, nothing to do
+	if (!rw.isHTML && !rw.isCSS) || rw.headerSent {
 		return nil
 	}
 
 	// Get the buffered content
 	bufferedData := rw.buffer.Bytes()
-	var html string
+	var content string
 
 	// Decompress if needed
 	if rw.contentEncoding == "gzip" {
 		reader, err := gzip.NewReader(bytes.NewReader(bufferedData))
 		if err != nil {
-			log.Warn("HTMLRewriter failed to decompress gzip, passing through", "error", err)
+			log.Warn("Rewriter failed to decompress gzip, passing through", "error", err)
 			rw.ResponseWriter.WriteHeader(rw.statusCode)
 			rw.headerSent = true
 			_, writeErr := rw.ResponseWriter.Write(bufferedData)
@@ -422,46 +424,52 @@ func (rw *HTMLRewritingResponseWriter) FlushHTML() error {
 
 		decompressed, err := io.ReadAll(reader)
 		if err != nil {
-			log.Warn("HTMLRewriter gzip read failed, passing through", "error", err)
+			log.Warn("Rewriter gzip read failed, passing through", "error", err)
 			rw.ResponseWriter.WriteHeader(rw.statusCode)
 			rw.headerSent = true
 			_, writeErr := rw.ResponseWriter.Write(bufferedData)
 			return writeErr
 		}
-		html = string(decompressed)
+		content = string(decompressed)
 	} else if rw.contentEncoding == "deflate" {
 		reader := flate.NewReader(bytes.NewReader(bufferedData))
 		defer reader.Close()
 
 		decompressed, err := io.ReadAll(reader)
 		if err != nil {
-			log.Warn("HTMLRewriter deflate read failed, passing through", "error", err)
+			log.Warn("Rewriter deflate read failed, passing through", "error", err)
 			rw.ResponseWriter.WriteHeader(rw.statusCode)
 			rw.headerSent = true
 			_, writeErr := rw.ResponseWriter.Write(bufferedData)
 			return writeErr
 		}
-		html = string(decompressed)
+		content = string(decompressed)
 	} else {
-		html = string(bufferedData)
+		content = string(bufferedData)
 	}
 
-	rewrittenHTML := rewriteHTMLPaths(html, rw.pathPrefix, rw.requestPath)
+	// Apply content-type-specific rewriting
+	var rewritten string
+	if rw.isCSS {
+		rewritten = rewriteCSSContent(content, rw.pathPrefix)
+	} else {
+		rewritten = rewriteHTMLPaths(content, rw.pathPrefix, rw.requestPath)
+	}
 
 	// Remove compression headers since we're sending uncompressed
 	// This is simpler and more reliable than re-compressing
 	rw.ResponseWriter.Header().Del("Content-Encoding")
 	rw.ResponseWriter.Header().Del("Content-Length")
-	rw.ResponseWriter.Header().Set("Content-Length", strconv.Itoa(len(rewrittenHTML)))
+	rw.ResponseWriter.Header().Set("Content-Length", strconv.Itoa(len(rewritten)))
 
 	// Send headers
 	rw.ResponseWriter.WriteHeader(rw.statusCode)
 	rw.headerSent = true
 
-	// Write rewritten HTML
-	_, err := rw.ResponseWriter.Write([]byte(rewrittenHTML))
+	// Write rewritten content
+	_, err := rw.ResponseWriter.Write([]byte(rewritten))
 	if err != nil {
-		return fmt.Errorf("failed to write rewritten HTML response: %w", err)
+		return fmt.Errorf("failed to write rewritten response: %w", err)
 	}
 	return nil
 }
@@ -473,13 +481,13 @@ func (rw *HTMLRewritingResponseWriter) Flush() {
 	// which would cause us to flush an empty buffer.
 	// FlushHTML() should only be called manually after ServeHTTP() returns.
 
-	// For non-HTML content, flush the underlying writer
-	if !rw.isHTML {
+	// For non-buffered content, flush the underlying writer
+	if !rw.isHTML && !rw.isCSS {
 		if f, ok := rw.ResponseWriter.(http.Flusher); ok {
 			f.Flush()
 		}
 	}
-	// For HTML content, do nothing - we're buffering until FlushHTML() is called manually
+	// For HTML/CSS content, do nothing - we're buffering until FlushHTML() is called manually
 }
 
 // Hijack implements http.Hijacker for WebSocket upgrade support
@@ -515,6 +523,8 @@ var (
 	metaRefreshRegex = regexp.MustCompile(`(?i)(content\s*=\s*["'][^"']*;\s*url\s*=\s*)(/[^"']+)(["'])`)
 	// Match existing <base href="..."> tag for rewriting
 	baseHrefRegex = regexp.MustCompile(`(?i)(<base\s[^>]*href\s*=\s*)(["'])([^"']*)(["'])([^>]*>)`)
+	// Match @import "path" or @import 'path' in CSS (without url())
+	cssImportRegex = regexp.MustCompile(`@import\s+(['"])(/[^'"]+)(['"])`)
 )
 
 // rewriteHTMLPaths rewrites absolute paths in HTML to include the path prefix
@@ -646,6 +656,36 @@ func rewriteMetaRefresh(html string, pathPrefix string) string {
 		newURL := pathPrefix + strings.TrimPrefix(url, "/")
 		return prefix + newURL + suffix
 	})
+}
+
+// rewriteCSSContent rewrites absolute paths in standalone CSS file responses
+func rewriteCSSContent(css string, pathPrefix string) string {
+	if !strings.HasSuffix(pathPrefix, "/") {
+		pathPrefix = pathPrefix + "/"
+	}
+
+	// Rewrite url() patterns (reuse existing regex)
+	css = rewriteCSSURLs(css, pathPrefix)
+
+	// Rewrite @import "/path" patterns (without url())
+	css = cssImportRegex.ReplaceAllStringFunc(css, func(match string) string {
+		submatches := cssImportRegex.FindStringSubmatch(match)
+		if len(submatches) < 4 {
+			return match
+		}
+		openQuote := submatches[1]
+		importPath := submatches[2]
+		closeQuote := submatches[3]
+
+		if !shouldRewritePath(importPath, pathPrefix) {
+			return match
+		}
+
+		newPath := pathPrefix + strings.TrimPrefix(importPath, "/")
+		return `@import ` + openQuote + newPath + closeQuote
+	})
+
+	return css
 }
 
 // shouldRewritePath returns true if the path should be rewritten

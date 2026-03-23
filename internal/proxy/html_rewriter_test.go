@@ -1575,3 +1575,162 @@ func TestInjectBaseTag_RewriteExisting(t *testing.T) {
 		})
 	}
 }
+
+// TestRewriteCSSContent tests CSS file content rewriting
+func TestRewriteCSSContent(t *testing.T) {
+	testCases := []struct {
+		name       string
+		css        string
+		pathPrefix string
+		expected   string
+	}{
+		{
+			name:       "rewrite url() with absolute path",
+			css:        `body { background: url(/images/bg.png); }`,
+			pathPrefix: "/apps/test/",
+			expected:   `body { background: url(/apps/test/images/bg.png); }`,
+		},
+		{
+			name:       "rewrite url() with quoted path",
+			css:        `@font-face { src: url("/fonts/roboto.woff2"); }`,
+			pathPrefix: "/apps/test/",
+			expected:   `@font-face { src: url("/apps/test/fonts/roboto.woff2"); }`,
+		},
+		{
+			name:       "rewrite url() with single-quoted path",
+			css:        `@font-face { src: url('/fonts/roboto.woff2'); }`,
+			pathPrefix: "/apps/test/",
+			expected:   `@font-face { src: url('/apps/test/fonts/roboto.woff2'); }`,
+		},
+		{
+			name:       "skip external url()",
+			css:        `body { background: url(https://example.com/bg.png); }`,
+			pathPrefix: "/apps/test/",
+			expected:   `body { background: url(https://example.com/bg.png); }`,
+		},
+		{
+			name:       "skip data URI in url()",
+			css:        `body { background: url(data:image/png;base64,ABC123); }`,
+			pathPrefix: "/apps/test/",
+			expected:   `body { background: url(data:image/png;base64,ABC123); }`,
+		},
+		{
+			name:       "skip relative url()",
+			css:        `body { background: url(images/bg.png); }`,
+			pathPrefix: "/apps/test/",
+			expected:   `body { background: url(images/bg.png); }`,
+		},
+		{
+			name:       "skip already prefixed url()",
+			css:        `body { background: url(/apps/test/images/bg.png); }`,
+			pathPrefix: "/apps/test/",
+			expected:   `body { background: url(/apps/test/images/bg.png); }`,
+		},
+		{
+			name:       "rewrite @import with double quotes",
+			css:        `@import "/other.css";`,
+			pathPrefix: "/apps/test/",
+			expected:   `@import "/apps/test/other.css";`,
+		},
+		{
+			name:       "rewrite @import with single quotes",
+			css:        `@import '/reset.css';`,
+			pathPrefix: "/apps/test/",
+			expected:   `@import '/apps/test/reset.css';`,
+		},
+		{
+			name:       "skip @import with external URL",
+			css:        `@import "https://fonts.googleapis.com/css";`,
+			pathPrefix: "/apps/test/",
+			expected:   `@import "https://fonts.googleapis.com/css";`,
+		},
+		{
+			name:       "skip @import with relative path",
+			css:        `@import "other.css";`,
+			pathPrefix: "/apps/test/",
+			expected:   `@import "other.css";`,
+		},
+		{
+			name:       "rewrite multiple url() in one file",
+			css:        `.a { background: url(/img/a.png); } .b { background: url(/img/b.png); }`,
+			pathPrefix: "/apps/test/",
+			expected:   `.a { background: url(/apps/test/img/a.png); } .b { background: url(/apps/test/img/b.png); }`,
+		},
+		{
+			name:       "prefix without trailing slash",
+			css:        `body { background: url(/images/bg.png); }`,
+			pathPrefix: "/apps/test",
+			expected:   `body { background: url(/apps/test/images/bg.png); }`,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := rewriteCSSContent(tc.css, tc.pathPrefix)
+			if result != tc.expected {
+				t.Errorf("rewriteCSSContent(%q, %q) = %q, want %q", tc.css, tc.pathPrefix, result, tc.expected)
+			}
+		})
+	}
+}
+
+// TestCSSResponseRewriting tests that CSS responses are buffered and rewritten end-to-end
+func TestCSSResponseRewriting(t *testing.T) {
+	w := httptest.NewRecorder()
+	rw := NewHTMLRewritingResponseWriter(w, "/apps/test/", "/apps/test/")
+
+	// Set CSS content type
+	rw.Header().Set("Content-Type", "text/css")
+	rw.WriteHeader(http.StatusOK)
+
+	// Verify isCSS was set
+	if !rw.isCSS {
+		t.Fatal("Expected isCSS to be true for text/css content type")
+	}
+
+	// Write CSS content
+	css := `body { background: url(/images/bg.png); } @import "/reset.css";`
+	_, err := rw.Write([]byte(css))
+	if err != nil {
+		t.Fatalf("Write failed: %v", err)
+	}
+
+	// Flush to send response
+	err = rw.FlushHTML()
+	if err != nil {
+		t.Fatalf("FlushHTML failed: %v", err)
+	}
+
+	result := w.Body.String()
+	if !strings.Contains(result, `url(/apps/test/images/bg.png)`) {
+		t.Errorf("Expected url() to be rewritten, got: %s", result)
+	}
+	if !strings.Contains(result, `"/apps/test/reset.css"`) {
+		t.Errorf("Expected @import to be rewritten, got: %s", result)
+	}
+}
+
+// TestCSSResponseNotRewrittenWhenBodyRewriteDisabled tests header-only mode skips CSS
+func TestCSSResponseNotRewrittenWhenBodyRewriteDisabled(t *testing.T) {
+	w := httptest.NewRecorder()
+	rw := NewHeaderRewritingResponseWriter(w, "/apps/test/", "nexus.local", "http")
+
+	rw.Header().Set("Content-Type", "text/css")
+	rw.WriteHeader(http.StatusOK)
+
+	// When rewriteBody is false, CSS should pass through unchanged
+	if rw.isCSS {
+		t.Error("Expected isCSS to be false when rewriteBody is disabled")
+	}
+
+	css := `body { background: url(/images/bg.png); }`
+	_, err := rw.Write([]byte(css))
+	if err != nil {
+		t.Fatalf("Write failed: %v", err)
+	}
+
+	result := w.Body.String()
+	if result != css {
+		t.Errorf("Expected CSS to pass through unchanged, got: %s", result)
+	}
+}
