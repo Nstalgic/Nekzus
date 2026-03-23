@@ -1016,6 +1016,41 @@ func generateFetchInterceptor(pathPrefix string) string {
     };
     window.SharedWorker.prototype = OriginalSharedWorker.prototype;
   }
+
+  // Intercept navigator.sendBeacon
+  if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
+    const originalSendBeacon = navigator.sendBeacon.bind(navigator);
+    navigator.sendBeacon = function(url, data) {
+      return originalSendBeacon(rewriteUrl(url), data);
+    };
+  }
+
+  // Override Location.prototype.pathname getter to strip the base path prefix
+  // This fixes SPA routers that read window.location.pathname for route matching
+  // e.g. they see "/dashboard" instead of "/apps/myapp/dashboard"
+  try {
+    const locProto = Object.getPrototypeOf(window.location);
+    const pathDesc = Object.getOwnPropertyDescriptor(locProto, 'pathname');
+    if (pathDesc && pathDesc.get) {
+      const origPathGetter = pathDesc.get;
+      Object.defineProperty(locProto, 'pathname', {
+        get: function() {
+          const p = origPathGetter.call(this);
+          const basePathNoSlash = basePath.endsWith('/') ? basePath.slice(0, -1) : basePath;
+          if (p === basePathNoSlash || p.startsWith(basePathNoSlash + '/')) {
+            const stripped = p.substring(basePathNoSlash.length);
+            return stripped === '' ? '/' : stripped;
+          }
+          return p;
+        },
+        set: pathDesc.set,
+        enumerable: pathDesc.enumerable,
+        configurable: pathDesc.configurable
+      });
+    }
+  } catch(e) {
+    // Some browsers may not allow overriding Location.prototype.pathname
+  }
 })();
 </script>`
 }
