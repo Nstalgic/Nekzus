@@ -6,6 +6,8 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/nstalgic/nekzus/internal/auth"
@@ -22,6 +24,8 @@ type SPKIProvider interface {
 	GetSPKIPins() []string
 }
 
+const maxGlobalCodesPerHour = 10
+
 // QRHandler handles QR code generation for mobile pairing
 type QRHandler struct {
 	authManager    *auth.Manager
@@ -31,6 +35,11 @@ type QRHandler struct {
 	baseURL        string
 	nekzusID       string
 	capabilities   []string
+
+	// Global hourly limit on code generation
+	globalCodeCount atomic.Int64
+	globalCodeReset time.Time
+	globalCodeMu    sync.Mutex
 }
 
 // NewQRHandler creates a new QR handler
@@ -69,6 +78,13 @@ func (h *QRHandler) HandleQRCode(w http.ResponseWriter, r *http.Request) {
 	clientIP := getClientIP(r)
 	if !h.rateLimiter.Allow(clientIP) {
 		apperrors.WriteJSON(w, apperrors.ErrRateLimitExceeded)
+		return
+	}
+
+	// Global hourly limit on code generation
+	if h.isGlobalCodeLimitExceeded() {
+		qrlog.Warn("global QR code generation limit exceeded")
+		apperrors.WriteJSON(w, apperrors.New("RATE_LIMITED", "Too many QR codes generated. Try again later.", http.StatusTooManyRequests))
 		return
 	}
 
@@ -153,6 +169,24 @@ func (h *QRHandler) getSPKIPins() []string {
 		return h.spkiProvider.GetSPKIPins()
 	}
 	return []string{}
+}
+
+// isGlobalCodeLimitExceeded checks if the global hourly code generation limit has been reached
+func (h *QRHandler) isGlobalCodeLimitExceeded() bool {
+	h.globalCodeMu.Lock()
+	defer h.globalCodeMu.Unlock()
+
+	if time.Now().After(h.globalCodeReset) {
+		h.globalCodeCount.Store(0)
+		h.globalCodeReset = time.Now().Add(time.Hour)
+	}
+
+	if h.globalCodeCount.Load() >= maxGlobalCodesPerHour {
+		return true
+	}
+
+	h.globalCodeCount.Add(1)
+	return false
 }
 
 // servePNGQRCode generates and serves a PNG QR code
