@@ -1142,6 +1142,8 @@ func TestJSInterceptorContainsRequiredInterceptions(t *testing.T) {
 		{"history.replaceState interception", "history.replaceState"},
 		{"location.assign interception", "location.assign"},
 		{"location.replace interception", "location.replace"},
+		{"pathname stripping", "Location.prototype"},
+		{"sendBeacon interception", "sendBeacon"},
 	}
 
 	for _, req := range requiredInterceptions {
@@ -1732,5 +1734,30 @@ func TestCSSResponseNotRewrittenWhenBodyRewriteDisabled(t *testing.T) {
 	result := w.Body.String()
 	if result != css {
 		t.Errorf("Expected CSS to pass through unchanged, got: %s", result)
+	}
+}
+
+// TestJSInterceptorPathnameStripping tests that the JS interceptor includes pathname override
+func TestJSInterceptorPathnameStripping(t *testing.T) {
+	interceptor := generateFetchInterceptor("/apps/myapp/")
+
+	// Should override Location.prototype.pathname getter
+	if !strings.Contains(interceptor, "Location.prototype") {
+		t.Error("Expected interceptor to reference Location.prototype for pathname override")
+	}
+
+	// Should strip the basePath prefix from pathname
+	if !strings.Contains(interceptor, "pathname") {
+		t.Error("Expected interceptor to contain pathname stripping logic")
+	}
+
+	// Should contain the basePath for comparison
+	if !strings.Contains(interceptor, "/apps/myapp/") {
+		t.Error("Expected interceptor to contain the basePath")
+	}
+
+	// Should be wrapped in try/catch for browser compatibility
+	if !strings.Contains(interceptor, "catch") {
+		t.Error("Expected pathname override to be wrapped in try/catch")
 	}
 }
