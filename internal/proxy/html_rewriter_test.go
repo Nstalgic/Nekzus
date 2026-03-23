@@ -1500,3 +1500,78 @@ func TestCSPReportOnlyHeaderRewriting(t *testing.T) {
 		t.Errorf("CSP-Report-Only header = %q, want %q", result, expected)
 	}
 }
+
+// TestInjectBaseTag_RewriteExisting tests that existing <base> tags are rewritten
+func TestInjectBaseTag_RewriteExisting(t *testing.T) {
+	testCases := []struct {
+		name         string
+		html         string
+		pathPrefix   string
+		requestPath  string
+		expectedBase string
+	}{
+		{
+			name:         "rewrite base href=/ to sub-path",
+			html:         `<html><head><base href="/"></head><body></body></html>`,
+			pathPrefix:   "/apps/test/",
+			requestPath:  "/apps/test/",
+			expectedBase: `<base href="/apps/test/">`,
+		},
+		{
+			name:         "rewrite base href with app sub-path",
+			html:         `<html><head><base href="/sonarr/"></head><body></body></html>`,
+			pathPrefix:   "/apps/sonarr/",
+			requestPath:  "/apps/sonarr/",
+			expectedBase: `<base href="/apps/sonarr/sonarr/">`,
+		},
+		{
+			name:         "leave already-prefixed base href alone",
+			html:         `<html><head><base href="/apps/test/"></head><body></body></html>`,
+			pathPrefix:   "/apps/test/",
+			requestPath:  "/apps/test/",
+			expectedBase: `<base href="/apps/test/">`,
+		},
+		{
+			name:         "rewrite empty base href",
+			html:         `<html><head><base href=""></head><body></body></html>`,
+			pathPrefix:   "/apps/radarr/",
+			requestPath:  "/apps/radarr/",
+			expectedBase: `<base href="/apps/radarr/">`,
+		},
+		{
+			name:         "rewrite base with double quotes and extra attributes",
+			html:         `<html><head><base href="/" target="_blank"></head><body></body></html>`,
+			pathPrefix:   "/apps/test/",
+			requestPath:  "/apps/test/",
+			expectedBase: `<base href="/apps/test/" target="_blank">`,
+		},
+		{
+			name:         "rewrite base with single quotes",
+			html:         `<html><head><base href='/'></head><body></body></html>`,
+			pathPrefix:   "/apps/test/",
+			requestPath:  "/apps/test/",
+			expectedBase: `<base href='/apps/test/'>`,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := injectBaseTag(tc.html, tc.pathPrefix, tc.requestPath)
+
+			if !strings.Contains(result, tc.expectedBase) {
+				t.Errorf("Expected result to contain %q, got: %s", tc.expectedBase, result)
+			}
+
+			// Should still inject the JS interceptor
+			if !strings.Contains(result, "window.fetch") {
+				t.Error("Expected result to contain fetch interceptor")
+			}
+
+			// Should NOT have multiple base tags
+			baseCount := strings.Count(strings.ToLower(result), "<base")
+			if baseCount != 1 {
+				t.Errorf("Expected exactly 1 base tag, found %d in: %s", baseCount, result)
+			}
+		})
+	}
+}
