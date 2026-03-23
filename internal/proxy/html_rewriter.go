@@ -1017,6 +1017,14 @@ func generateFetchInterceptor(pathPrefix string) string {
     window.SharedWorker.prototype = OriginalSharedWorker.prototype;
   }
 
+  // Intercept navigator.sendBeacon
+  if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
+    const originalSendBeacon = navigator.sendBeacon.bind(navigator);
+    navigator.sendBeacon = function(url, data) {
+      return originalSendBeacon(rewriteUrl(url), data);
+    };
+  }
+
   // Override Location.prototype.pathname getter to strip the base path prefix
   // This fixes SPA routers that read window.location.pathname for route matching
   // e.g. they see "/dashboard" instead of "/apps/myapp/dashboard"
