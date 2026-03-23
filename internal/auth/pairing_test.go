@@ -84,26 +84,41 @@ func TestPairingManager_RedeemCode(t *testing.T) {
 	}
 }
 
-func TestPairingManager_RedeemCode_SingleUse(t *testing.T) {
+func TestPairingManager_RedeemCode_IdempotentBeforeConsume(t *testing.T) {
 	pm := NewPairingManager()
 	defer pm.Stop()
 
 	config := PairingConfig{
-		BaseURL: "https://192.168.1.100:8443",
+		BaseURL:        "https://192.168.1.100:8443",
+		BootstrapToken: "test-bootstrap-token",
 	}
 
 	code, _ := pm.GenerateCode(config)
 
 	// First redemption should succeed
-	_, err := pm.RedeemCode(code)
+	cfg1, err := pm.RedeemCode(code)
 	if err != nil {
 		t.Fatalf("First redemption failed: %v", err)
 	}
 
-	// Second redemption should fail
+	// Second redemption should also succeed (idempotent before consumption)
+	cfg2, err := pm.RedeemCode(code)
+	if err != nil {
+		t.Fatalf("Second redemption should succeed before consumption: %v", err)
+	}
+
+	// Both should return the same config
+	if cfg1.BootstrapToken != cfg2.BootstrapToken {
+		t.Error("Re-redemption returned different config")
+	}
+
+	// Consume via bootstrap token (simulates successful pairing)
+	pm.ConsumeByBootstrapToken("test-bootstrap-token")
+
+	// Third redemption should fail (consumed)
 	_, err = pm.RedeemCode(code)
 	if err == nil {
-		t.Error("Expected error on second redemption, got nil")
+		t.Error("Expected error after consumption, got nil")
 	}
 }
 
@@ -202,11 +217,20 @@ func TestPairingManager_ActiveCodeCount(t *testing.T) {
 
 	pm.RedeemCode(codes[0])
 
-	// Count should decrease (original 3 + 3 new - 1 redeemed = 5)
-	// But first 3 are still active, so 3 + 2 = 5
+	// Redeemed codes are still active (not yet consumed) — all 6 remain active
 	count := pm.ActiveCodeCount()
+	if count != 6 {
+		t.Errorf("Expected 6 active codes after redemption (not yet consumed), got %d", count)
+	}
+
+	// After consumption, count should decrease
+	cfg, _ := pm.RedeemCode(codes[0])
+	if cfg != nil {
+		pm.ConsumeByBootstrapToken(cfg.BootstrapToken)
+	}
+	count = pm.ActiveCodeCount()
 	if count != 5 {
-		t.Errorf("Expected 5 active codes after redemption, got %d", count)
+		t.Errorf("Expected 5 active codes after consumption, got %d", count)
 	}
 }
 

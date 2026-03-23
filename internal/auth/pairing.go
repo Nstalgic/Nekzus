@@ -30,7 +30,8 @@ type pairingCode struct {
 	code        string
 	config      PairingConfig
 	expiresAt   time.Time
-	used        bool
+	redeemed    bool      // Config fetched, awaiting pairing completion
+	used        bool      // Fully consumed after successful pairing
 	failedCount int       // Track failed attempts per code
 	lockedUntil time.Time // Lock code after too many failures
 }
@@ -106,9 +107,12 @@ func (pm *PairingManager) GenerateCode(config PairingConfig) (string, error) {
 	return code, nil
 }
 
-// RedeemCode retrieves and invalidates a pairing code
-// Returns the config if valid, error if expired/invalid/already used
-// Uses constant-time comparison to prevent timing attacks
+// RedeemCode retrieves a pairing code's config.
+// The code is marked as redeemed but not fully consumed — it can be
+// re-redeemed (idempotent) until ConsumeByBootstrapToken is called
+// after a successful pairing. This prevents the "code already used"
+// error when the mobile app needs to retry after a transient failure.
+// Uses constant-time comparison to prevent timing attacks.
 func (pm *PairingManager) RedeemCode(code string) (*PairingConfig, error) {
 	code = strings.ToUpper(strings.TrimSpace(code))
 
@@ -163,13 +167,14 @@ func (pm *PairingManager) RedeemCode(code string) (*PairingConfig, error) {
 		return nil, fmt.Errorf("invalid pairing code")
 	}
 
+	// Fully consumed codes cannot be redeemed again
 	if matchedCode.used {
 		pm.recordGlobalFailure()
 		matchedCode.failedCount++
 		if matchedCode.failedCount >= maxFailedAttemptsPerCode {
 			matchedCode.lockedUntil = now.Add(codeLockDuration)
 		}
-		pairingLog.Warn("pairing code already used",
+		pairingLog.Warn("pairing code already consumed",
 			"code_hash", hashCodeForLog(code),
 			"failed_count", matchedCode.failedCount)
 		return nil, fmt.Errorf("invalid pairing code")
@@ -191,14 +196,31 @@ func (pm *PairingManager) RedeemCode(code string) (*PairingConfig, error) {
 		"ttl_remaining", matchedCode.expiresAt.Sub(now).String(),
 		"base_url", matchedCode.config.BaseURL)
 
-	// Mark as used but keep for a short time to prevent replay
-	matchedCode.used = true
+	// Mark as redeemed (idempotent — allows retry if pairing step fails)
+	matchedCode.redeemed = true
 
 	pairingLog.Info("pairing code redeemed", "code_hash", hashCodeForLog(code))
 
 	// Return a copy of the config to prevent external modification
 	configCopy := matchedCode.config
 	return &configCopy, nil
+}
+
+// ConsumeByBootstrapToken fully consumes the pairing code associated with the
+// given bootstrap token. Called after successful device pairing to prevent
+// further redemptions of the code.
+func (pm *PairingManager) ConsumeByBootstrapToken(bootstrapToken string) {
+	pm.mu.Lock()
+	defer pm.mu.Unlock()
+
+	for _, pc := range pm.codes {
+		if pc.config.BootstrapToken == bootstrapToken {
+			pc.used = true
+			pairingLog.Info("pairing code consumed via bootstrap token",
+				"code_hash", hashCodeForLog(pc.code))
+			return
+		}
+	}
 }
 
 // GetCode retrieves a pairing code without redeeming it (for display purposes)
@@ -350,9 +372,11 @@ func (pm *PairingManager) GetCodeStatus(code string) CodeStatus {
 		if subtle.ConstantTimeCompare([]byte(code), []byte(storedCode)) == 1 {
 			status := CodeStatus{Valid: true}
 
-			if pc.used {
+			if pc.used || pc.redeemed {
 				status.Redeemed = true
-				return status
+				if pc.used {
+					return status
+				}
 			}
 
 			if now.After(pc.expiresAt) {

@@ -80,6 +80,7 @@ type AuthHandler struct {
 	qrLimiter      *ratelimit.Limiter
 	certManager    CertificateManager
 	wsDisconnecter WebSocketDisconnecter
+	pairingManager *auth.PairingManager
 	baseURL        string
 	tlsCertPath    string
 	nekzusID       string
@@ -134,6 +135,11 @@ func (h *AuthHandler) SetBaseURL(baseURL string) {
 // stale connections during re-pairing.
 func (h *AuthHandler) SetWebSocketDisconnecter(d WebSocketDisconnecter) {
 	h.wsDisconnecter = d
+}
+
+// SetPairingManager sets the pairing manager for consuming codes after successful pairing
+func (h *AuthHandler) SetPairingManager(pm *auth.PairingManager) {
+	h.pairingManager = pm
 }
 
 // PairRequest represents a device pairing request
@@ -341,6 +347,11 @@ func (h *AuthHandler) HandlePair(w http.ResponseWriter, r *http.Request) {
 
 	// Record successful pairing (consumes the token for short-lived tokens)
 	h.authManager.RecordSuccessfulPairing(bootstrap)
+
+	// Consume the pairing code so it can't be re-redeemed
+	if h.pairingManager != nil {
+		h.pairingManager.ConsumeByBootstrapToken(bootstrap)
+	}
 
 	// Record success metric
 	if h.metrics != nil {
