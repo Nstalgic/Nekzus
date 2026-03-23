@@ -11,11 +11,11 @@ func TestRateLimitConstants(t *testing.T) {
 		wantBurst int
 	}{
 		{
-			name:      "QR rate limit is 1 req/sec with burst of 5",
+			name:      "QR rate limit is 1 req/sec with burst of 3",
 			rate:      QRLimitRate,
 			burst:     QRLimitBurst,
 			wantRate:  1.0,
-			wantBurst: 5,
+			wantBurst: 3,
 		},
 		{
 			name:      "Auth rate limit is 10 req/min (0.167) with burst of 10",
