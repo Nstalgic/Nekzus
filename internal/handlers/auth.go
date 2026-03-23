@@ -422,6 +422,24 @@ func (h *AuthHandler) HandleRefresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Explicit revocation checks before issuing a new token.
+	// ParseJWT already checks revocation, but this closes the race window
+	// between parse-time check and token issuance.
+	if h.authManager.IsDeviceRevoked(deviceID) {
+		if h.metrics != nil {
+			h.metrics.RecordAuthRefresh("error_device_revoked")
+		}
+		apperrors.WriteJSON(w, apperrors.ErrDeviceRevoked)
+		return
+	}
+	if h.authManager.IsTokenRevoked(oldToken) {
+		if h.metrics != nil {
+			h.metrics.RecordAuthRefresh("error_token_revoked")
+		}
+		apperrors.WriteJSON(w, apperrors.ErrTokenRevoked)
+		return
+	}
+
 	// Extract existing scopes
 	scopes := auth.ExtractScopes(claims)
 
