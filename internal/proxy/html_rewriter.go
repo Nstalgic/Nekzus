@@ -513,6 +513,8 @@ var (
 	cssURLRegex = regexp.MustCompile(`url\(\s*(['"]?)(/[^'")]+)(['"]?)\s*\)`)
 	// Match meta refresh content with url
 	metaRefreshRegex = regexp.MustCompile(`(?i)(content\s*=\s*["'][^"']*;\s*url\s*=\s*)(/[^"']+)(["'])`)
+	// Match existing <base href="..."> tag for rewriting
+	baseHrefRegex = regexp.MustCompile(`(?i)(<base\s[^>]*href\s*=\s*)(["'])([^"']*)(["'])([^>]*>)`)
 )
 
 // rewriteHTMLPaths rewrites absolute paths in HTML to include the path prefix
@@ -997,15 +999,7 @@ func injectBaseTag(html string, pathPrefix string, requestPath string) string {
 	// Find the <head> tag to inject after it
 	headRegex := regexp.MustCompile(`(?i)(<head(?:>|\s[^>]*>))`)
 
-	if hasExistingBase {
-		// Already has a base tag - only inject the interceptor, not another base tag
-		// This is critical for apps like Sonarr that set their own base tag
-		return headRegex.ReplaceAllString(html, `$1`+interceptor)
-	}
-
-	// No existing base tag - inject both base tag and interceptor
-	// Ensure requestPath has trailing slash for base href
-	// This is important so relative paths like "./app.js" resolve correctly
+	// Compute baseHrefPath (used for both existing and new base tags)
 	baseHrefPath := requestPath
 	if baseHrefPath == "" {
 		baseHrefPath = pathPrefix // Fallback to pathPrefix if no requestPath
@@ -1014,6 +1008,40 @@ func injectBaseTag(html string, pathPrefix string, requestPath string) string {
 		baseHrefPath = baseHrefPath + "/"
 	}
 
+	if hasExistingBase {
+		// Rewrite existing base tag's href to include the sub-path prefix
+		// This is critical for apps like Sonarr/Radarr that set their own base tag
+		html = baseHrefRegex.ReplaceAllStringFunc(html, func(match string) string {
+			submatches := baseHrefRegex.FindStringSubmatch(match)
+			if len(submatches) < 6 {
+				return match
+			}
+			prefix := submatches[1]  // `<base href=`
+			quote := submatches[2]   // opening quote
+			href := submatches[3]    // existing href value
+			_ = submatches[4]        // closing quote (same as opening)
+			suffix := submatches[5]  // rest of tag + >
+
+			// Already prefixed — leave alone
+			if strings.HasPrefix(href, pathPrefix) {
+				return match
+			}
+
+			var newHref string
+			if href == "/" || href == "" {
+				newHref = baseHrefPath
+			} else {
+				// Prepend prefix to existing sub-path
+				newHref = pathPrefix + strings.TrimPrefix(href, "/")
+			}
+
+			return prefix + quote + newHref + quote + suffix
+		})
+		// Inject the JS interceptor after <head>
+		return headRegex.ReplaceAllString(html, `$1`+interceptor)
+	}
+
+	// No existing base tag - inject both base tag and interceptor
 	// Use requestPath for base href (for relative URL resolution like "./app.js")
 	baseTag := `<base href="` + baseHrefPath + `">`
 
