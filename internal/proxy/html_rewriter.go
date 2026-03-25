@@ -750,6 +750,15 @@ func generateFetchInterceptor(pathPrefix string) string {
   const OriginalURL = typeof URL !== 'undefined' ? URL : undefined;
 
   // Helper function to rewrite URL
+  // Build same-origin prefixes for http(s) and ws(s) schemes
+  var sameOriginPrefixes = [window.location.origin + '/'];
+  // Also match ws:// and wss:// URLs with the same host (for WebSocket/SignalR)
+  if (window.location.protocol === 'https:') {
+    sameOriginPrefixes.push('wss://' + window.location.host + '/');
+  } else {
+    sameOriginPrefixes.push('ws://' + window.location.host + '/');
+  }
+
   function rewriteUrl(url) {
     // Handle string URLs
     if (typeof url === 'string') {
@@ -764,15 +773,18 @@ func generateFetchInterceptor(pathPrefix string) string {
         }
         return basePath + url.substring(1);
       }
-      // Full URL with same origin
-      if (url.startsWith(window.location.origin + '/')) {
-        const path = url.substring(window.location.origin.length);
-        if (path.startsWith('/')) {
-          // Skip if already has prefix (with or without trailing slash)
-          if (path.startsWith(basePath) || path === basePathNoSlash || path.startsWith(basePathNoSlash + '/')) {
-            return url;
+      // Full URL with same origin (http/https and ws/wss)
+      for (var i = 0; i < sameOriginPrefixes.length; i++) {
+        var prefix = sameOriginPrefixes[i];
+        if (url.startsWith(prefix)) {
+          var path = url.substring(prefix.length - 1); // include the leading /
+          if (path.startsWith('/')) {
+            // Skip if already has prefix (with or without trailing slash)
+            if (path.startsWith(basePath) || path === basePathNoSlash || path.startsWith(basePathNoSlash + '/')) {
+              return url;
+            }
+            return url.substring(0, prefix.length - 1) + basePath + path.substring(1);
           }
-          return window.location.origin + basePath + path.substring(1);
         }
       }
     }
@@ -841,14 +853,33 @@ func generateFetchInterceptor(pathPrefix string) string {
     return originalSetAttribute.call(this, name, value);
   };
 
-  // Intercept property setters for direct property assignments
-  // This catches cases like: obj.data = '/icon.svg' or img.src = '/logo.png'
-  // which don't go through setAttribute
+  // Intercept getAttribute to strip the prefix when JS reads resource attributes.
+  // The DOM retains the prefixed value (so the browser loads resources from the
+  // correct proxy URL), but JS sees the unprefixed "native" path. This prevents
+  // the proxy prefix from leaking into SPA hash routes when apps read href
+  // attributes and use them for client-side routing.
+  const originalGetAttribute = Element.prototype.getAttribute;
+  Element.prototype.getAttribute = function(name) {
+    const value = originalGetAttribute.call(this, name);
+    if (value && resourceAttrs.includes(name.toLowerCase()) &&
+        typeof value === 'string' &&
+        value.startsWith(basePath)) {
+      return '/' + value.substring(basePath.length);
+    }
+    return value;
+  };
+
+  // Intercept property setters AND getters for direct property assignments.
+  // Setter adds the prefix (so the DOM/browser uses the correct proxy URL).
+  // Getter strips the prefix (so JS sees the native path for SPA routing).
+  // The property getter returns the resolved absolute URL, so we strip the
+  // prefix from the pathname portion.
   function interceptProperty(prototype, propertyName) {
     const descriptor = Object.getOwnPropertyDescriptor(prototype, propertyName);
     if (!descriptor || !descriptor.set) return;
 
     const originalSetter = descriptor.set;
+    const originalGetter = descriptor.get;
     Object.defineProperty(prototype, propertyName, {
       set: function(value) {
         // Only rewrite absolute paths that don't already have the prefix
@@ -860,7 +891,21 @@ func generateFetchInterceptor(pathPrefix string) string {
         }
         return originalSetter.call(this, value);
       },
-      get: descriptor.get,
+      get: originalGetter ? function() {
+        var value = originalGetter.call(this);
+        // Property getters return resolved absolute URLs (e.g. http://host/apps/x/path)
+        // Strip the basePath from the pathname so SPAs see the native path
+        if (typeof value === 'string' && OriginalURL) {
+          try {
+            var u = new OriginalURL(value);
+            if (u.pathname.startsWith(basePath)) {
+              u.pathname = '/' + u.pathname.substring(basePath.length);
+              return u.toString();
+            }
+          } catch(e) {}
+        }
+        return value;
+      } : undefined,
       enumerable: descriptor.enumerable,
       configurable: descriptor.configurable
     });
@@ -915,11 +960,14 @@ func generateFetchInterceptor(pathPrefix string) string {
   }
 
   // Intercept URL constructor
-  // This handles cases like: new URL('/api/data', window.location.href)
+  // Only rewrite when no base is provided (single-argument form).
+  // When a base IS provided, the caller is explicitly controlling resolution,
+  // and the fetch/XHR interceptors will add the prefix at request time.
+  // Rewriting here with a base causes double-prefixing when libraries like
+  // axios prepend their own baseURL to the already-rewritten path.
   if (OriginalURL) {
     window.URL = function(url, base) {
-      // Rewrite the url if it's an absolute path
-      if (typeof url === 'string') {
+      if (typeof url === 'string' && base === undefined) {
         url = rewriteUrl(url);
       }
       return base !== undefined
@@ -931,13 +979,29 @@ func generateFetchInterceptor(pathPrefix string) string {
     window.URL.revokeObjectURL = OriginalURL.revokeObjectURL;
   }
 
+  // Helper: strip the proxy prefix from the hash portion of a URL.
+  // e.g. "http://host/apps/x/web/#/apps/x/login" → "http://host/apps/x/web/#/login"
+  function cleanHash(url) {
+    if (typeof url !== 'string') return url;
+    var hashIdx = url.indexOf('#');
+    if (hashIdx === -1) return url;
+    var base = url.substring(0, hashIdx);
+    var hash = url.substring(hashIdx + 1);
+    var basePathNoSlash = basePath.endsWith('/') ? basePath.slice(0, -1) : basePath;
+    if (hash.startsWith(basePathNoSlash + '/') || hash === basePathNoSlash) {
+      var stripped = hash.substring(basePathNoSlash.length);
+      hash = stripped === '' ? '/' : stripped;
+    }
+    return base + '#' + hash;
+  }
+
   // Intercept history.pushState and history.replaceState
   // This handles SPA navigation that uses the History API
   if (typeof history !== 'undefined') {
     const originalPushState = history.pushState;
     history.pushState = function(state, title, url) {
       if (typeof url === 'string') {
-        url = rewriteUrl(url);
+        url = cleanHash(rewriteUrl(url));
       }
       return originalPushState.call(this, state, title, url);
     };
@@ -945,7 +1009,7 @@ func generateFetchInterceptor(pathPrefix string) string {
     const originalReplaceState = history.replaceState;
     history.replaceState = function(state, title, url) {
       if (typeof url === 'string') {
-        url = rewriteUrl(url);
+        url = cleanHash(rewriteUrl(url));
       }
       return originalReplaceState.call(this, state, title, url);
     };
@@ -1073,6 +1137,38 @@ func generateFetchInterceptor(pathPrefix string) string {
         set: hrefDesc.set,
         enumerable: hrefDesc.enumerable,
         configurable: hrefDesc.configurable
+      });
+    }
+
+    // Intercept hash getter/setter to strip the proxy prefix from hash routes.
+    // SPAs using hash-based routing (e.g. /#/login) can accidentally get the
+    // proxy prefix into the hash fragment (e.g. /#/apps/myapp/login) from
+    // various sources. This interceptor acts as a safety net.
+    const hashDesc = Object.getOwnPropertyDescriptor(locProto, 'hash');
+    if (hashDesc && hashDesc.get) {
+      const origHashGetter = hashDesc.get;
+      const origHashSetter = hashDesc.set;
+      Object.defineProperty(locProto, 'hash', {
+        get: function() {
+          const h = origHashGetter.call(this);
+          // Strip prefix from hash path: #/apps/myapp/login → #/login
+          if (h.startsWith('#' + basePathNoSlash + '/') || h === '#' + basePathNoSlash) {
+            const stripped = h.substring(1 + basePathNoSlash.length);
+            return '#' + (stripped === '' ? '/' : stripped);
+          }
+          return h;
+        },
+        set: origHashSetter ? function(v) {
+          // Strip prefix when setting hash too
+          if (typeof v === 'string') {
+            var val = v.startsWith('#') ? v.substring(1) : v;
+            val = stripPrefix(val);
+            return origHashSetter.call(this, '#' + val);
+          }
+          return origHashSetter.call(this, v);
+        } : undefined,
+        enumerable: hashDesc.enumerable,
+        configurable: hashDesc.configurable
       });
     }
 
