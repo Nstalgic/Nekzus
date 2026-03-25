@@ -147,14 +147,21 @@ func TestWebSocketRevokedDeviceCannotConnect(t *testing.T) {
 			t.Errorf("Expected auth_failed for revoked device, got %s", response.Type)
 		}
 
-		// Check error message
+		// Check error message and structured code
 		if dataMap, ok := response.Data.(map[string]interface{}); ok {
 			if errMsg, ok := dataMap["error"].(string); ok {
-				if errMsg != "device access revoked" {
-					t.Errorf("Expected 'device access revoked' error, got '%s'", errMsg)
+				if errMsg != "This device has been revoked" {
+					t.Errorf("Expected 'This device has been revoked' error, got '%s'", errMsg)
 				}
 			} else {
 				t.Error("Auth failed message missing error field")
+			}
+			if code, ok := dataMap["code"].(string); ok {
+				if code != "DEVICE_REVOKED" {
+					t.Errorf("Expected code 'DEVICE_REVOKED', got '%s'", code)
+				}
+			} else {
+				t.Error("Auth failed message missing code field")
 			}
 		} else {
 			t.Error("Auth failed message has invalid data format")

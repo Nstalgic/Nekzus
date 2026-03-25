@@ -747,6 +747,7 @@ func generateFetchInterceptor(pathPrefix string) string {
   'use strict';
 
   const basePath = '` + pathPrefix + `';
+  const OriginalURL = typeof URL !== 'undefined' ? URL : undefined;
 
   // Helper function to rewrite URL
   function rewriteUrl(url) {
@@ -915,8 +916,7 @@ func generateFetchInterceptor(pathPrefix string) string {
 
   // Intercept URL constructor
   // This handles cases like: new URL('/api/data', window.location.href)
-  if (typeof URL !== 'undefined') {
-    const OriginalURL = window.URL;
+  if (OriginalURL) {
     window.URL = function(url, base) {
       // Rewrite the url if it's an absolute path
       if (typeof url === 'string') {
@@ -1025,31 +1025,71 @@ func generateFetchInterceptor(pathPrefix string) string {
     };
   }
 
-  // Override Location.prototype.pathname getter to strip the base path prefix
-  // This fixes SPA routers that read window.location.pathname for route matching
-  // e.g. they see "/dashboard" instead of "/apps/myapp/dashboard"
+  // Override Location.prototype getters to strip the base path prefix.
+  // This fixes SPA routers that read window.location for route matching.
+  // We must intercept pathname, href, and toString consistently so that
+  // code using new URL(location.href) agrees with location.pathname.
   try {
     const locProto = Object.getPrototypeOf(window.location);
+    const basePathNoSlash = basePath.endsWith('/') ? basePath.slice(0, -1) : basePath;
+
+    function stripPrefix(p) {
+      if (p === basePathNoSlash || p.startsWith(basePathNoSlash + '/')) {
+        const s = p.substring(basePathNoSlash.length);
+        return s === '' ? '/' : s;
+      }
+      return p;
+    }
+
+    // Intercept pathname getter
     const pathDesc = Object.getOwnPropertyDescriptor(locProto, 'pathname');
     if (pathDesc && pathDesc.get) {
       const origPathGetter = pathDesc.get;
       Object.defineProperty(locProto, 'pathname', {
-        get: function() {
-          const p = origPathGetter.call(this);
-          const basePathNoSlash = basePath.endsWith('/') ? basePath.slice(0, -1) : basePath;
-          if (p === basePathNoSlash || p.startsWith(basePathNoSlash + '/')) {
-            const stripped = p.substring(basePathNoSlash.length);
-            return stripped === '' ? '/' : stripped;
-          }
-          return p;
-        },
+        get: function() { return stripPrefix(origPathGetter.call(this)); },
         set: pathDesc.set,
         enumerable: pathDesc.enumerable,
         configurable: pathDesc.configurable
       });
     }
+
+    // Intercept href getter so new URL(location.href) is consistent with pathname
+    const hrefDesc = Object.getOwnPropertyDescriptor(locProto, 'href');
+    if (hrefDesc && hrefDesc.get) {
+      const origHrefGetter = hrefDesc.get;
+      Object.defineProperty(locProto, 'href', {
+        get: function() {
+          const h = origHrefGetter.call(this);
+          try {
+            const u = new OriginalURL(h);
+            const stripped = stripPrefix(u.pathname);
+            if (stripped !== u.pathname) {
+              u.pathname = stripped;
+              return u.toString();
+            }
+          } catch(e) {}
+          return h;
+        },
+        set: hrefDesc.set,
+        enumerable: hrefDesc.enumerable,
+        configurable: hrefDesc.configurable
+      });
+    }
+
+    // Intercept toString (used when location is coerced to string)
+    const toStrDesc = Object.getOwnPropertyDescriptor(locProto, 'toString');
+    if (toStrDesc) {
+      Object.defineProperty(locProto, 'toString', {
+        value: function() {
+          return this.href;
+        },
+        writable: toStrDesc.writable,
+        enumerable: toStrDesc.enumerable,
+        configurable: toStrDesc.configurable
+      });
+    }
   } catch(e) {
-    // Some browsers may not allow overriding Location.prototype.pathname
+    // Some browsers may not allow overriding Location.prototype
   }
 })();
 </script>`
@@ -1075,12 +1115,21 @@ func injectBaseTag(html string, pathPrefix string, requestPath string) string {
 	headRegex := regexp.MustCompile(`(?i)(<head(?:>|\s[^>]*>))`)
 
 	// Compute baseHrefPath (used for both existing and new base tags)
+	// Use the directory portion of requestPath so relative paths resolve correctly.
+	// e.g., for requestPath="/UI/Dashboard", the directory is "/UI/".
+	// This ensures "../bootstrap/x.css" resolves to "/bootstrap/x.css" (one level up from /UI/),
+	// not "/UI/bootstrap/x.css" (which would happen if we treated "Dashboard" as a directory).
 	baseHrefPath := requestPath
 	if baseHrefPath == "" {
 		baseHrefPath = pathPrefix // Fallback to pathPrefix if no requestPath
 	}
 	if !strings.HasSuffix(baseHrefPath, "/") {
-		baseHrefPath = baseHrefPath + "/"
+		// Extract the directory portion (everything up to and including the last slash)
+		if idx := strings.LastIndex(baseHrefPath, "/"); idx >= 0 {
+			baseHrefPath = baseHrefPath[:idx+1]
+		} else {
+			baseHrefPath = "/"
+		}
 	}
 
 	if hasExistingBase {

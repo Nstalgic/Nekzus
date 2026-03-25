@@ -553,13 +553,13 @@ func TestHTMLRewritingResponseWriter_SubpathBaseHref(t *testing.T) {
 			name:         "request at subpath without trailing slash",
 			pathPrefix:   "/apps/test/",
 			requestPath:  "/apps/test/ui/dashboard",
-			expectedBase: "/apps/test/ui/dashboard/",
+			expectedBase: "/apps/test/ui/",
 		},
 		{
 			name:         "request at deep subpath",
 			pathPrefix:   "/apps/grafana/",
 			requestPath:  "/apps/grafana/d/abc123/dashboard",
-			expectedBase: "/apps/grafana/d/abc123/dashboard/",
+			expectedBase: "/apps/grafana/d/abc123/",
 		},
 	}
 
