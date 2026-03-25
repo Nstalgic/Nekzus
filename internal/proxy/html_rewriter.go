@@ -700,7 +700,7 @@ func rewriteCSSContent(css string, pathPrefix string) string {
 }
 
 // rewriteURLBase rewrites urlBase config values in inline scripts.
-// Apps like Sonarr/Radarr/Prowlarr use `urlBase: ''` to configure their SPA router basename.
+// Apps like Sonarr/Radarr/Prowlarr use `urlBase: ”` to configure their SPA router basename.
 // The backend sets it to empty since it doesn't know about the proxy prefix.
 // We rewrite it to include the prefix so the router correctly strips it from the pathname.
 func rewriteURLBase(html string, pathPrefix string) string {
