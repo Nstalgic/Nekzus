@@ -35,6 +35,7 @@ type HTMLRewritingResponseWriter struct {
 	statusCode      int
 	isHTML          bool
 	isCSS           bool
+	isJSON          bool
 	headerSent      bool
 	contentEncoding string // gzip, deflate, or empty
 }
@@ -145,17 +146,18 @@ func (rw *HTMLRewritingResponseWriter) WriteHeader(statusCode int) {
 		}
 	}
 
-	// Check if this is HTML or CSS content that should be rewritten
+	// Check if this is HTML, CSS, or JSON content that should be rewritten
 	// Only buffer if rewriteBody is enabled
 	contentType := rw.ResponseWriter.Header().Get("Content-Type")
 	rw.isHTML = rw.rewriteBody && strings.HasPrefix(contentType, "text/html")
 	rw.isCSS = rw.rewriteBody && strings.HasPrefix(contentType, "text/css")
+	rw.isJSON = rw.rewriteBody && strings.HasPrefix(contentType, "application/json")
 
 	// Capture content encoding for decompression during rewrite
 	rw.contentEncoding = strings.ToLower(rw.ResponseWriter.Header().Get("Content-Encoding"))
 
-	// If not HTML or CSS, write headers immediately and don't buffer
-	if !rw.isHTML && !rw.isCSS {
+	// If not a rewritable content type, write headers immediately and don't buffer
+	if !rw.isHTML && !rw.isCSS && !rw.isJSON {
 		rw.ResponseWriter.WriteHeader(statusCode)
 		rw.headerSent = true
 	}
@@ -390,19 +392,19 @@ func (rw *HTMLRewritingResponseWriter) Write(data []byte) (int, error) {
 		rw.WriteHeader(http.StatusOK)
 	}
 
-	// If not HTML or CSS, write directly
-	if !rw.isHTML && !rw.isCSS {
+	// If not a rewritable content type, write directly
+	if !rw.isHTML && !rw.isCSS && !rw.isJSON {
 		return rw.ResponseWriter.Write(data)
 	}
 
-	// Buffer HTML/CSS content for rewriting
+	// Buffer content for rewriting
 	return rw.buffer.Write(data)
 }
 
-// FlushHTML rewrites HTML/CSS and sends the final response
+// FlushHTML rewrites HTML/CSS/JSON and sends the final response
 func (rw *HTMLRewritingResponseWriter) FlushHTML() error {
-	// If not HTML/CSS or already sent, nothing to do
-	if (!rw.isHTML && !rw.isCSS) || rw.headerSent {
+	// If not a rewritable type or already sent, nothing to do
+	if (!rw.isHTML && !rw.isCSS && !rw.isJSON) || rw.headerSent {
 		return nil
 	}
 
@@ -452,6 +454,8 @@ func (rw *HTMLRewritingResponseWriter) FlushHTML() error {
 	var rewritten string
 	if rw.isCSS {
 		rewritten = rewriteCSSContent(content, rw.pathPrefix)
+	} else if rw.isJSON {
+		rewritten = rewriteURLBase(content, rw.pathPrefix)
 	} else {
 		rewritten = rewriteHTMLPaths(content, rw.pathPrefix, rw.requestPath)
 	}
@@ -482,7 +486,7 @@ func (rw *HTMLRewritingResponseWriter) Flush() {
 	// FlushHTML() should only be called manually after ServeHTTP() returns.
 
 	// For non-buffered content, flush the underlying writer
-	if !rw.isHTML && !rw.isCSS {
+	if !rw.isHTML && !rw.isCSS && !rw.isJSON {
 		if f, ok := rw.ResponseWriter.(http.Flusher); ok {
 			f.Flush()
 		}
@@ -525,6 +529,9 @@ var (
 	baseHrefRegex = regexp.MustCompile(`(?i)(<base\s[^>]*href\s*=\s*)(["'])([^"']*)(["'])([^>]*>)`)
 	// Match @import "path" or @import 'path' in CSS (without url())
 	cssImportRegex = regexp.MustCompile(`@import\s+(['"])(/[^'"]+)(['"])`)
+	// Match urlBase config in both JS (urlBase: '') and JSON ("urlBase": "") formats
+	// The optional leading quote handles JSON keys: "urlBase": "" vs JS keys: urlBase: ''
+	urlBaseRegex = regexp.MustCompile(`("?urlBase"?\s*:\s*(['"]))(\/?)(['"])`)
 )
 
 // rewriteHTMLPaths rewrites absolute paths in HTML to include the path prefix
@@ -559,6 +566,10 @@ func rewriteHTMLPaths(html string, pathPrefix string, requestPath string) string
 
 	// Rewrite meta refresh URLs
 	html = rewriteMetaRefresh(html, pathPrefix)
+
+	// Rewrite urlBase config in inline scripts (e.g. *arr apps: Sonarr, Radarr, Prowlarr)
+	// urlBase: '' → urlBase: '/apps/myapp'
+	html = rewriteURLBase(html, pathPrefix)
 
 	return html
 }
@@ -686,6 +697,30 @@ func rewriteCSSContent(css string, pathPrefix string) string {
 	})
 
 	return css
+}
+
+// rewriteURLBase rewrites urlBase config values in inline scripts.
+// Apps like Sonarr/Radarr/Prowlarr use `urlBase: ''` to configure their SPA router basename.
+// The backend sets it to empty since it doesn't know about the proxy prefix.
+// We rewrite it to include the prefix so the router correctly strips it from the pathname.
+func rewriteURLBase(html string, pathPrefix string) string {
+	// pathPrefix has trailing slash (e.g. "/apps/sonarr/"), urlBase needs it without
+	urlBaseValue := strings.TrimSuffix(pathPrefix, "/")
+
+	return urlBaseRegex.ReplaceAllStringFunc(html, func(match string) string {
+		submatches := urlBaseRegex.FindStringSubmatch(match)
+		if len(submatches) < 5 {
+			return match
+		}
+		value := submatches[3] // "" or "/"
+
+		// Don't rewrite if already has a non-trivial urlBase (app has its own prefix configured)
+		if value != "" && value != "/" {
+			return match
+		}
+
+		return submatches[1] + urlBaseValue + submatches[4]
+	})
 }
 
 // shouldRewritePath returns true if the path should be rewritten
