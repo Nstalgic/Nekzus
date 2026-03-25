@@ -146,12 +146,27 @@ func (rw *HTMLRewritingResponseWriter) WriteHeader(statusCode int) {
 		}
 	}
 
-	// Check if this is HTML, CSS, or JSON content that should be rewritten
+	// Check if this is HTML, CSS, or JSON/JS content that should be rewritten
 	// Only buffer if rewriteBody is enabled
 	contentType := rw.ResponseWriter.Header().Get("Content-Type")
 	rw.isHTML = rw.rewriteBody && strings.HasPrefix(contentType, "text/html")
 	rw.isCSS = rw.rewriteBody && strings.HasPrefix(contentType, "text/css")
-	rw.isJSON = rw.rewriteBody && strings.HasPrefix(contentType, "application/json")
+	// Buffer JSON and small JS responses for urlBase rewriting.
+	// JS config files like initialize.js contain urlBase that needs patching.
+	// Large JS bundles are skipped (Content-Length > 50KB) to avoid buffering overhead.
+	isJSONType := strings.HasPrefix(contentType, "application/json")
+	isJSType := strings.HasPrefix(contentType, "application/javascript") || strings.HasPrefix(contentType, "text/javascript")
+	if isJSType {
+		// Only buffer small JS files (config files are typically < 1KB).
+		// Skip if Content-Length is missing (chunked = likely a large bundle) or > 50KB.
+		cl := rw.ResponseWriter.Header().Get("Content-Length")
+		if cl == "" {
+			isJSType = false
+		} else if size, err := strconv.Atoi(cl); err != nil || size > 50*1024 {
+			isJSType = false
+		}
+	}
+	rw.isJSON = rw.rewriteBody && (isJSONType || isJSType)
 
 	// Capture content encoding for decompression during rewrite
 	rw.contentEncoding = strings.ToLower(rw.ResponseWriter.Header().Get("Content-Encoding"))
