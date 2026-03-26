@@ -92,11 +92,15 @@ func NewIPBasedAuth(authMgr *auth.Manager, store *storage.Store, m *metrics.Metr
 				if token != "" {
 					_, claims, err := authMgr.ParseJWT(token)
 					if err != nil {
-						// Invalid token from local network - reject
+						// Token is invalid or expired — still allow the local request through
+						// (local network is trusted) but skip device activity tracking.
+						// This prevents the mobile app from getting 401s on local network
+						// when its token expires, which would trigger a credential wipe.
+						log.Debug("Local request with invalid/expired JWT, allowing without device tracking", "error", err)
 						if m != nil {
-							m.RecordJWTValidation("error_invalid")
+							m.RecordLocalAuth("expired_jwt_passthrough")
 						}
-						http.Error(hw, "invalid token: "+err.Error(), http.StatusUnauthorized)
+						next.ServeHTTP(hw, r)
 						return
 					}
 
