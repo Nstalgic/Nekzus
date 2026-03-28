@@ -430,6 +430,8 @@ func TestRequestTracker_ImplementsFlusher(t *testing.T) {
 	resp, err := http.Get(server.URL)
 	require.NoError(t, err)
 	defer resp.Body.Close()
+	// Read body to ensure the handler has fully completed before asserting
+	_, _ = io.ReadAll(resp.Body)
 
 	// Assert
 	assert.True(t, flusherAvailable.Load(), "ResponseWriter should implement http.Flusher for SSE/streaming")
