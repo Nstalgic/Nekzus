@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	apperrors "github.com/nstalgic/nekzus/internal/errors"
 	"github.com/nstalgic/nekzus/internal/handlers"
 	"github.com/nstalgic/nekzus/internal/httputil"
 	"github.com/nstalgic/nekzus/internal/types"
@@ -99,11 +100,20 @@ func (app *Application) handleWebSocket(w http.ResponseWriter, r *http.Request) 
 		if err != nil {
 			log.Warn("invalid token", "error", err)
 			conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
+
+			// Send structured error so client can distinguish expired vs revoked vs invalid
+			errData := map[string]interface{}{
+				"error": "invalid token",
+			}
+			if appErr, ok := err.(*apperrors.AppError); ok {
+				errData["error"] = appErr.Message
+				errData["code"] = appErr.Code
+				errData["numericCode"] = appErr.NumericCode
+			}
+
 			conn.WriteJSON(types.WebSocketMessage{
 				Type: types.WSMsgTypeAuthFailed,
-				Data: map[string]string{
-					"error": "invalid token",
-				},
+				Data: errData,
 			})
 			return
 		}
@@ -136,8 +146,10 @@ func (app *Application) handleWebSocket(w http.ResponseWriter, r *http.Request) 
 			conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
 			conn.WriteJSON(types.WebSocketMessage{
 				Type: types.WSMsgTypeAuthFailed,
-				Data: map[string]string{
-					"error": "device access revoked",
+				Data: map[string]interface{}{
+					"error":       "This device has been revoked",
+					"code":        "DEVICE_REVOKED",
+					"numericCode": apperrors.CodeDeviceRevoked,
 				},
 			})
 			return

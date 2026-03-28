@@ -35,6 +35,7 @@ type HTMLRewritingResponseWriter struct {
 	statusCode      int
 	isHTML          bool
 	isCSS           bool
+	isJSON          bool
 	headerSent      bool
 	contentEncoding string // gzip, deflate, or empty
 }
@@ -145,17 +146,33 @@ func (rw *HTMLRewritingResponseWriter) WriteHeader(statusCode int) {
 		}
 	}
 
-	// Check if this is HTML or CSS content that should be rewritten
+	// Check if this is HTML, CSS, or JSON/JS content that should be rewritten
 	// Only buffer if rewriteBody is enabled
 	contentType := rw.ResponseWriter.Header().Get("Content-Type")
 	rw.isHTML = rw.rewriteBody && strings.HasPrefix(contentType, "text/html")
 	rw.isCSS = rw.rewriteBody && strings.HasPrefix(contentType, "text/css")
+	// Buffer JSON and small JS responses for urlBase rewriting.
+	// JS config files like initialize.js contain urlBase that needs patching.
+	// Large JS bundles are skipped (Content-Length > 50KB) to avoid buffering overhead.
+	isJSONType := strings.HasPrefix(contentType, "application/json")
+	isJSType := strings.HasPrefix(contentType, "application/javascript") || strings.HasPrefix(contentType, "text/javascript")
+	if isJSType {
+		// Only buffer small JS files (config files are typically < 1KB).
+		// Skip if Content-Length is missing (chunked = likely a large bundle) or > 50KB.
+		cl := rw.ResponseWriter.Header().Get("Content-Length")
+		if cl == "" {
+			isJSType = false
+		} else if size, err := strconv.Atoi(cl); err != nil || size > 50*1024 {
+			isJSType = false
+		}
+	}
+	rw.isJSON = rw.rewriteBody && (isJSONType || isJSType)
 
 	// Capture content encoding for decompression during rewrite
 	rw.contentEncoding = strings.ToLower(rw.ResponseWriter.Header().Get("Content-Encoding"))
 
-	// If not HTML or CSS, write headers immediately and don't buffer
-	if !rw.isHTML && !rw.isCSS {
+	// If not a rewritable content type, write headers immediately and don't buffer
+	if !rw.isHTML && !rw.isCSS && !rw.isJSON {
 		rw.ResponseWriter.WriteHeader(statusCode)
 		rw.headerSent = true
 	}
@@ -390,19 +407,19 @@ func (rw *HTMLRewritingResponseWriter) Write(data []byte) (int, error) {
 		rw.WriteHeader(http.StatusOK)
 	}
 
-	// If not HTML or CSS, write directly
-	if !rw.isHTML && !rw.isCSS {
+	// If not a rewritable content type, write directly
+	if !rw.isHTML && !rw.isCSS && !rw.isJSON {
 		return rw.ResponseWriter.Write(data)
 	}
 
-	// Buffer HTML/CSS content for rewriting
+	// Buffer content for rewriting
 	return rw.buffer.Write(data)
 }
 
-// FlushHTML rewrites HTML/CSS and sends the final response
+// FlushHTML rewrites HTML/CSS/JSON and sends the final response
 func (rw *HTMLRewritingResponseWriter) FlushHTML() error {
-	// If not HTML/CSS or already sent, nothing to do
-	if (!rw.isHTML && !rw.isCSS) || rw.headerSent {
+	// If not a rewritable type or already sent, nothing to do
+	if (!rw.isHTML && !rw.isCSS && !rw.isJSON) || rw.headerSent {
 		return nil
 	}
 
@@ -452,6 +469,8 @@ func (rw *HTMLRewritingResponseWriter) FlushHTML() error {
 	var rewritten string
 	if rw.isCSS {
 		rewritten = rewriteCSSContent(content, rw.pathPrefix)
+	} else if rw.isJSON {
+		rewritten = rewriteURLBase(content, rw.pathPrefix)
 	} else {
 		rewritten = rewriteHTMLPaths(content, rw.pathPrefix, rw.requestPath)
 	}
@@ -482,7 +501,7 @@ func (rw *HTMLRewritingResponseWriter) Flush() {
 	// FlushHTML() should only be called manually after ServeHTTP() returns.
 
 	// For non-buffered content, flush the underlying writer
-	if !rw.isHTML && !rw.isCSS {
+	if !rw.isHTML && !rw.isCSS && !rw.isJSON {
 		if f, ok := rw.ResponseWriter.(http.Flusher); ok {
 			f.Flush()
 		}
@@ -525,6 +544,9 @@ var (
 	baseHrefRegex = regexp.MustCompile(`(?i)(<base\s[^>]*href\s*=\s*)(["'])([^"']*)(["'])([^>]*>)`)
 	// Match @import "path" or @import 'path' in CSS (without url())
 	cssImportRegex = regexp.MustCompile(`@import\s+(['"])(/[^'"]+)(['"])`)
+	// Match urlBase config in both JS (urlBase: '') and JSON ("urlBase": "") formats
+	// The optional leading quote handles JSON keys: "urlBase": "" vs JS keys: urlBase: ''
+	urlBaseRegex = regexp.MustCompile(`("?urlBase"?\s*:\s*(['"]))(\/?)(['"])`)
 )
 
 // rewriteHTMLPaths rewrites absolute paths in HTML to include the path prefix
@@ -559,6 +581,10 @@ func rewriteHTMLPaths(html string, pathPrefix string, requestPath string) string
 
 	// Rewrite meta refresh URLs
 	html = rewriteMetaRefresh(html, pathPrefix)
+
+	// Rewrite urlBase config in inline scripts (e.g. *arr apps: Sonarr, Radarr, Prowlarr)
+	// urlBase: '' → urlBase: '/apps/myapp'
+	html = rewriteURLBase(html, pathPrefix)
 
 	return html
 }
@@ -688,6 +714,30 @@ func rewriteCSSContent(css string, pathPrefix string) string {
 	return css
 }
 
+// rewriteURLBase rewrites urlBase config values in inline scripts.
+// Apps like Sonarr/Radarr/Prowlarr use `urlBase: ”` to configure their SPA router basename.
+// The backend sets it to empty since it doesn't know about the proxy prefix.
+// We rewrite it to include the prefix so the router correctly strips it from the pathname.
+func rewriteURLBase(html string, pathPrefix string) string {
+	// pathPrefix has trailing slash (e.g. "/apps/sonarr/"), urlBase needs it without
+	urlBaseValue := strings.TrimSuffix(pathPrefix, "/")
+
+	return urlBaseRegex.ReplaceAllStringFunc(html, func(match string) string {
+		submatches := urlBaseRegex.FindStringSubmatch(match)
+		if len(submatches) < 5 {
+			return match
+		}
+		value := submatches[3] // "" or "/"
+
+		// Don't rewrite if already has a non-trivial urlBase (app has its own prefix configured)
+		if value != "" && value != "/" {
+			return match
+		}
+
+		return submatches[1] + urlBaseValue + submatches[4]
+	})
+}
+
 // shouldRewritePath returns true if the path should be rewritten
 func shouldRewritePath(path string, pathPrefix string) bool {
 	// Don't rewrite empty paths
@@ -747,8 +797,18 @@ func generateFetchInterceptor(pathPrefix string) string {
   'use strict';
 
   const basePath = '` + pathPrefix + `';
+  const OriginalURL = typeof URL !== 'undefined' ? URL : undefined;
 
   // Helper function to rewrite URL
+  // Build same-origin prefixes for http(s) and ws(s) schemes
+  var sameOriginPrefixes = [window.location.origin + '/'];
+  // Also match ws:// and wss:// URLs with the same host (for WebSocket/SignalR)
+  if (window.location.protocol === 'https:') {
+    sameOriginPrefixes.push('wss://' + window.location.host + '/');
+  } else {
+    sameOriginPrefixes.push('ws://' + window.location.host + '/');
+  }
+
   function rewriteUrl(url) {
     // Handle string URLs
     if (typeof url === 'string') {
@@ -763,15 +823,18 @@ func generateFetchInterceptor(pathPrefix string) string {
         }
         return basePath + url.substring(1);
       }
-      // Full URL with same origin
-      if (url.startsWith(window.location.origin + '/')) {
-        const path = url.substring(window.location.origin.length);
-        if (path.startsWith('/')) {
-          // Skip if already has prefix (with or without trailing slash)
-          if (path.startsWith(basePath) || path === basePathNoSlash || path.startsWith(basePathNoSlash + '/')) {
-            return url;
+      // Full URL with same origin (http/https and ws/wss)
+      for (var i = 0; i < sameOriginPrefixes.length; i++) {
+        var prefix = sameOriginPrefixes[i];
+        if (url.startsWith(prefix)) {
+          var path = url.substring(prefix.length - 1); // include the leading /
+          if (path.startsWith('/')) {
+            // Skip if already has prefix (with or without trailing slash)
+            if (path.startsWith(basePath) || path === basePathNoSlash || path.startsWith(basePathNoSlash + '/')) {
+              return url;
+            }
+            return url.substring(0, prefix.length - 1) + basePath + path.substring(1);
           }
-          return window.location.origin + basePath + path.substring(1);
         }
       }
     }
@@ -840,14 +903,33 @@ func generateFetchInterceptor(pathPrefix string) string {
     return originalSetAttribute.call(this, name, value);
   };
 
-  // Intercept property setters for direct property assignments
-  // This catches cases like: obj.data = '/icon.svg' or img.src = '/logo.png'
-  // which don't go through setAttribute
+  // Intercept getAttribute to strip the prefix when JS reads resource attributes.
+  // The DOM retains the prefixed value (so the browser loads resources from the
+  // correct proxy URL), but JS sees the unprefixed "native" path. This prevents
+  // the proxy prefix from leaking into SPA hash routes when apps read href
+  // attributes and use them for client-side routing.
+  const originalGetAttribute = Element.prototype.getAttribute;
+  Element.prototype.getAttribute = function(name) {
+    const value = originalGetAttribute.call(this, name);
+    if (value && resourceAttrs.includes(name.toLowerCase()) &&
+        typeof value === 'string' &&
+        value.startsWith(basePath)) {
+      return '/' + value.substring(basePath.length);
+    }
+    return value;
+  };
+
+  // Intercept property setters AND getters for direct property assignments.
+  // Setter adds the prefix (so the DOM/browser uses the correct proxy URL).
+  // Getter strips the prefix (so JS sees the native path for SPA routing).
+  // The property getter returns the resolved absolute URL, so we strip the
+  // prefix from the pathname portion.
   function interceptProperty(prototype, propertyName) {
     const descriptor = Object.getOwnPropertyDescriptor(prototype, propertyName);
     if (!descriptor || !descriptor.set) return;
 
     const originalSetter = descriptor.set;
+    const originalGetter = descriptor.get;
     Object.defineProperty(prototype, propertyName, {
       set: function(value) {
         // Only rewrite absolute paths that don't already have the prefix
@@ -859,7 +941,21 @@ func generateFetchInterceptor(pathPrefix string) string {
         }
         return originalSetter.call(this, value);
       },
-      get: descriptor.get,
+      get: originalGetter ? function() {
+        var value = originalGetter.call(this);
+        // Property getters return resolved absolute URLs (e.g. http://host/apps/x/path)
+        // Strip the basePath from the pathname so SPAs see the native path
+        if (typeof value === 'string' && OriginalURL) {
+          try {
+            var u = new OriginalURL(value);
+            if (u.pathname.startsWith(basePath)) {
+              u.pathname = '/' + u.pathname.substring(basePath.length);
+              return u.toString();
+            }
+          } catch(e) {}
+        }
+        return value;
+      } : undefined,
       enumerable: descriptor.enumerable,
       configurable: descriptor.configurable
     });
@@ -914,12 +1010,14 @@ func generateFetchInterceptor(pathPrefix string) string {
   }
 
   // Intercept URL constructor
-  // This handles cases like: new URL('/api/data', window.location.href)
-  if (typeof URL !== 'undefined') {
-    const OriginalURL = window.URL;
+  // Only rewrite when no base is provided (single-argument form).
+  // When a base IS provided, the caller is explicitly controlling resolution,
+  // and the fetch/XHR interceptors will add the prefix at request time.
+  // Rewriting here with a base causes double-prefixing when libraries like
+  // axios prepend their own baseURL to the already-rewritten path.
+  if (OriginalURL) {
     window.URL = function(url, base) {
-      // Rewrite the url if it's an absolute path
-      if (typeof url === 'string') {
+      if (typeof url === 'string' && base === undefined) {
         url = rewriteUrl(url);
       }
       return base !== undefined
@@ -931,13 +1029,29 @@ func generateFetchInterceptor(pathPrefix string) string {
     window.URL.revokeObjectURL = OriginalURL.revokeObjectURL;
   }
 
+  // Helper: strip the proxy prefix from the hash portion of a URL.
+  // e.g. "http://host/apps/x/web/#/apps/x/login" → "http://host/apps/x/web/#/login"
+  function cleanHash(url) {
+    if (typeof url !== 'string') return url;
+    var hashIdx = url.indexOf('#');
+    if (hashIdx === -1) return url;
+    var base = url.substring(0, hashIdx);
+    var hash = url.substring(hashIdx + 1);
+    var basePathNoSlash = basePath.endsWith('/') ? basePath.slice(0, -1) : basePath;
+    if (hash.startsWith(basePathNoSlash + '/') || hash === basePathNoSlash) {
+      var stripped = hash.substring(basePathNoSlash.length);
+      hash = stripped === '' ? '/' : stripped;
+    }
+    return base + '#' + hash;
+  }
+
   // Intercept history.pushState and history.replaceState
   // This handles SPA navigation that uses the History API
   if (typeof history !== 'undefined') {
     const originalPushState = history.pushState;
     history.pushState = function(state, title, url) {
       if (typeof url === 'string') {
-        url = rewriteUrl(url);
+        url = cleanHash(rewriteUrl(url));
       }
       return originalPushState.call(this, state, title, url);
     };
@@ -945,7 +1059,7 @@ func generateFetchInterceptor(pathPrefix string) string {
     const originalReplaceState = history.replaceState;
     history.replaceState = function(state, title, url) {
       if (typeof url === 'string') {
-        url = rewriteUrl(url);
+        url = cleanHash(rewriteUrl(url));
       }
       return originalReplaceState.call(this, state, title, url);
     };
@@ -1025,31 +1139,103 @@ func generateFetchInterceptor(pathPrefix string) string {
     };
   }
 
-  // Override Location.prototype.pathname getter to strip the base path prefix
-  // This fixes SPA routers that read window.location.pathname for route matching
-  // e.g. they see "/dashboard" instead of "/apps/myapp/dashboard"
+  // Override Location.prototype getters to strip the base path prefix.
+  // This fixes SPA routers that read window.location for route matching.
+  // We must intercept pathname, href, and toString consistently so that
+  // code using new URL(location.href) agrees with location.pathname.
   try {
     const locProto = Object.getPrototypeOf(window.location);
+    const basePathNoSlash = basePath.endsWith('/') ? basePath.slice(0, -1) : basePath;
+
+    function stripPrefix(p) {
+      if (p === basePathNoSlash || p.startsWith(basePathNoSlash + '/')) {
+        const s = p.substring(basePathNoSlash.length);
+        return s === '' ? '/' : s;
+      }
+      return p;
+    }
+
+    // Intercept pathname getter
     const pathDesc = Object.getOwnPropertyDescriptor(locProto, 'pathname');
     if (pathDesc && pathDesc.get) {
       const origPathGetter = pathDesc.get;
       Object.defineProperty(locProto, 'pathname', {
-        get: function() {
-          const p = origPathGetter.call(this);
-          const basePathNoSlash = basePath.endsWith('/') ? basePath.slice(0, -1) : basePath;
-          if (p === basePathNoSlash || p.startsWith(basePathNoSlash + '/')) {
-            const stripped = p.substring(basePathNoSlash.length);
-            return stripped === '' ? '/' : stripped;
-          }
-          return p;
-        },
+        get: function() { return stripPrefix(origPathGetter.call(this)); },
         set: pathDesc.set,
         enumerable: pathDesc.enumerable,
         configurable: pathDesc.configurable
       });
     }
+
+    // Intercept href getter so new URL(location.href) is consistent with pathname
+    const hrefDesc = Object.getOwnPropertyDescriptor(locProto, 'href');
+    if (hrefDesc && hrefDesc.get) {
+      const origHrefGetter = hrefDesc.get;
+      Object.defineProperty(locProto, 'href', {
+        get: function() {
+          const h = origHrefGetter.call(this);
+          try {
+            const u = new OriginalURL(h);
+            const stripped = stripPrefix(u.pathname);
+            if (stripped !== u.pathname) {
+              u.pathname = stripped;
+              return u.toString();
+            }
+          } catch(e) {}
+          return h;
+        },
+        set: hrefDesc.set,
+        enumerable: hrefDesc.enumerable,
+        configurable: hrefDesc.configurable
+      });
+    }
+
+    // Intercept hash getter/setter to strip the proxy prefix from hash routes.
+    // SPAs using hash-based routing (e.g. /#/login) can accidentally get the
+    // proxy prefix into the hash fragment (e.g. /#/apps/myapp/login) from
+    // various sources. This interceptor acts as a safety net.
+    const hashDesc = Object.getOwnPropertyDescriptor(locProto, 'hash');
+    if (hashDesc && hashDesc.get) {
+      const origHashGetter = hashDesc.get;
+      const origHashSetter = hashDesc.set;
+      Object.defineProperty(locProto, 'hash', {
+        get: function() {
+          const h = origHashGetter.call(this);
+          // Strip prefix from hash path: #/apps/myapp/login → #/login
+          if (h.startsWith('#' + basePathNoSlash + '/') || h === '#' + basePathNoSlash) {
+            const stripped = h.substring(1 + basePathNoSlash.length);
+            return '#' + (stripped === '' ? '/' : stripped);
+          }
+          return h;
+        },
+        set: origHashSetter ? function(v) {
+          // Strip prefix when setting hash too
+          if (typeof v === 'string') {
+            var val = v.startsWith('#') ? v.substring(1) : v;
+            val = stripPrefix(val);
+            return origHashSetter.call(this, '#' + val);
+          }
+          return origHashSetter.call(this, v);
+        } : undefined,
+        enumerable: hashDesc.enumerable,
+        configurable: hashDesc.configurable
+      });
+    }
+
+    // Intercept toString (used when location is coerced to string)
+    const toStrDesc = Object.getOwnPropertyDescriptor(locProto, 'toString');
+    if (toStrDesc) {
+      Object.defineProperty(locProto, 'toString', {
+        value: function() {
+          return this.href;
+        },
+        writable: toStrDesc.writable,
+        enumerable: toStrDesc.enumerable,
+        configurable: toStrDesc.configurable
+      });
+    }
   } catch(e) {
-    // Some browsers may not allow overriding Location.prototype.pathname
+    // Some browsers may not allow overriding Location.prototype
   }
 })();
 </script>`
@@ -1075,12 +1261,21 @@ func injectBaseTag(html string, pathPrefix string, requestPath string) string {
 	headRegex := regexp.MustCompile(`(?i)(<head(?:>|\s[^>]*>))`)
 
 	// Compute baseHrefPath (used for both existing and new base tags)
+	// Use the directory portion of requestPath so relative paths resolve correctly.
+	// e.g., for requestPath="/UI/Dashboard", the directory is "/UI/".
+	// This ensures "../bootstrap/x.css" resolves to "/bootstrap/x.css" (one level up from /UI/),
+	// not "/UI/bootstrap/x.css" (which would happen if we treated "Dashboard" as a directory).
 	baseHrefPath := requestPath
 	if baseHrefPath == "" {
 		baseHrefPath = pathPrefix // Fallback to pathPrefix if no requestPath
 	}
 	if !strings.HasSuffix(baseHrefPath, "/") {
-		baseHrefPath = baseHrefPath + "/"
+		// Extract the directory portion (everything up to and including the last slash)
+		if idx := strings.LastIndex(baseHrefPath, "/"); idx >= 0 {
+			baseHrefPath = baseHrefPath[:idx+1]
+		} else {
+			baseHrefPath = "/"
+		}
 	}
 
 	if hasExistingBase {

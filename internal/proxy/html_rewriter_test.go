@@ -67,7 +67,13 @@ func TestHTMLRewritingResponseWriter_NonHTML(t *testing.T) {
 		t.Fatalf("Write failed: %v", err)
 	}
 
-	// Verify JSON was not modified
+	// Flush (JSON is buffered for urlBase rewriting)
+	err = rw.FlushHTML()
+	if err != nil {
+		t.Fatalf("FlushHTML failed: %v", err)
+	}
+
+	// Verify JSON was not modified (no urlBase field to rewrite)
 	result := w.Body.String()
 	if result != json {
 		t.Errorf("Expected JSON to pass through unchanged, got: %s", result)
@@ -553,13 +559,13 @@ func TestHTMLRewritingResponseWriter_SubpathBaseHref(t *testing.T) {
 			name:         "request at subpath without trailing slash",
 			pathPrefix:   "/apps/test/",
 			requestPath:  "/apps/test/ui/dashboard",
-			expectedBase: "/apps/test/ui/dashboard/",
+			expectedBase: "/apps/test/ui/",
 		},
 		{
 			name:         "request at deep subpath",
 			pathPrefix:   "/apps/grafana/",
 			requestPath:  "/apps/grafana/d/abc123/dashboard",
-			expectedBase: "/apps/grafana/d/abc123/dashboard/",
+			expectedBase: "/apps/grafana/d/abc123/",
 		},
 	}
 
