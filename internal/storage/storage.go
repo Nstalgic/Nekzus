@@ -2380,6 +2380,22 @@ func (s *Store) MarkNotificationDelivered(id int64) error {
 	return nil
 }
 
+// MarkNotificationExpired marks a notification as expired
+func (s *Store) MarkNotificationExpired(id int64) error {
+	query := `
+		UPDATE notifications
+		SET status = 'expired', error_message = 'notification expired'
+		WHERE id = ?
+	`
+
+	_, err := s.db.Exec(query, id)
+	if err != nil {
+		return fmt.Errorf("failed to mark notification expired: %w", err)
+	}
+
+	return nil
+}
+
 // UpdateNotificationRetry updates retry count and checks if max retries reached
 func (s *Store) UpdateNotificationRetry(id int64, errorMsg string) error {
 	tx, err := s.db.Begin()

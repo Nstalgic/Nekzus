@@ -138,8 +138,11 @@ func (q *Queue) RetryDevice(deviceID string) error {
 
 		// Check if expired
 		if time.Now().After(notif.ExpiresAt) {
-			log.Info("Notification expired", "notif_id", notif.ID, "expires_at", notif.ExpiresAt)
+			log.Info("Notification expired, marking as expired", "notif_id", notif.ID, "expires_at", notif.ExpiresAt)
 			q.metrics.expired.Add(1)
+			if markErr := q.storage.MarkNotificationExpired(notif.ID); markErr != nil {
+				log.Warn("Failed to mark notification as expired", "notif_id", notif.ID, "error", markErr)
+			}
 			continue
 		}
 
@@ -194,8 +197,11 @@ func (q *Queue) RetryNotification(id int64) (bool, error) {
 
 	// Check if expired
 	if time.Now().After(notif.ExpiresAt) {
-		log.Info("Notification expired", "notif_id", id, "expires_at", notif.ExpiresAt)
+		log.Info("Notification expired, marking as expired", "notif_id", id, "expires_at", notif.ExpiresAt)
 		q.metrics.expired.Add(1)
+		if markErr := q.storage.MarkNotificationExpired(id); markErr != nil {
+			log.Warn("Failed to mark notification as expired", "notif_id", id, "error", markErr)
+		}
 		return false, errors.New("notification expired")
 	}
 

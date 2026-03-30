@@ -67,6 +67,7 @@ type Storage interface {
 	GetNotificationByID(id int64) (*StoredNotification, error)
 	GetAllRetryableNotifications() ([]*StoredNotification, error)
 	MarkNotificationDelivered(id int64) error
+	MarkNotificationExpired(id int64) error
 	UpdateNotificationRetry(id int64, errorMsg string) error
 	ResetNotificationForRetry(id int64) error
 }

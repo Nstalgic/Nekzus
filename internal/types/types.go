@@ -289,6 +289,7 @@ const (
 	WSMsgTypeDevicePaired      = "device_paired"
 	WSMsgTypeDeviceRevoked     = "device_revoked"
 	WSMsgTypeHealthChange      = "health_change"
+	WSMsgTypeHealthAlert       = "health_alert"
 	WSMsgTypePortExposure      = "port_exposure_warning"
 	WSMsgTypeWebhook           = "webhook"
 	WSMsgTypeHello             = "hello"

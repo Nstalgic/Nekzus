@@ -59,8 +59,14 @@ func DefaultServiceConfig() ServiceConfig {
 
 			// Health status change
 			types.WSMsgTypeHealthChange: {
-				TTL:        7 * 24 * time.Hour, // 7 days - less critical
-				MaxRetries: 5,
+				TTL:        30 * 24 * time.Hour, // 30 days
+				MaxRetries: 10,
+			},
+
+			// Health alert (service went unhealthy)
+			types.WSMsgTypeHealthAlert: {
+				TTL:        30 * 24 * time.Hour, // 30 days
+				MaxRetries: 10,
 			},
 
 			// Security: Port exposure warning

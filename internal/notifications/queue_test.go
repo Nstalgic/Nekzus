@@ -87,6 +87,17 @@ func (m *MockStorage) MarkNotificationDelivered(id int64) error {
 	return nil
 }
 
+func (m *MockStorage) MarkNotificationExpired(id int64) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if notif, ok := m.notifications[id]; ok {
+		notif.Status = StatusExpired
+		notif.ErrorMessage = "notification expired"
+	}
+	return nil
+}
+
 func (m *MockStorage) UpdateNotificationRetry(id int64, errorMsg string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
