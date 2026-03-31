@@ -67,3 +67,8 @@ cmd/nekzus/webdist/
 docs-site/node_modules/
 docs-site/.docusaurus/
 docs-site/build/
+
+# Gait
+.gait-secrets
+.gait/
+gait.yml

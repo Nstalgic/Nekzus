@@ -248,6 +248,12 @@ func (h *NotificationHandler) HandleRetryNotification(w http.ResponseWriter, r *
 				}
 				return
 			}
+			// Handle expired notifications
+			if strings.Contains(deliveryErr.Error(), "notification expired") {
+				notifLog.Info("Notification expired, cannot retry", "id", id)
+				apperrors.WriteJSON(w, apperrors.New("EXPIRED", "Notification has expired and cannot be retried", http.StatusGone))
+				return
+			}
 			notifLog.Error("Failed to retry notification", "id", id, "error", deliveryErr)
 			apperrors.WriteJSON(w, apperrors.Wrap(deliveryErr, "RETRY_FAILED", "Failed to retry notification", http.StatusInternalServerError))
 			return

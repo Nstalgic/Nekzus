@@ -98,10 +98,10 @@ func TestSend_UsesCorrectTTLForType(t *testing.T) {
 			wantRetries: 10,
 		},
 		{
-			name:        "health_change uses 7 days TTL",
+			name:        "health_change uses 30 days TTL",
 			msgType:     types.WSMsgTypeHealthChange,
-			wantTTL:     7 * 24 * time.Hour,
-			wantRetries: 5,
+			wantTTL:     30 * 24 * time.Hour,
+			wantRetries: 10,
 		},
 		{
 			name:        "unknown type uses default TTL",

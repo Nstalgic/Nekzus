@@ -750,14 +750,12 @@ func (c *ServiceHealthChecker) enqueueHealthNotification(appID, status, message 
 			continue
 		}
 
-		// TTL: 1 hour for health alerts
-		// MaxRetries: 3 attempts
 		err := c.notificationQueue.Enqueue(
 			device.ID,
-			"health_alert",
+			types.WSMsgTypeHealthAlert,
 			json.RawMessage(payloadJSON),
-			1*time.Hour,
-			3,
+			30*24*time.Hour,
+			10,
 		)
 		if err != nil {
 			log.Warn("Failed to enqueue health notification for device", "deviceID", device.ID, "error", err)
