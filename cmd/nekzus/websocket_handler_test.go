@@ -56,6 +56,24 @@ func authenticateWebSocket(t *testing.T, conn *websocket.Conn, token string) {
 	}
 }
 
+// readAppMessage reads the next non-device_status message from the WebSocket connection.
+// device_status messages are automatically broadcast on connect/disconnect and are skipped.
+func readAppMessage(t *testing.T, conn *websocket.Conn, timeout time.Duration) (types.WebSocketMessage, error) {
+	t.Helper()
+	deadline := time.Now().Add(timeout)
+	for {
+		var msg types.WebSocketMessage
+		conn.SetReadDeadline(deadline)
+		if err := conn.ReadJSON(&msg); err != nil {
+			return msg, err
+		}
+		if msg.Type == types.WSMsgTypeDeviceStatus {
+			continue
+		}
+		return msg, nil
+	}
+}
+
 func TestHandleWebSocket_LocalRequestNoAuth(t *testing.T) {
 	app := newTestApplication(t)
 	app.managers.WebSocket = wsmanager.NewManager(app.metrics, app.storage)
@@ -217,10 +235,8 @@ func TestHandleWebSocket_ReceiveBroadcastMessages(t *testing.T) {
 
 	app.managers.WebSocket.Broadcast(testMessage)
 
-	// Client should receive the broadcast
-	var receivedMsg types.WebSocketMessage
-	conn.SetReadDeadline(time.Now().Add(2 * time.Second))
-	err = conn.ReadJSON(&receivedMsg)
+	// Client should receive the broadcast (skip device_status from connect)
+	receivedMsg, err := readAppMessage(t, conn, 2*time.Second)
 	if err != nil {
 		t.Fatalf("Failed to receive broadcast message: %v", err)
 	}
@@ -341,11 +357,9 @@ func TestHandleWebSocket_MultipleClients(t *testing.T) {
 	}
 	app.managers.WebSocket.Broadcast(testMessage)
 
-	// All clients should receive it
+	// All clients should receive it (skip device_status from connect)
 	for i, conn := range clients {
-		var msg types.WebSocketMessage
-		conn.SetReadDeadline(time.Now().Add(2 * time.Second))
-		err := conn.ReadJSON(&msg)
+		msg, err := readAppMessage(t, conn, 2*time.Second)
 		if err != nil {
 			t.Errorf("Client %d failed to receive broadcast: %v", i, err)
 			continue
@@ -463,10 +477,8 @@ func TestHandleWebSocket_MessageSerialization(t *testing.T) {
 			// Broadcast message
 			app.managers.WebSocket.Broadcast(tt.message)
 
-			// Receive and verify
-			var received types.WebSocketMessage
-			conn.SetReadDeadline(time.Now().Add(2 * time.Second))
-			err := conn.ReadJSON(&received)
+			// Receive and verify (skip device_status from connect)
+			received, err := readAppMessage(t, conn, 2*time.Second)
 			if err != nil {
 				t.Fatalf("Failed to receive message: %v", err)
 			}
@@ -722,10 +734,8 @@ func TestHandleWebSocket_PostConnectionAuth_BroadcastOnlyAfterAuth(t *testing.T)
 	}
 	app.managers.WebSocket.Broadcast(testMessage2)
 
-	// Should receive the message sent AFTER auth
-	var received types.WebSocketMessage
-	conn.SetReadDeadline(time.Now().Add(2 * time.Second))
-	err = conn.ReadJSON(&received)
+	// Should receive the message sent AFTER auth (skip device_status from connect)
+	received, err := readAppMessage(t, conn, 2*time.Second)
 	if err != nil {
 		t.Fatalf("Failed to receive broadcast after auth: %v", err)
 	}
@@ -769,10 +779,8 @@ func TestHandleWebSocket_HealthChangeNotification(t *testing.T) {
 	// Publish a health change event
 	app.managers.WebSocket.PublishHealthChange("test-app", "Test App", "/apps/test-app/", "unhealthy", "Connection timeout")
 
-	// Client should receive the health change message
-	var msg types.WebSocketMessage
-	conn.SetReadDeadline(time.Now().Add(2 * time.Second))
-	err = conn.ReadJSON(&msg)
+	// Client should receive the health change message (skip device_status from connect)
+	msg, err := readAppMessage(t, conn, 2*time.Second)
 	if err != nil {
 		t.Fatalf("Failed to receive health change message: %v", err)
 	}

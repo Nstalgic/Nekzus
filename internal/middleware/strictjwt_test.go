@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/nstalgic/nekzus/internal/auth"
 	"github.com/nstalgic/nekzus/internal/storage"
 )
 
@@ -542,4 +543,124 @@ func TestStrictJWTAuth_StorageNilMetrics(t *testing.T) {
 	if rec.Code != http.StatusServiceUnavailable {
 		t.Errorf("Expected status 503, got %d", rec.Code)
 	}
+}
+
+// Test differentiated JWT rejection metrics
+func TestStrictJWTAuth_DifferentiatedRejectionMetrics(t *testing.T) {
+	nextHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	t.Run("ExpiredToken_RecordsExpiredMetric", func(t *testing.T) {
+		store, err := storage.NewStore(storage.Config{DatabasePath: ":memory:"})
+		if err != nil {
+			t.Fatalf("Failed to create storage: %v", err)
+		}
+		defer store.Close()
+
+		middleware := NewStrictJWTAuth(testAuth, store, testMetrics)
+		wrappedHandler := middleware(nextHandler)
+
+		// Create expired token
+		token, err := testAuth.SignJWT("device-expired", []string{"read:catalog"}, -1*time.Hour)
+		if err != nil {
+			t.Fatalf("Failed to create expired token: %v", err)
+		}
+
+		req := httptest.NewRequest("GET", "/api/test", nil)
+		req.Header.Set("Authorization", "Bearer "+token)
+		rec := httptest.NewRecorder()
+
+		wrappedHandler.ServeHTTP(rec, req)
+
+		if rec.Code != http.StatusUnauthorized {
+			t.Errorf("Expected status 401, got %d", rec.Code)
+		}
+	})
+
+	t.Run("MalformedToken_RecordsMalformedMetric", func(t *testing.T) {
+		store, err := storage.NewStore(storage.Config{DatabasePath: ":memory:"})
+		if err != nil {
+			t.Fatalf("Failed to create storage: %v", err)
+		}
+		defer store.Close()
+
+		middleware := NewStrictJWTAuth(testAuth, store, testMetrics)
+		wrappedHandler := middleware(nextHandler)
+
+		req := httptest.NewRequest("GET", "/api/test", nil)
+		req.Header.Set("Authorization", "Bearer not-a-jwt-at-all")
+		rec := httptest.NewRecorder()
+
+		wrappedHandler.ServeHTTP(rec, req)
+
+		if rec.Code != http.StatusUnauthorized {
+			t.Errorf("Expected status 401, got %d", rec.Code)
+		}
+	})
+
+	t.Run("WrongSignature_RecordsSignatureMetric", func(t *testing.T) {
+		store, err := storage.NewStore(storage.Config{DatabasePath: ":memory:"})
+		if err != nil {
+			t.Fatalf("Failed to create storage: %v", err)
+		}
+		defer store.Close()
+
+		middleware := NewStrictJWTAuth(testAuth, store, testMetrics)
+		wrappedHandler := middleware(nextHandler)
+
+		// Create a token signed with a different key
+		differentSecret := "a-totally-different-signing-key-that-is-at-least-32-chars-long"
+		differentAuth, err := newTestAuthManager([]byte(differentSecret))
+		if err != nil {
+			t.Fatalf("Failed to create alt auth manager: %v", err)
+		}
+		token, err := differentAuth.SignJWT("device-123", []string{"read:catalog"}, 1*time.Hour)
+		if err != nil {
+			t.Fatalf("Failed to create token with wrong key: %v", err)
+		}
+
+		req := httptest.NewRequest("GET", "/api/test", nil)
+		req.Header.Set("Authorization", "Bearer "+token)
+		rec := httptest.NewRecorder()
+
+		wrappedHandler.ServeHTTP(rec, req)
+
+		if rec.Code != http.StatusUnauthorized {
+			t.Errorf("Expected status 401, got %d", rec.Code)
+		}
+	})
+
+	t.Run("DeviceNotFound_RecordsDeviceRevokedMetric", func(t *testing.T) {
+		store, err := storage.NewStore(storage.Config{DatabasePath: ":memory:"})
+		if err != nil {
+			t.Fatalf("Failed to create storage: %v", err)
+		}
+		defer store.Close()
+
+		middleware := NewStrictJWTAuth(testAuth, store, testMetrics)
+		wrappedHandler := middleware(nextHandler)
+
+		// Valid token but device doesn't exist in storage
+		token, err := testAuth.SignJWT("nonexistent-device", []string{"read:catalog"}, 1*time.Hour)
+		if err != nil {
+			t.Fatalf("Failed to create token: %v", err)
+		}
+
+		req := httptest.NewRequest("GET", "/api/test", nil)
+		req.Header.Set("Authorization", "Bearer "+token)
+		rec := httptest.NewRecorder()
+
+		wrappedHandler.ServeHTTP(rec, req)
+
+		if rec.Code != http.StatusUnauthorized {
+			t.Errorf("Expected status 401, got %d", rec.Code)
+		}
+	})
+}
+
+// newTestAuthManager creates an auth manager for testing with a custom secret.
+// This is useful for generating tokens with a different signing key.
+func newTestAuthManager(secret []byte) (*auth.Manager, error) {
+	return auth.NewManager(secret, "nekzus", "nekzus-mobile", nil)
 }

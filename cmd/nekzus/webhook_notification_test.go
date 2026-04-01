@@ -90,35 +90,71 @@ func sendWebhookNotify(t *testing.T, serverURL string, payload WebhookNotifyPayl
 func expectWebSocketMessage(t *testing.T, conn *websocket.Conn, expectedType string, timeout time.Duration) types.WebSocketMessage {
 	t.Helper()
 
-	var msg types.WebSocketMessage
-	conn.SetReadDeadline(time.Now().Add(timeout))
-	err := conn.ReadJSON(&msg)
-	if err != nil {
-		t.Fatalf("Failed to read WebSocket message: %v", err)
-	}
+	deadline := time.Now().Add(timeout)
+	for {
+		var msg types.WebSocketMessage
+		conn.SetReadDeadline(deadline)
+		err := conn.ReadJSON(&msg)
+		if err != nil {
+			t.Fatalf("Failed to read WebSocket message: %v", err)
+		}
 
-	if msg.Type != expectedType {
-		t.Errorf("Expected message type %s, got %s", expectedType, msg.Type)
-	}
+		// Skip device_status messages (broadcast on connect/disconnect)
+		if msg.Type == types.WSMsgTypeDeviceStatus {
+			continue
+		}
 
-	return msg
+		if msg.Type != expectedType {
+			t.Errorf("Expected message type %s, got %s", expectedType, msg.Type)
+		}
+
+		return msg
+	}
+}
+
+// readNextAppMessage reads the next WebSocket message, skipping device_status messages
+func readNextAppMessage(t *testing.T, conn *websocket.Conn, timeout time.Duration) (types.WebSocketMessage, error) {
+	t.Helper()
+	deadline := time.Now().Add(timeout)
+	for {
+		var msg types.WebSocketMessage
+		conn.SetReadDeadline(deadline)
+		if err := conn.ReadJSON(&msg); err != nil {
+			return msg, err
+		}
+		if msg.Type == types.WSMsgTypeDeviceStatus {
+			continue
+		}
+		return msg, nil
+	}
 }
 
 // Helper function to expect NO WebSocket message (for filtering tests)
 func expectNoWebSocketMessage(t *testing.T, conn *websocket.Conn, timeout time.Duration) {
 	t.Helper()
 
-	var msg types.WebSocketMessage
-	conn.SetReadDeadline(time.Now().Add(timeout))
-	err := conn.ReadJSON(&msg)
+	deadline := time.Now().Add(timeout)
+	for {
+		var msg types.WebSocketMessage
+		conn.SetReadDeadline(deadline)
+		err := conn.ReadJSON(&msg)
 
-	// Clear the deadline for future reads
-	conn.SetReadDeadline(time.Time{})
+		// Clear the deadline for future reads
+		conn.SetReadDeadline(time.Time{})
 
-	if err == nil {
+		if err != nil {
+			// Timeout error is expected, so we don't fail on it
+			return
+		}
+
+		// Skip device_status messages (broadcast on connect/disconnect)
+		if msg.Type == types.WSMsgTypeDeviceStatus {
+			continue
+		}
+
 		t.Errorf("Expected no message, but received: %+v", msg)
+		return
 	}
-	// Timeout error is expected, so we don't fail on it
 }
 
 // TestWebhookActivityNotification_Broadcast tests that activity webhooks
@@ -1000,11 +1036,10 @@ func TestWebhookNotification_QueueDrainOnReconnect(t *testing.T) {
 	// Wait for the callback to process
 	time.Sleep(500 * time.Millisecond)
 
-	// Expect the notification to be received
-	client.SetReadDeadline(time.Now().Add(2 * time.Second))
-	var msg types.WebSocketMessage
-	if err := client.ReadJSON(&msg); err != nil {
-		t.Fatalf("Failed to receive notification: %v", err)
+	// Expect the notification to be received (skip device_status messages)
+	msg, readErr := readNextAppMessage(t, client, 2*time.Second)
+	if readErr != nil {
+		t.Fatalf("Failed to receive notification: %v", readErr)
 	}
 
 	if msg.Type != types.WSMsgTypeNotification {
@@ -1186,11 +1221,10 @@ func TestWebhookNotification_QueueDrainWithRealQueue(t *testing.T) {
 	// Wait for the callback to process
 	time.Sleep(500 * time.Millisecond)
 
-	// Expect the notification to be received
-	client.SetReadDeadline(time.Now().Add(2 * time.Second))
-	var msg types.WebSocketMessage
-	if err := client.ReadJSON(&msg); err != nil {
-		t.Fatalf("Failed to receive notification: %v", err)
+	// Expect the notification to be received (skip device_status messages)
+	msg, readErr := readNextAppMessage(t, client, 2*time.Second)
+	if readErr != nil {
+		t.Fatalf("Failed to receive notification: %v", readErr)
 	}
 
 	t.Logf("Received message type: %s, notificationId: %s", msg.Type, msg.NotificationID)

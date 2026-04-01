@@ -289,6 +289,19 @@ export function DataProvider({ children }) {
   }, [refreshSystemResources]);
 
   /**
+   * Poll devices every 30 seconds to keep request counts and status fresh
+   */
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      refreshDevices();
+    }, 30000);
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [refreshDevices]);
+
+  /**
    * Setup WebSocket connection and listeners
    */
   useEffect(() => {
@@ -325,6 +338,11 @@ export function DataProvider({ children }) {
       refreshDevices();
       refreshActivities();
       refreshStats();
+    });
+
+    websocketService.on(WS_MSG_TYPES.DEVICE_STATUS, () => {
+      console.log('WebSocket: Device status changed');
+      refreshDevices();
     });
 
     websocketService.on(WS_MSG_TYPES.APP_REGISTERED, () => {

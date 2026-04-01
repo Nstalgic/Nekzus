@@ -286,11 +286,19 @@ func TestWebSocketRevokeWhileConnected(t *testing.T) {
 		t.Errorf("Expected 0 active connections after revocation, got %d", wsManager.ActiveConnections())
 	}
 
-	// Try to read from WebSocket - should fail with connection closed error
-	var msg types.WebSocketMessage
-	err = ws.ReadJSON(&msg)
-	if err == nil {
-		t.Error("Expected error reading from closed connection, got nil")
+	// Try to read from WebSocket - should eventually fail with connection closed error
+	// (may first receive buffered device_status messages from connect/disconnect)
+	for {
+		var msg types.WebSocketMessage
+		err = ws.ReadJSON(&msg)
+		if err != nil {
+			break // Connection closed as expected
+		}
+		// Skip any buffered messages (e.g. device_status from connect)
+		if msg.Type != types.WSMsgTypeDeviceStatus {
+			t.Errorf("Expected connection closed error, got message: %s", msg.Type)
+			break
+		}
 	}
 }
 

@@ -169,6 +169,24 @@ func (c *Client) closeSendChanSafe() {
 	}
 }
 
+// TrySend attempts a non-blocking send on the client's send channel.
+// Returns true if sent, false if the channel is closed or full.
+func (c *Client) TrySend(msg types.WebSocketMessage) bool {
+	c.closeChanMu.Lock()
+	defer c.closeChanMu.Unlock()
+
+	if c.chanClosed || c.sendChan == nil {
+		return false
+	}
+
+	select {
+	case c.sendChan <- msg:
+		return true
+	default:
+		return false
+	}
+}
+
 // clientSlicePool is a sync.Pool for reusing client slice buffers during broadcast
 // This reduces GC pressure by reusing allocations instead of creating new slices on every broadcast
 var clientSlicePool = sync.Pool{
@@ -227,6 +245,9 @@ func (wm *Manager) Subscribe(client *Client) {
 		"device_id", deviceID,
 		"total_clients", clientCount)
 
+	// Broadcast device online status to dashboard
+	wm.PublishDeviceStatus(deviceID, "online")
+
 	// Trigger device connect callback (for notification retries)
 	if callback != nil {
 		go callback(deviceID)
@@ -258,12 +279,15 @@ func (wm *Manager) unsubscribeClient(client *Client, publishLastWill bool) {
 		lastWill = client.GetLastWill()
 	}
 
+	var deviceWentOffline bool
+	var deviceID string
+
 	wm.mu.Lock()
 	if _, exists := wm.clients[client]; exists {
 		delete(wm.clients, client)
 
 		// Remove from clientsByDevice
-		deviceID := client.deviceID
+		deviceID = client.deviceID
 		clients := wm.clientsByDevice[deviceID]
 		for i, c := range clients {
 			if c == client {
@@ -273,6 +297,7 @@ func (wm *Manager) unsubscribeClient(client *Client, publishLastWill bool) {
 		}
 		if len(wm.clientsByDevice[deviceID]) == 0 {
 			delete(wm.clientsByDevice, deviceID)
+			deviceWentOffline = true
 		}
 
 		// Close the send channel safely to prevent double-close
@@ -289,6 +314,11 @@ func (wm *Manager) unsubscribeClient(client *Client, publishLastWill bool) {
 			"unexpected", publishLastWill)
 	}
 	wm.mu.Unlock()
+
+	// Broadcast device offline status if no connections remain
+	if deviceWentOffline {
+		wm.PublishDeviceStatus(deviceID, "offline")
+	}
 
 	// Publish last will after releasing lock
 	if lastWill != nil {
@@ -339,30 +369,11 @@ func (wm *Manager) BroadcastFiltered(msg types.WebSocketMessage, filter func(*Cl
 	sentCount := 0
 	droppedCount := 0
 	for _, client := range clients {
-		// Non-blocking send to avoid blocking on slow clients
-		// Recover from panics if channel is closed during broadcast
-		func() {
-			defer func() {
-				if r := recover(); r != nil {
-					droppedCount++
-					log.Warn("failed to send message to client (channel closed)",
-						"device_id", client.deviceID,
-						"panic", r)
-				}
-			}()
-
-			if client.sendChan != nil {
-				select {
-				case client.sendChan <- msg:
-					sentCount++
-				default:
-					// Channel full - drop message
-					droppedCount++
-					log.Warn("failed to send message to client (channel full)",
-						"device_id", client.deviceID)
-				}
-			}
-		}()
+		if client.TrySend(msg) {
+			sentCount++
+		} else {
+			droppedCount++
+		}
 	}
 
 	// Record metrics
@@ -487,6 +498,18 @@ func (wm *Manager) PublishDeviceRevoked(deviceID string) {
 		Type: types.WSMsgTypeDeviceRevoked,
 		Data: map[string]string{
 			"deviceId": deviceID,
+		},
+	}
+	wm.Broadcast(msg)
+}
+
+// PublishDeviceStatus publishes a device online/offline status change to all connected clients
+func (wm *Manager) PublishDeviceStatus(deviceID, status string) {
+	msg := types.WebSocketMessage{
+		Type: types.WSMsgTypeDeviceStatus,
+		Data: map[string]string{
+			"deviceId": deviceID,
+			"status":   status,
 		},
 	}
 	wm.Broadcast(msg)
@@ -672,12 +695,10 @@ func (wm *Manager) SendToDevice(deviceID string, message interface{}) error {
 			}
 
 			// Try to send message
-			select {
-			case client.sendChan <- msg:
+			if client.TrySend(msg) {
 				sent = true
-			default:
-				// Send channel is full, message will be dropped
-				log.Warn("send channel full for device, message dropped",
+			} else {
+				log.Warn("send channel full or closed for device, message dropped",
 					"device_id", deviceID)
 			}
 		}
@@ -938,13 +959,12 @@ func (wm *Manager) sendRetainedMessages(clients []*Client, patterns []string) {
 
 		// Send to all clients
 		for _, client := range clients {
-			select {
-			case client.sendChan <- rm.Message:
+			if client.TrySend(rm.Message) {
 				log.Debug("sent retained message",
 					"topic", topic,
 					"device_id", client.deviceID)
-			default:
-				log.Warn("failed to send retained message (channel full)",
+			} else {
+				log.Warn("failed to send retained message (channel full or closed)",
 					"topic", topic,
 					"device_id", client.deviceID)
 			}
