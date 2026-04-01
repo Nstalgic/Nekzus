@@ -259,7 +259,7 @@ func TestWebSocketManager_BroadcastToClosedChannel(t *testing.T) {
 	wsMgr.Subscribe(client)
 
 	// Close the channel to simulate a disconnected client
-	close(clientChan)
+	client.closeSendChanSafe()
 
 	// Broadcasting should not panic
 	testMsg := types.WebSocketMessage{
