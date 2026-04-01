@@ -1443,7 +1443,7 @@ export function SettingsTab() {
             <p className="text-secondary">Web dashboard version</p>
           </div>
           <div className="system-info-right">
-            <code className="system-info-value">v1.0.0</code>
+            <code className="system-info-value">{__APP_VERSION__}</code>
           </div>
         </div>
 
@@ -1454,7 +1454,7 @@ export function SettingsTab() {
             <p className="text-secondary">Nekzus server version</p>
           </div>
           <div className="system-info-right">
-            <code className="system-info-value">v1.0.0</code>
+            <code className="system-info-value">{__APP_VERSION__}</code>
           </div>
         </div>
 

@@ -141,7 +141,7 @@ function AuthGate() {
           <DashboardPage />
         </TerminalContent>
 
-        <TerminalFooter version="1.0.0" />
+        <TerminalFooter version={__APP_VERSION__} />
       </Container>
 
       {/* Toast notifications */}
