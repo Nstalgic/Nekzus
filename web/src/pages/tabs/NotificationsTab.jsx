@@ -144,10 +144,10 @@ export function NotificationsTab() {
       const result = await notificationsAPI.retry(notification.id);
 
       // Show feedback based on result status
-      if (result.status === 'delivered') {
+      if (result.status === 'sent') {
         addNotification({
-          severity: 'success',
-          message: 'Notification delivered successfully',
+          severity: 'info',
+          message: 'Notification sent, awaiting device confirmation',
           strongText: notification.deviceName,
         });
       } else if (result.status === 'offline') {

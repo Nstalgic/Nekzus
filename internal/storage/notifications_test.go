@@ -216,14 +216,17 @@ func TestUpdateNotificationRetry_MaxRetries(t *testing.T) {
 		}
 	}
 
-	// Should be marked as failed
+	// GetPendingNotifications returns both pending and failed (for reconnect drain)
 	pending, err := store.GetPendingNotifications("device-1")
 	if err != nil {
 		t.Fatalf("GetPendingNotifications failed: %v", err)
 	}
 
-	if len(pending) != 0 {
-		t.Errorf("expected 0 pending after max retries, got %d", len(pending))
+	if len(pending) != 1 {
+		t.Errorf("expected 1 notification (failed, eligible for reconnect drain), got %d", len(pending))
+	}
+	if len(pending) > 0 && pending[0].Status != "failed" {
+		t.Errorf("expected status 'failed', got '%s'", pending[0].Status)
 	}
 
 	// Verify it's marked as failed

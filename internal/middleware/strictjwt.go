@@ -2,10 +2,12 @@ package middleware
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strings"
 	"time"
 
+	jwt "github.com/golang-jwt/jwt/v5"
 	"github.com/nstalgic/nekzus/internal/auth"
 	"github.com/nstalgic/nekzus/internal/metrics"
 	"github.com/nstalgic/nekzus/internal/storage"
@@ -45,11 +47,12 @@ func NewStrictJWTAuth(authMgr *auth.Manager, store *storage.Store, m *metrics.Me
 			// Validate JWT token
 			_, claims, err := authMgr.ParseJWT(token)
 			if err != nil {
+				// Differentiate rejection reason for observability
+				metricStatus, logMsg := classifyJWTError(err)
 				if m != nil {
-					m.RecordJWTValidation("error_invalid")
+					m.RecordJWTValidation(metricStatus)
 				}
-				// Log detailed error for debugging, but return generic response
-				log.Error("StrictJWT: Invalid token", "error", err)
+				log.Error(logMsg, "error", err, "remote_addr", r.RemoteAddr)
 				http.Error(w, "unauthorized", http.StatusUnauthorized)
 				return
 			}
@@ -165,4 +168,22 @@ func GetDeviceIDFromContext(ctx context.Context) string {
 // This is primarily useful for testing handlers that depend on device ID.
 func SetDeviceIDInContext(ctx context.Context, deviceID string) context.Context {
 	return context.WithValue(ctx, deviceIDContextKey, deviceID)
+}
+
+// classifyJWTError maps a JWT parsing error to a metric status label and log message.
+// This provides differentiated observability for expired, malformed, and signature errors.
+func classifyJWTError(err error) (metricStatus string, logMsg string) {
+	switch {
+	case errors.Is(err, jwt.ErrTokenExpired):
+		return "error_token_expired", "StrictJWT: Token expired"
+	case errors.Is(err, jwt.ErrTokenMalformed):
+		return "error_token_malformed", "StrictJWT: Token malformed"
+	case errors.Is(err, jwt.ErrSignatureInvalid):
+		return "error_signature_invalid", "StrictJWT: Token signature invalid"
+	case errors.Is(err, jwt.ErrTokenNotValidYet):
+		return "error_token_not_valid_yet", "StrictJWT: Token not valid yet"
+	default:
+		// Covers issuer/audience mismatch, revocation, and other parse failures
+		return "error_invalid", "StrictJWT: Invalid token"
+	}
 }

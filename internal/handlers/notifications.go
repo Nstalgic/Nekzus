@@ -262,8 +262,8 @@ func (h *NotificationHandler) HandleRetryNotification(w http.ResponseWriter, r *
 		status := "queued"
 		message := "Notification queued for retry"
 		if delivered {
-			status = "delivered"
-			message = "Notification delivered successfully"
+			status = "sent"
+			message = "Notification sent to device (awaiting confirmation)"
 		}
 
 		notifLog.Info("Retry notification", "id", id, "status", status)

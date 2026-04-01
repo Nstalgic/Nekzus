@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -11,6 +12,8 @@ import (
 	"github.com/nstalgic/nekzus/internal/notifications"
 	"github.com/nstalgic/nekzus/internal/types"
 )
+
+var storageLog = slog.With("package", "storage")
 
 // Store provides persistent storage for Nexus data.
 type Store struct {
@@ -1050,9 +1053,11 @@ func (s *Store) SaveDevice(deviceID, deviceName, platform, platformVersion strin
 
 	_, err = s.db.Exec(query, deviceID, deviceName, platform, platformVersion, string(scopesJSON))
 	if err != nil {
+		storageLog.Error("Failed to save device", "device_id", deviceID, "platform", platform, "error", err)
 		return fmt.Errorf("failed to save device: %w", err)
 	}
 
+	storageLog.Info("Device saved", "device_id", deviceID, "device_name", deviceName, "platform", platform)
 	return nil
 }
 
@@ -1169,8 +1174,10 @@ func (s *Store) DeleteDevice(deviceID string) error {
 	query := `DELETE FROM devices WHERE device_id = ?`
 	_, err := s.db.Exec(query, deviceID)
 	if err != nil {
+		storageLog.Error("Failed to delete device", "device_id", deviceID, "error", err)
 		return fmt.Errorf("failed to delete device: %w", err)
 	}
+	storageLog.Info("Device deleted", "device_id", deviceID)
 	return nil
 }
 
@@ -1179,6 +1186,7 @@ func (s *Store) UpdateDeviceLastSeen(deviceID string) error {
 	query := `UPDATE devices SET last_seen = CURRENT_TIMESTAMP WHERE device_id = ?`
 	_, err := s.db.Exec(query, deviceID)
 	if err != nil {
+		storageLog.Warn("Failed to update device last_seen", "device_id", deviceID, "error", err)
 		return fmt.Errorf("failed to update device last seen: %w", err)
 	}
 	return nil
@@ -2304,7 +2312,7 @@ func (s *Store) GetPendingNotifications(deviceID string) ([]*notifications.Store
 		SELECT id, device_id, type, payload, status, retry_count, max_retries,
 			   created_at, expires_at, delivered_at, last_attempt_at, error_message
 		FROM notifications
-		WHERE device_id = ? AND status = 'pending' AND datetime(expires_at) > datetime('now')
+		WHERE device_id = ? AND status IN ('pending', 'failed') AND datetime(expires_at) > datetime('now')
 		ORDER BY created_at ASC
 	`
 

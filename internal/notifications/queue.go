@@ -134,7 +134,7 @@ func (q *Queue) RetryDevice(deviceID string) error {
 
 	// Try to enqueue each notification
 	for _, notif := range pending {
-		log.Info("Processing notification", "notif_id", notif.ID, "notif_device_id", notif.DeviceID, "type", notif.Type)
+		log.Info("Processing notification", "notif_id", notif.ID, "notif_device_id", notif.DeviceID, "type", notif.Type, "status", notif.Status)
 
 		// Check if expired
 		if time.Now().After(notif.ExpiresAt) {
@@ -144,6 +144,15 @@ func (q *Queue) RetryDevice(deviceID string) error {
 				log.Warn("Failed to mark notification as expired", "notif_id", notif.ID, "error", markErr)
 			}
 			continue
+		}
+
+		// Reset failed notifications so they can be retried with a fresh count
+		if notif.Status == StatusFailed {
+			if resetErr := q.storage.ResetNotificationForRetry(notif.ID); resetErr != nil {
+				log.Warn("Failed to reset failed notification for retry", "notif_id", notif.ID, "error", resetErr)
+				continue
+			}
+			log.Info("Reset failed notification for retry on reconnect", "notif_id", notif.ID)
 		}
 
 		// Try to deliver - pass storage ID for ACK tracking

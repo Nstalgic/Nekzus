@@ -16,6 +16,7 @@ export const WS_MSG_TYPES = {
   CONFIG_WARNING: 'config_warning',
   DEVICE_PAIRED: 'device_paired',
   DEVICE_REVOKED: 'device_revoked',
+  DEVICE_STATUS: 'device_status',
   HEALTH_CHANGE: 'health_change',
   PORT_EXPOSURE: 'port_exposure_warning',
   WEBHOOK: 'webhook',

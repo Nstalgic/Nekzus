@@ -288,6 +288,7 @@ const (
 	WSMsgTypeConfigWarning     = "config_warning"
 	WSMsgTypeDevicePaired      = "device_paired"
 	WSMsgTypeDeviceRevoked     = "device_revoked"
+	WSMsgTypeDeviceStatus      = "device_status"
 	WSMsgTypeHealthChange      = "health_change"
 	WSMsgTypeHealthAlert       = "health_alert"
 	WSMsgTypePortExposure      = "port_exposure_warning"

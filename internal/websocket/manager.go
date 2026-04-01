@@ -227,6 +227,9 @@ func (wm *Manager) Subscribe(client *Client) {
 		"device_id", deviceID,
 		"total_clients", clientCount)
 
+	// Broadcast device online status to dashboard
+	wm.PublishDeviceStatus(deviceID, "online")
+
 	// Trigger device connect callback (for notification retries)
 	if callback != nil {
 		go callback(deviceID)
@@ -258,12 +261,15 @@ func (wm *Manager) unsubscribeClient(client *Client, publishLastWill bool) {
 		lastWill = client.GetLastWill()
 	}
 
+	var deviceWentOffline bool
+	var deviceID string
+
 	wm.mu.Lock()
 	if _, exists := wm.clients[client]; exists {
 		delete(wm.clients, client)
 
 		// Remove from clientsByDevice
-		deviceID := client.deviceID
+		deviceID = client.deviceID
 		clients := wm.clientsByDevice[deviceID]
 		for i, c := range clients {
 			if c == client {
@@ -273,6 +279,7 @@ func (wm *Manager) unsubscribeClient(client *Client, publishLastWill bool) {
 		}
 		if len(wm.clientsByDevice[deviceID]) == 0 {
 			delete(wm.clientsByDevice, deviceID)
+			deviceWentOffline = true
 		}
 
 		// Close the send channel safely to prevent double-close
@@ -289,6 +296,11 @@ func (wm *Manager) unsubscribeClient(client *Client, publishLastWill bool) {
 			"unexpected", publishLastWill)
 	}
 	wm.mu.Unlock()
+
+	// Broadcast device offline status if no connections remain
+	if deviceWentOffline {
+		wm.PublishDeviceStatus(deviceID, "offline")
+	}
 
 	// Publish last will after releasing lock
 	if lastWill != nil {
@@ -487,6 +499,18 @@ func (wm *Manager) PublishDeviceRevoked(deviceID string) {
 		Type: types.WSMsgTypeDeviceRevoked,
 		Data: map[string]string{
 			"deviceId": deviceID,
+		},
+	}
+	wm.Broadcast(msg)
+}
+
+// PublishDeviceStatus publishes a device online/offline status change to all connected clients
+func (wm *Manager) PublishDeviceStatus(deviceID, status string) {
+	msg := types.WebSocketMessage{
+		Type: types.WSMsgTypeDeviceStatus,
+		Data: map[string]string{
+			"deviceId": deviceID,
+			"status":   status,
 		},
 	}
 	wm.Broadcast(msg)
