@@ -169,6 +169,24 @@ func (c *Client) closeSendChanSafe() {
 	}
 }
 
+// TrySend attempts a non-blocking send on the client's send channel.
+// Returns true if sent, false if the channel is closed or full.
+func (c *Client) TrySend(msg types.WebSocketMessage) bool {
+	c.closeChanMu.Lock()
+	defer c.closeChanMu.Unlock()
+
+	if c.chanClosed || c.sendChan == nil {
+		return false
+	}
+
+	select {
+	case c.sendChan <- msg:
+		return true
+	default:
+		return false
+	}
+}
+
 // clientSlicePool is a sync.Pool for reusing client slice buffers during broadcast
 // This reduces GC pressure by reusing allocations instead of creating new slices on every broadcast
 var clientSlicePool = sync.Pool{
@@ -351,30 +369,11 @@ func (wm *Manager) BroadcastFiltered(msg types.WebSocketMessage, filter func(*Cl
 	sentCount := 0
 	droppedCount := 0
 	for _, client := range clients {
-		// Non-blocking send to avoid blocking on slow clients
-		// Recover from panics if channel is closed during broadcast
-		func() {
-			defer func() {
-				if r := recover(); r != nil {
-					droppedCount++
-					log.Warn("failed to send message to client (channel closed)",
-						"device_id", client.deviceID,
-						"panic", r)
-				}
-			}()
-
-			if client.sendChan != nil {
-				select {
-				case client.sendChan <- msg:
-					sentCount++
-				default:
-					// Channel full - drop message
-					droppedCount++
-					log.Warn("failed to send message to client (channel full)",
-						"device_id", client.deviceID)
-				}
-			}
-		}()
+		if client.TrySend(msg) {
+			sentCount++
+		} else {
+			droppedCount++
+		}
 	}
 
 	// Record metrics
@@ -696,12 +695,10 @@ func (wm *Manager) SendToDevice(deviceID string, message interface{}) error {
 			}
 
 			// Try to send message
-			select {
-			case client.sendChan <- msg:
+			if client.TrySend(msg) {
 				sent = true
-			default:
-				// Send channel is full, message will be dropped
-				log.Warn("send channel full for device, message dropped",
+			} else {
+				log.Warn("send channel full or closed for device, message dropped",
 					"device_id", deviceID)
 			}
 		}
@@ -962,13 +959,12 @@ func (wm *Manager) sendRetainedMessages(clients []*Client, patterns []string) {
 
 		// Send to all clients
 		for _, client := range clients {
-			select {
-			case client.sendChan <- rm.Message:
+			if client.TrySend(rm.Message) {
 				log.Debug("sent retained message",
 					"topic", topic,
 					"device_id", client.deviceID)
-			default:
-				log.Warn("failed to send retained message (channel full)",
+			} else {
+				log.Warn("failed to send retained message (channel full or closed)",
 					"topic", topic,
 					"device_id", client.deviceID)
 			}
