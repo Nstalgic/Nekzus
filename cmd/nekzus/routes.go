@@ -26,18 +26,26 @@ type RouteBuilder struct {
 func NewRouteBuilder(app *Application) *RouteBuilder {
 	mux := http.NewServeMux()
 
-	// Create IP-based auth middleware (local requests bypass JWT, external requests require JWT)
-	ipAuth := middleware.NewIPBasedAuth(app.services.Auth, app.storage, app.metrics)
+	// Create base auth middleware
+	rawIPAuth := middleware.NewIPBasedAuth(app.services.Auth, app.storage, app.metrics)
+	rawAPIKeyAuth := middleware.NewAPIKeyAuth(app.storage, app.metrics)
+	rawStrictJWT := middleware.NewStrictJWTAuth(app.services.Auth, app.storage, app.metrics)
 
-	// Create API key auth middleware (optional - allows API key authentication)
-	apiKeyAuth := middleware.NewAPIKeyAuth(app.storage, app.metrics)
+	// Request tracker runs AFTER auth so device ID is available in context
+	tracker := middleware.RequestTracker(app.storage)
 
-	// Create strict JWT auth middleware (always requires JWT, no IP bypass, checks revocation)
-	strictJWT := middleware.NewStrictJWTAuth(app.services.Auth, app.storage, app.metrics)
-
-	// Create combined auth middleware (tries API key first, then falls back to IP-based JWT)
+	// Wrap auth middlewares: auth sets device ID in context, then tracker can read it
+	ipAuth := func(next http.Handler) http.Handler {
+		return rawIPAuth(tracker(next))
+	}
+	apiKeyAuth := func(next http.Handler) http.Handler {
+		return rawAPIKeyAuth(tracker(next))
+	}
+	strictJWT := func(next http.Handler) http.Handler {
+		return rawStrictJWT(tracker(next))
+	}
 	combinedAuth := func(next http.Handler) http.Handler {
-		return apiKeyAuth(ipAuth(next))
+		return rawAPIKeyAuth(rawIPAuth(tracker(next)))
 	}
 
 	return &RouteBuilder{
@@ -76,11 +84,10 @@ func (rb *RouteBuilder) Build() http.Handler {
 	rb.registerProxyRoutes()
 	rb.registerWebUIRoutes()
 
-	// Apply middleware stack (security -> version -> request tracker -> metrics -> logging)
-	// Security headers are outermost so they apply to all responses
+	// Apply middleware stack (security -> version -> metrics -> logging)
+	// Request tracking is applied per-route after auth (see NewRouteBuilder)
 	handler := middleware.SecurityHeaders(rb.mux)
 	handler = middleware.APIVersion(rb.app.version)(handler)
-	handler = middleware.RequestTracker(rb.app.storage)(handler)
 	handler = metrics.HTTPMiddleware(rb.app.metrics)(handler)
 	handler = logMiddleware(handler)
 
