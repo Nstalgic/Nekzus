@@ -55,6 +55,8 @@ jobs:
       - name: Build web UI
         working-directory: web
         run: npm run build
+        env:
+          NEKZUS_VERSION: ${{ github.ref_name }}
 
       - name: Copy web dist for embedding
         run: cp -r web/dist cmd/nekzus/webdist
@@ -139,36 +141,70 @@ jobs:
           # Get commits since last tag
           LAST_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
           if [ -n "$LAST_TAG" ]; then
-            COMMITS=$(git log --pretty=format:"- %s" ${LAST_TAG}..HEAD)
+            COMMITS=$(git log --pretty=format:"%s" ${LAST_TAG}..HEAD)
           else
-            COMMITS=$(git log --pretty=format:"- %s" -20)
+            COMMITS=$(git log --pretty=format:"%s" -20)
           fi
 
-          # Create release notes
-          cat << EOF > release_notes.md
-          ## What's Changed
+          # Categorize commits
+          FEATURES=""
+          FIXES=""
+          OTHER=""
 
-          ${COMMITS}
+          while IFS= read -r msg; do
+            [ -z "$msg" ] && continue
+            # Strip conventional-commit prefix for the display text
+            clean=$(echo "$msg" | sed -E 's/^(feat|fix|bugfix|docs|chore|refactor|test|ci|perf|style|build)(\(.*\))?[!]?:\s*//')
+            case "$msg" in
+              feat*|add*|Add*|new*|New*)
+                FEATURES="${FEATURES}- ${clean}\n" ;;
+              fix*|Fix*|bugfix*|Bugfix*)
+                FIXES="${FIXES}- ${clean}\n" ;;
+              *)
+                OTHER="${OTHER}- ${clean}\n" ;;
+            esac
+          done <<< "$COMMITS"
 
-          ## Docker
-
-          \`\`\`bash
-          docker pull ${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
-          \`\`\`
-
-          ## Quick Start
-
-          \`\`\`bash
-          docker run -d \\
-            --name nekzus \\
-            -p 8080:8080 \\
-            -v /var/run/docker.sock:/var/run/docker.sock:ro \\
-            -v nekzus-data:/app/data \\
-            ${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
-          \`\`\`
-
-          **Full Changelog**: https://github.com/${{ github.repository }}/compare/${LAST_TAG}...${{ steps.version.outputs.version }}
-          EOF
+          # Build release notes
+          {
+            echo "## What's Changed"
+            echo ""
+            if [ -n "$FEATURES" ]; then
+              echo "### New Features"
+              echo ""
+              echo -e "$FEATURES"
+            fi
+            if [ -n "$FIXES" ]; then
+              echo "### Bug Fixes"
+              echo ""
+              echo -e "$FIXES"
+            fi
+            if [ -n "$OTHER" ]; then
+              echo "### Other Changes"
+              echo ""
+              echo -e "$OTHER"
+            fi
+            echo "## Docker"
+            echo ""
+            echo '```bash'
+            echo "docker pull ${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}"
+            echo '```'
+            echo ""
+            echo "## Quick Start"
+            echo ""
+            echo '```bash'
+            echo "docker run -d \\"
+            echo "  --name nekzus \\"
+            echo "  -p 8080:8080 \\"
+            echo "  -v /var/run/docker.sock:/var/run/docker.sock:ro \\"
+            echo "  -v nekzus-data:/app/data \\"
+            echo "  ${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}"
+            echo '```'
+            echo ""
+            if [ -n "$LAST_TAG" ]; then
+              echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${LAST_TAG}...${{ steps.version.outputs.version }}"
+            fi
+          } > release_notes.md
 
       - name: Create GitHub Release
         if: ${{ !inputs.dry_run && github.event_name == 'push' }}

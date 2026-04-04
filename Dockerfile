@@ -1,6 +1,9 @@
 # --- Web UI Build Stage
 FROM node:20-alpine AS web-build
 
+ARG VERSION=dev
+ENV NEKZUS_VERSION=${VERSION}
+
 WORKDIR /web
 COPY web/package*.json ./
 RUN npm ci

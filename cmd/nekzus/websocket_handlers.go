@@ -43,7 +43,7 @@ func (app *Application) handleWebSocket(w http.ResponseWriter, r *http.Request) 
 	var authMsg types.WebSocketMessage
 	err = conn.ReadJSON(&authMsg)
 	if err != nil {
-		log.Warn("failed to read auth message", "error", err)
+		log.Debug("failed to read auth message", "error", err)
 		// Send error and close
 		conn.WriteJSON(types.WebSocketMessage{
 			Type: types.WSMsgTypeAuthFailed,
