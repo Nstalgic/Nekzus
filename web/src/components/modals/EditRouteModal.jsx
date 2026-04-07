@@ -44,7 +44,10 @@ export function EditRouteModal({
     healthCheckTimeout: '',
     healthCheckInterval: '',
     expectedStatusCodes: '',
-    persistCookies: false
+    persistCookies: false,
+    routingMode: '',
+    subdomain: '',
+    excludePaths: ''
   });
 
   const [errors, setErrors] = useState({});
@@ -67,7 +70,10 @@ export function EditRouteModal({
         healthCheckTimeout: route.healthCheckTimeout || '',
         healthCheckInterval: route.healthCheckInterval || '',
         expectedStatusCodes: route.expectedStatusCodes?.join(', ') || '',
-        persistCookies: route.persistCookies || false
+        persistCookies: route.persistCookies || false,
+        routingMode: route.routingMode || '',
+        subdomain: route.subdomain || '',
+        excludePaths: route.excludePaths?.join(', ') || ''
       });
       // Show advanced section if any advanced fields are set
       if (route.healthCheckTimeout || route.healthCheckInterval || route.expectedStatusCodes?.length) {
@@ -85,7 +91,10 @@ export function EditRouteModal({
         healthCheckTimeout: '',
         healthCheckInterval: '',
         expectedStatusCodes: '',
-        persistCookies: false
+        persistCookies: false,
+        routingMode: '',
+        subdomain: '',
+        excludePaths: ''
       });
       setShowAdvancedHealth(false);
     }
@@ -161,6 +170,17 @@ export function EditRouteModal({
       const invalidCodes = codes.filter(c => isNaN(parseInt(c, 10)) || parseInt(c, 10) < 100 || parseInt(c, 10) > 599);
       if (invalidCodes.length > 0) {
         newErrors.expectedStatusCodes = 'Invalid status codes (must be 100-599)';
+      }
+    }
+
+    // Subdomain validation
+    if (formData.routingMode === 'subdomain' || formData.routingMode === 'both') {
+      if (!formData.subdomain.trim()) {
+        newErrors.subdomain = 'Subdomain is required for subdomain routing mode';
+      } else if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(formData.subdomain.trim())) {
+        newErrors.subdomain = 'Must be lowercase alphanumeric with hyphens, no leading/trailing hyphens';
+      } else if (formData.subdomain.trim().length > 63) {
+        newErrors.subdomain = 'Subdomain too long (max 63 characters)';
       }
     }
 
@@ -252,10 +272,13 @@ export function EditRouteModal({
     // Convert form data to API format
     const saveData = {
       ...formData,
-      // Parse expected status codes from comma-separated string to array of integers
       expectedStatusCodes: formData.expectedStatusCodes
         ? formData.expectedStatusCodes.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n))
-        : []
+        : [],
+      excludePaths: formData.excludePaths
+        ? formData.excludePaths.split(',').map(s => s.trim()).filter(s => s)
+        : [],
+      routingMode: formData.routingMode || undefined,
     };
 
     onSave(saveData);
@@ -380,6 +403,74 @@ export function EditRouteModal({
             )}
           </div>
         </div>
+
+        {/* Routing Mode */}
+        <div className="form-group">
+          <label htmlFor="routingMode">
+            ROUTING MODE
+          </label>
+          <select
+            id="routingMode"
+            className="input"
+            value={formData.routingMode}
+            onChange={(e) => handleChange('routingMode', e.target.value)}
+          >
+            <option value="">Default (inherit global)</option>
+            <option value="path">Path-based (/apps/myapp/)</option>
+            <option value="subdomain">Subdomain (myapp.domain)</option>
+            <option value="both">Both</option>
+          </select>
+          <p className={`text-secondary ${styles.helperText}`}>
+            How clients access this service
+          </p>
+        </div>
+
+        {/* Subdomain - shown when routing mode includes subdomain */}
+        {(formData.routingMode === 'subdomain' || formData.routingMode === 'both') && (
+          <div className="form-group">
+            <label htmlFor="subdomain">
+              SUBDOMAIN <span className="text-error">*</span>
+            </label>
+            <input
+              type="text"
+              id="subdomain"
+              className={`input ${errors.subdomain ? 'input-error' : ''}`}
+              value={formData.subdomain}
+              onChange={(e) => handleChange('subdomain', e.target.value.toLowerCase())}
+              placeholder="e.g. sonarr"
+              aria-required="true"
+              aria-invalid={!!errors.subdomain}
+            />
+            {errors.subdomain && (
+              <span className="form-error">{errors.subdomain}</span>
+            )}
+            {formData.subdomain && (
+              <p className={`text-secondary ${styles.helperText}`}>
+                Access via: {formData.subdomain}.nekzus.local
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Exclude Paths - shown when routing mode includes path */}
+        {formData.routingMode !== 'subdomain' && (
+          <div className="form-group">
+            <label htmlFor="excludePaths">
+              EXCLUDE PATHS
+            </label>
+            <input
+              type="text"
+              id="excludePaths"
+              className="input"
+              value={formData.excludePaths}
+              onChange={(e) => handleChange('excludePaths', e.target.value)}
+              placeholder="/api/v1/, /healthz"
+            />
+            <p className={`text-secondary ${styles.helperText}`}>
+              Comma-separated paths to skip during URL rewriting (default: /api/v1/)
+            </p>
+          </div>
+        )}
 
         {/* Health Check Configuration */}
         <div className={`form-group ${styles.healthCheckSection}`}>

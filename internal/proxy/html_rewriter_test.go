@@ -1851,3 +1851,35 @@ func TestRewriteSourceMaps_AlreadyPrefixed(t *testing.T) {
 		t.Errorf("source map double-prefixed: %s", result)
 	}
 }
+
+func TestHTMLRewritingResponseWriter_BufferOverflow(t *testing.T) {
+	recorder := httptest.NewRecorder()
+	rw := NewHTMLRewritingResponseWriter(recorder, "/apps/myapp/", "/apps/myapp/")
+
+	rw.ResponseWriter.Header().Set("Content-Type", "text/html")
+	rw.WriteHeader(http.StatusOK)
+
+	// Write data exceeding MaxHTMLBufferSize (10MB)
+	chunk := make([]byte, 1024*1024) // 1MB chunks
+	for i := range chunk {
+		chunk[i] = 'A'
+	}
+
+	for i := 0; i < 12; i++ { // 12MB > 10MB limit
+		_, err := rw.Write(chunk)
+		if err != nil {
+			t.Fatalf("Write failed at chunk %d: %v", i, err)
+		}
+	}
+
+	// FlushHTML should be a no-op since we switched to passthrough
+	err := rw.FlushHTML()
+	if err != nil {
+		t.Fatalf("FlushHTML failed: %v", err)
+	}
+
+	// Response should have been written in passthrough mode
+	if recorder.Body.Len() == 0 {
+		t.Error("expected response body to be written in passthrough mode")
+	}
+}

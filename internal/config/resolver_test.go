@@ -35,6 +35,8 @@ func TestResolveBaseURL_EnvVar(t *testing.T) {
 			BaseURL          string `yaml:"base_url" json:"base_url"`
 			TLSCert          string `yaml:"tls_cert" json:"tls_cert"`
 			TLSKey           string `yaml:"tls_key" json:"tls_key"`
+			RoutingMode      string `yaml:"routing_mode" json:"routing_mode"`
+			BaseDomain       string `yaml:"base_domain" json:"base_domain"`
 		}{
 			BaseURL: "https://config-url.example.com",
 		},
@@ -64,6 +66,8 @@ func TestResolveBaseURL_ConfigFile(t *testing.T) {
 			BaseURL          string `yaml:"base_url" json:"base_url"`
 			TLSCert          string `yaml:"tls_cert" json:"tls_cert"`
 			TLSKey           string `yaml:"tls_key" json:"tls_key"`
+			RoutingMode      string `yaml:"routing_mode" json:"routing_mode"`
+			BaseDomain       string `yaml:"base_domain" json:"base_domain"`
 		}{
 			BaseURL: "https://config-url.example.com",
 		},
@@ -93,6 +97,8 @@ func TestResolveBaseURL_AutoDetect_HTTP(t *testing.T) {
 			BaseURL          string `yaml:"base_url" json:"base_url"`
 			TLSCert          string `yaml:"tls_cert" json:"tls_cert"`
 			TLSKey           string `yaml:"tls_key" json:"tls_key"`
+			RoutingMode      string `yaml:"routing_mode" json:"routing_mode"`
+			BaseDomain       string `yaml:"base_domain" json:"base_domain"`
 		}{
 			BaseURL: "", // No config URL
 			Addr:    ":8080",
@@ -125,6 +131,8 @@ func TestResolveBaseURL_AutoDetect_HTTPS(t *testing.T) {
 			BaseURL          string `yaml:"base_url" json:"base_url"`
 			TLSCert          string `yaml:"tls_cert" json:"tls_cert"`
 			TLSKey           string `yaml:"tls_key" json:"tls_key"`
+			RoutingMode      string `yaml:"routing_mode" json:"routing_mode"`
+			BaseDomain       string `yaml:"base_domain" json:"base_domain"`
 		}{
 			BaseURL: "",
 			Addr:    ":8443",
@@ -157,6 +165,8 @@ func TestWasAutoDetected_True(t *testing.T) {
 			BaseURL          string `yaml:"base_url" json:"base_url"`
 			TLSCert          string `yaml:"tls_cert" json:"tls_cert"`
 			TLSKey           string `yaml:"tls_key" json:"tls_key"`
+			RoutingMode      string `yaml:"routing_mode" json:"routing_mode"`
+			BaseDomain       string `yaml:"base_domain" json:"base_domain"`
 		}{
 			BaseURL: "", // No config URL
 		},
@@ -185,6 +195,8 @@ func TestWasAutoDetected_False_EnvVar(t *testing.T) {
 			BaseURL          string `yaml:"base_url" json:"base_url"`
 			TLSCert          string `yaml:"tls_cert" json:"tls_cert"`
 			TLSKey           string `yaml:"tls_key" json:"tls_key"`
+			RoutingMode      string `yaml:"routing_mode" json:"routing_mode"`
+			BaseDomain       string `yaml:"base_domain" json:"base_domain"`
 		}{
 			BaseURL: "",
 		},
@@ -212,6 +224,8 @@ func TestWasAutoDetected_False_ConfigFile(t *testing.T) {
 			BaseURL          string `yaml:"base_url" json:"base_url"`
 			TLSCert          string `yaml:"tls_cert" json:"tls_cert"`
 			TLSKey           string `yaml:"tls_key" json:"tls_key"`
+			RoutingMode      string `yaml:"routing_mode" json:"routing_mode"`
+			BaseDomain       string `yaml:"base_domain" json:"base_domain"`
 		}{
 			BaseURL: "https://config-url.example.com",
 		},
@@ -240,6 +254,8 @@ func TestResolveBaseURL_PriorityOrdering(t *testing.T) {
 			BaseURL          string `yaml:"base_url" json:"base_url"`
 			TLSCert          string `yaml:"tls_cert" json:"tls_cert"`
 			TLSKey           string `yaml:"tls_key" json:"tls_key"`
+			RoutingMode      string `yaml:"routing_mode" json:"routing_mode"`
+			BaseDomain       string `yaml:"base_domain" json:"base_domain"`
 		}{
 			BaseURL: "https://priority-config.example.com",
 			Addr:    ":8080",

@@ -417,6 +417,30 @@ func (rw *HTMLRewritingResponseWriter) Write(data []byte) (int, error) {
 		return rw.ResponseWriter.Write(data)
 	}
 
+	// Enforce buffer limit to prevent OOM on large responses
+	if rw.buffer.Len()+len(data) > MaxHTMLBufferSize {
+		log.Warn("HTML response exceeds buffer limit, switching to passthrough",
+			"buffered", rw.buffer.Len(),
+			"incoming", len(data),
+			"limit", MaxHTMLBufferSize)
+
+		if !rw.headerSent {
+			rw.ResponseWriter.WriteHeader(rw.statusCode)
+			rw.headerSent = true
+		}
+
+		if rw.buffer.Len() > 0 {
+			rw.ResponseWriter.Write(rw.buffer.Bytes())
+			rw.buffer.Reset()
+		}
+
+		rw.isHTML = false
+		rw.isCSS = false
+		rw.isJSON = false
+
+		return rw.ResponseWriter.Write(data)
+	}
+
 	// Buffer content for rewriting
 	return rw.buffer.Write(data)
 }
