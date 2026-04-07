@@ -29,8 +29,8 @@ type Registry struct {
 // NewRegistry creates a new route registry with storage backend
 func NewRegistry(store *storage.Store) *Registry {
 	registry := &Registry{
-		routes:     make(map[string]types.Route),
-		apps:       make(map[string]types.App),
+		routes:         make(map[string]types.Route),
+		apps:           make(map[string]types.App),
 		radixIndex:     NewRadixTree(),
 		subdomainIndex: make(map[string]string),
 		storage:        store,

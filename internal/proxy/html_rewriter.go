@@ -785,7 +785,6 @@ func rewriteMetaTag(token *html.Token, pathPrefix string) {
 	}
 }
 
-
 // rewriteCSSURLs rewrites url() paths in CSS (inline styles and style tags)
 func rewriteCSSURLs(html string, pathPrefix string) string {
 	return cssURLRegex.ReplaceAllStringFunc(html, func(match string) string {
@@ -1489,4 +1488,3 @@ func rewriteSourceMapReferences(content string, pathPrefix string) string {
 
 	return content
 }
-
