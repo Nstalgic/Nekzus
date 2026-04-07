@@ -18,6 +18,8 @@ type ServerConfig struct {
 		BaseURL          string `yaml:"base_url" json:"base_url"`
 		TLSCert          string `yaml:"tls_cert" json:"tls_cert"`
 		TLSKey           string `yaml:"tls_key" json:"tls_key"`
+		RoutingMode      string `yaml:"routing_mode" json:"routing_mode"` // "path" (default) or "subdomain"
+		BaseDomain       string `yaml:"base_domain" json:"base_domain"`   // e.g. "nekzus.local" for subdomain routing
 	} `yaml:"server" json:"server"`
 	Auth struct {
 		Issuer        string   `yaml:"issuer" json:"issuer"`
@@ -155,6 +157,11 @@ type Route struct {
 	RewriteHTML          bool     `yaml:"rewrite_html,omitempty" json:"rewriteHTML,omitempty"`                    // Rewrite HTML responses to fix absolute asset paths for SPAs
 	PersistCookies       bool     `yaml:"persist_cookies,omitempty" json:"persistCookies,omitempty"`              // Persist cookies for mobile webview session continuity
 
+	// Routing mode configuration
+	RoutingMode  string   `yaml:"routing_mode,omitempty" json:"routingMode,omitempty"`   // "path" (default), "subdomain", "both"
+	Subdomain    string   `yaml:"subdomain,omitempty" json:"subdomain,omitempty"`        // e.g. "sonarr" -> sonarr.nekzus.local
+	ExcludePaths []string `yaml:"exclude_paths,omitempty" json:"excludePaths,omitempty"` // Paths to skip in rewriting (default: ["/api/v1/"])
+
 	// Health check configuration (route-level override)
 	HealthCheckPath     string `yaml:"health_check_path,omitempty" json:"healthCheckPath,omitempty"`         // Path to health endpoint (e.g., "/health")
 	HealthCheckTimeout  string `yaml:"health_check_timeout,omitempty" json:"healthCheckTimeout,omitempty"`   // Timeout duration (e.g., "5s")
@@ -183,6 +190,27 @@ func (r *Route) GetEffectiveScopes(defaultScopes []string) []string {
 
 	// Fall back to default scopes from config
 	return defaultScopes
+}
+
+// GetEffectiveRoutingMode returns the routing mode for this route.
+// Falls back to the provided global default if the route has no explicit mode.
+func (r *Route) GetEffectiveRoutingMode(globalDefault string) string {
+	if r.RoutingMode != "" {
+		return r.RoutingMode
+	}
+	if globalDefault != "" {
+		return globalDefault
+	}
+	return "path"
+}
+
+// GetEffectiveExcludePaths returns the exclude paths for rewriting.
+// Falls back to the default /api/v1/ exclusion if none configured.
+func (r *Route) GetEffectiveExcludePaths() []string {
+	if len(r.ExcludePaths) > 0 {
+		return r.ExcludePaths
+	}
+	return []string{"/api/v1/"}
 }
 
 // RouteHealthInfo provides computed health check information for API responses.

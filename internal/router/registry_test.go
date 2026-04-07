@@ -1078,6 +1078,128 @@ func TestRouteRegistry_ReplaceRoutesAtomicSwap(t *testing.T) {
 	}
 }
 
+func TestRegistry_SubdomainIndex(t *testing.T) {
+	registry := NewRegistry(nil) // No storage needed for in-memory tests
+
+	// Add a route with subdomain
+	route := types.Route{
+		RouteID:     "route:sonarr",
+		AppID:       "sonarr",
+		PathBase:    "/apps/sonarr/",
+		To:          "http://localhost:8989",
+		RoutingMode: "subdomain",
+		Subdomain:   "sonarr",
+	}
+
+	err := registry.UpsertRoute(route)
+	if err != nil {
+		t.Fatalf("UpsertRoute failed: %v", err)
+	}
+
+	// Lookup by subdomain
+	found, ok := registry.GetRouteBySubdomain("sonarr")
+	if !ok {
+		t.Fatal("expected to find route by subdomain")
+	}
+	if found.RouteID != "route:sonarr" {
+		t.Errorf("got RouteID %q, want %q", found.RouteID, "route:sonarr")
+	}
+
+	// Lookup unknown subdomain
+	_, ok = registry.GetRouteBySubdomain("unknown")
+	if ok {
+		t.Fatal("expected not to find route for unknown subdomain")
+	}
+
+	// Mode "both" should be in subdomain index AND radix tree
+	bothRoute := types.Route{
+		RouteID:     "route:grafana",
+		AppID:       "grafana",
+		PathBase:    "/apps/grafana/",
+		To:          "http://localhost:3000",
+		RoutingMode: "both",
+		Subdomain:   "grafana",
+	}
+	err = registry.UpsertRoute(bothRoute)
+	if err != nil {
+		t.Fatalf("UpsertRoute (both) failed: %v", err)
+	}
+
+	_, ok = registry.GetRouteBySubdomain("grafana")
+	if !ok {
+		t.Fatal("mode=both route should be findable by subdomain")
+	}
+	_, ok = registry.GetRouteByPath("/apps/grafana/")
+	if !ok {
+		t.Fatal("mode=both route should be findable by path")
+	}
+
+	// Mode "path" should NOT be in subdomain index
+	pathRoute := types.Route{
+		RouteID:     "route:plex",
+		AppID:       "plex",
+		PathBase:    "/apps/plex/",
+		To:          "http://localhost:32400",
+		RoutingMode: "path",
+	}
+	err = registry.UpsertRoute(pathRoute)
+	if err != nil {
+		t.Fatalf("UpsertRoute (path) failed: %v", err)
+	}
+	_, ok = registry.GetRouteBySubdomain("plex")
+	if ok {
+		t.Fatal("mode=path route should NOT be in subdomain index")
+	}
+
+	// Remove route should clean up subdomain index
+	err = registry.RemoveRoute("route:sonarr")
+	if err != nil {
+		t.Fatalf("RemoveRoute failed: %v", err)
+	}
+	_, ok = registry.GetRouteBySubdomain("sonarr")
+	if ok {
+		t.Fatal("removed route should not be in subdomain index")
+	}
+}
+
+func TestRegistry_SubdomainUniqueness(t *testing.T) {
+	registry := NewRegistry(nil)
+
+	route1 := types.Route{
+		RouteID:     "route:sonarr",
+		AppID:       "sonarr",
+		PathBase:    "/apps/sonarr/",
+		To:          "http://localhost:8989",
+		RoutingMode: "subdomain",
+		Subdomain:   "sonarr",
+	}
+	err := registry.UpsertRoute(route1)
+	if err != nil {
+		t.Fatalf("UpsertRoute failed: %v", err)
+	}
+
+	// Try to add another route with the same subdomain
+	route2 := types.Route{
+		RouteID:     "route:sonarr2",
+		AppID:       "sonarr2",
+		PathBase:    "/apps/sonarr2/",
+		To:          "http://localhost:8990",
+		RoutingMode: "subdomain",
+		Subdomain:   "sonarr",
+	}
+	err = registry.UpsertRoute(route2)
+	if err == nil {
+		t.Fatal("expected error for duplicate subdomain")
+	}
+
+	// Same route updating itself should succeed
+	route1.To = "http://localhost:9999"
+	err = registry.UpsertRoute(route1)
+	if err != nil {
+		t.Fatalf("updating own route should succeed: %v", err)
+	}
+}
+
 // Cleanup helper to ensure test databases are removed
 func TestMain(m *testing.M) {
 	code := m.Run()

@@ -24,6 +24,8 @@ func TestValidate(t *testing.T) {
 					BaseURL          string `yaml:"base_url" json:"base_url"`
 					TLSCert          string `yaml:"tls_cert" json:"tls_cert"`
 					TLSKey           string `yaml:"tls_key" json:"tls_key"`
+					RoutingMode      string `yaml:"routing_mode" json:"routing_mode"`
+					BaseDomain       string `yaml:"base_domain" json:"base_domain"`
 				}{
 					Addr: ":8443",
 				},
@@ -51,6 +53,8 @@ func TestValidate(t *testing.T) {
 					BaseURL          string `yaml:"base_url" json:"base_url"`
 					TLSCert          string `yaml:"tls_cert" json:"tls_cert"`
 					TLSKey           string `yaml:"tls_key" json:"tls_key"`
+					RoutingMode      string `yaml:"routing_mode" json:"routing_mode"`
+					BaseDomain       string `yaml:"base_domain" json:"base_domain"`
 				}{
 					Addr: ":8443",
 				},
@@ -265,6 +269,8 @@ func TestValidateServerAddress(t *testing.T) {
 					BaseURL          string `yaml:"base_url" json:"base_url"`
 					TLSCert          string `yaml:"tls_cert" json:"tls_cert"`
 					TLSKey           string `yaml:"tls_key" json:"tls_key"`
+					RoutingMode      string `yaml:"routing_mode" json:"routing_mode"`
+					BaseDomain       string `yaml:"base_domain" json:"base_domain"`
 				}{
 					Addr: tt.addr,
 				},
@@ -722,6 +728,8 @@ func TestValidateTLSConfig(t *testing.T) {
 					BaseURL          string `yaml:"base_url" json:"base_url"`
 					TLSCert          string `yaml:"tls_cert" json:"tls_cert"`
 					TLSKey           string `yaml:"tls_key" json:"tls_key"`
+					RoutingMode      string `yaml:"routing_mode" json:"routing_mode"`
+					BaseDomain       string `yaml:"base_domain" json:"base_domain"`
 				}{
 					TLSCert: tt.tlsCert,
 					TLSKey:  tt.tlsKey,

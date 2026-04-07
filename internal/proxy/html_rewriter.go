@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"compress/flate"
 	"compress/gzip"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net"
@@ -13,6 +14,9 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"golang.org/x/net/html"
+	"golang.org/x/net/html/atom"
 )
 
 // MaxHTMLBufferSize is the maximum size of HTML content that will be buffered for rewriting
@@ -155,6 +159,7 @@ func (rw *HTMLRewritingResponseWriter) WriteHeader(statusCode int) {
 	// JS config files like initialize.js contain urlBase that needs patching.
 	// Large JS bundles are skipped (Content-Length > 50KB) to avoid buffering overhead.
 	isJSONType := strings.HasPrefix(contentType, "application/json")
+	isManifestType := strings.HasPrefix(contentType, "application/manifest+json")
 	isJSType := strings.HasPrefix(contentType, "application/javascript") || strings.HasPrefix(contentType, "text/javascript")
 	if isJSType {
 		// Only buffer small JS files (config files are typically < 1KB).
@@ -166,7 +171,7 @@ func (rw *HTMLRewritingResponseWriter) WriteHeader(statusCode int) {
 			isJSType = false
 		}
 	}
-	rw.isJSON = rw.rewriteBody && (isJSONType || isJSType)
+	rw.isJSON = rw.rewriteBody && (isJSONType || isJSType || isManifestType)
 
 	// Capture content encoding for decompression during rewrite
 	rw.contentEncoding = strings.ToLower(rw.ResponseWriter.Header().Get("Content-Encoding"))
@@ -412,6 +417,30 @@ func (rw *HTMLRewritingResponseWriter) Write(data []byte) (int, error) {
 		return rw.ResponseWriter.Write(data)
 	}
 
+	// Enforce buffer limit to prevent OOM on large responses
+	if rw.buffer.Len()+len(data) > MaxHTMLBufferSize {
+		log.Warn("HTML response exceeds buffer limit, switching to passthrough",
+			"buffered", rw.buffer.Len(),
+			"incoming", len(data),
+			"limit", MaxHTMLBufferSize)
+
+		if !rw.headerSent {
+			rw.ResponseWriter.WriteHeader(rw.statusCode)
+			rw.headerSent = true
+		}
+
+		if rw.buffer.Len() > 0 {
+			rw.ResponseWriter.Write(rw.buffer.Bytes())
+			rw.buffer.Reset()
+		}
+
+		rw.isHTML = false
+		rw.isCSS = false
+		rw.isJSON = false
+
+		return rw.ResponseWriter.Write(data)
+	}
+
 	// Buffer content for rewriting
 	return rw.buffer.Write(data)
 }
@@ -469,8 +498,14 @@ func (rw *HTMLRewritingResponseWriter) FlushHTML() error {
 	var rewritten string
 	if rw.isCSS {
 		rewritten = rewriteCSSContent(content, rw.pathPrefix)
+		rewritten = rewriteSourceMapReferences(rewritten, rw.pathPrefix)
 	} else if rw.isJSON {
-		rewritten = rewriteURLBase(content, rw.pathPrefix)
+		contentType := rw.ResponseWriter.Header().Get("Content-Type")
+		if strings.Contains(contentType, "manifest") {
+			rewritten = rewriteManifestJSON(content, rw.pathPrefix)
+		} else {
+			rewritten = rewriteURLBase(content, rw.pathPrefix)
+		}
 	} else {
 		rewritten = rewriteHTMLPaths(content, rw.pathPrefix, rw.requestPath)
 	}
@@ -517,31 +552,10 @@ func (rw *HTMLRewritingResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, er
 	return nil, nil, http.ErrNotSupported
 }
 
-// Regular expressions for matching HTML attributes with paths
-// Note: Using `(?:\s|^|<\w+)` pattern to match attributes at start of tag or after whitespace
+// Regular expressions for matching CSS and config patterns
 var (
-	// Match src="..." or src='...' attributes (with optional leading whitespace)
-	srcRegex = regexp.MustCompile(`(\s)(src)=["']([^"']+)["']`)
-	// Match href="..." or href='...' attributes
-	hrefRegex = regexp.MustCompile(`(\s)(href)=["']([^"']+)["']`)
-	// Match action="..." or action='...' attributes (form submit)
-	actionRegex = regexp.MustCompile(`(\s)(action)=["']([^"']+)["']`)
-	// Match formaction="..." or formaction='...' attributes (button submit)
-	formactionRegex = regexp.MustCompile(`(\s)(formaction)=["']([^"']+)["']`)
-	// Match poster="..." or poster='...' attributes (video thumbnail)
-	posterRegex = regexp.MustCompile(`(\s)(poster)=["']([^"']+)["']`)
-	// Match data="..." or data='...' attributes (object element)
-	dataRegex = regexp.MustCompile(`(\s)(data)=["']([^"']+)["']`)
-	// Match xlink:href="..." or xlink:href='...' attributes (SVG elements)
-	xlinkHrefRegex = regexp.MustCompile(`(\s)(xlink:href)=["']([^"']+)["']`)
-	// Match srcset="..." or srcset='...' attributes (responsive images)
-	srcsetRegex = regexp.MustCompile(`(\s)(srcset)=["']([^"']+)["']`)
 	// Match CSS url() patterns in style attributes and style tags
 	cssURLRegex = regexp.MustCompile(`url\(\s*(['"]?)(/[^'")]+)(['"]?)\s*\)`)
-	// Match meta refresh content with url
-	metaRefreshRegex = regexp.MustCompile(`(?i)(content\s*=\s*["'][^"']*;\s*url\s*=\s*)(/[^"']+)(["'])`)
-	// Match existing <base href="..."> tag for rewriting
-	baseHrefRegex = regexp.MustCompile(`(?i)(<base\s[^>]*href\s*=\s*)(["'])([^"']*)(["'])([^>]*>)`)
 	// Match @import "path" or @import 'path' in CSS (without url())
 	cssImportRegex = regexp.MustCompile(`@import\s+(['"])(/[^'"]+)(['"])`)
 	// Match urlBase config in both JS (urlBase: '') and JSON ("urlBase": "") formats
@@ -552,91 +566,223 @@ var (
 // rewriteHTMLPaths rewrites absolute paths in HTML to include the path prefix
 // pathPrefix is the route's pathBase (for JS interceptor and absolute path rewriting)
 // requestPath is the actual request URL path (for base href to resolve relative paths)
-func rewriteHTMLPaths(html string, pathPrefix string, requestPath string) string {
-	// Ensure pathPrefix has trailing slash
+func rewriteHTMLPaths(htmlContent string, pathPrefix string, requestPath string) string {
 	if !strings.HasSuffix(pathPrefix, "/") {
 		pathPrefix = pathPrefix + "/"
 	}
 
-	// Inject <base> tag and JS interceptor
-	// This is critical for SPAs that make API calls with absolute paths starting with "/"
-	// Use requestPath for base href (for relative URL resolution)
-	// Use pathPrefix for JS interceptor (for absolute path rewriting)
-	html = injectBaseTag(html, pathPrefix, requestPath)
+	tokenizer := html.NewTokenizer(strings.NewReader(htmlContent))
+	var buf bytes.Buffer
+	var insideScript, insideStyle bool
+	headInjected := false
 
-	// Rewrite standard attributes
-	html = rewriteAttributeRegex(html, srcRegex, pathPrefix)
-	html = rewriteAttributeRegex(html, hrefRegex, pathPrefix)
-	html = rewriteAttributeRegex(html, actionRegex, pathPrefix)
-	html = rewriteAttributeRegex(html, formactionRegex, pathPrefix)
-	html = rewriteAttributeRegex(html, posterRegex, pathPrefix)
-	html = rewriteAttributeRegex(html, dataRegex, pathPrefix)
-	html = rewriteAttributeRegex(html, xlinkHrefRegex, pathPrefix)
+	interceptor := generateFetchInterceptor(pathPrefix)
+	baseHrefPath := computeBaseHrefPath(pathPrefix, requestPath)
+	hasExistingBase := strings.Contains(strings.ToLower(htmlContent), "<base")
 
-	// Rewrite srcset attributes (special handling for multiple URLs)
-	html = rewriteSrcset(html, pathPrefix)
+	for {
+		tt := tokenizer.Next()
+		switch tt {
+		case html.ErrorToken:
+			return buf.String()
 
-	// Rewrite CSS url() in style attributes and style tags
-	html = rewriteCSSURLs(html, pathPrefix)
+		case html.StartTagToken, html.SelfClosingTagToken:
+			token := tokenizer.Token()
+			tagName := token.DataAtom
 
-	// Rewrite meta refresh URLs
-	html = rewriteMetaRefresh(html, pathPrefix)
+			if tagName == atom.Script && tt == html.StartTagToken {
+				insideScript = true
+			}
+			if tagName == atom.Style && tt == html.StartTagToken {
+				insideStyle = true
+			}
 
-	// Rewrite urlBase config in inline scripts (e.g. *arr apps: Sonarr, Radarr, Prowlarr)
-	// urlBase: '' → urlBase: '/apps/myapp'
-	html = rewriteURLBase(html, pathPrefix)
+			// Inject after <head>
+			if tagName == atom.Head && !headInjected && tt == html.StartTagToken {
+				buf.WriteString(token.String())
+				headInjected = true
+				if !hasExistingBase {
+					buf.WriteString(`<base href="` + baseHrefPath + `">`)
+				}
+				buf.WriteString(interceptor)
+				continue
+			}
 
-	return html
+			// Rewrite <base> tag
+			if tagName == atom.Base {
+				rewriteBaseTag(&token, pathPrefix, baseHrefPath)
+				buf.WriteString(token.String())
+				continue
+			}
+
+			// Rewrite <meta> tags
+			if tagName == atom.Meta {
+				rewriteMetaTag(&token, pathPrefix)
+				buf.WriteString(token.String())
+				continue
+			}
+
+			// Rewrite resource attributes
+			rewriteTokenAttributes(&token, pathPrefix)
+			buf.WriteString(token.String())
+
+		case html.EndTagToken:
+			token := tokenizer.Token()
+			if token.DataAtom == atom.Script {
+				insideScript = false
+			}
+			if token.DataAtom == atom.Style {
+				insideStyle = false
+			}
+			buf.WriteString(token.String())
+
+		case html.TextToken:
+			text := string(tokenizer.Raw())
+			if insideStyle {
+				text = rewriteCSSContent(text, pathPrefix)
+			} else if insideScript {
+				text = rewriteURLBase(text, pathPrefix)
+			}
+			buf.WriteString(text)
+
+		default:
+			buf.Write(tokenizer.Raw())
+		}
+	}
 }
 
-// rewriteAttributeRegex rewrites paths in attributes matched by the given regex
-func rewriteAttributeRegex(html string, regex *regexp.Regexp, pathPrefix string) string {
-	return regex.ReplaceAllStringFunc(html, func(match string) string {
-		return rewriteAttribute(match, pathPrefix)
-	})
+// computeBaseHrefPath computes the base href path from pathPrefix and requestPath
+func computeBaseHrefPath(pathPrefix, requestPath string) string {
+	baseHrefPath := requestPath
+	if baseHrefPath == "" {
+		baseHrefPath = pathPrefix
+	}
+	if !strings.HasSuffix(baseHrefPath, "/") {
+		if idx := strings.LastIndex(baseHrefPath, "/"); idx >= 0 {
+			baseHrefPath = baseHrefPath[:idx+1]
+		} else {
+			baseHrefPath = "/"
+		}
+	}
+	return baseHrefPath
 }
 
-// rewriteSrcset rewrites paths in srcset attributes
-// srcset can contain multiple URLs separated by commas with optional width/density descriptors
-func rewriteSrcset(html string, pathPrefix string) string {
-	return srcsetRegex.ReplaceAllStringFunc(html, func(match string) string {
-		// Extract the srcset value
-		// Match format: ' srcset="value"' or " srcset='value'"
-		parts := strings.SplitN(match, "=", 2)
-		if len(parts) != 2 {
+// rewritableAttrs lists HTML attributes whose values should be rewritten
+var rewritableAttrs = map[string]bool{
+	"src": true, "href": true, "action": true, "formaction": true,
+	"poster": true, "data": true,
+}
+
+// rewriteTokenAttributes rewrites resource attributes on an HTML token
+func rewriteTokenAttributes(token *html.Token, pathPrefix string) {
+	for i, attr := range token.Attr {
+		key := attr.Key
+		if attr.Namespace != "" {
+			key = attr.Namespace + ":" + attr.Key
+		}
+
+		if key == "srcset" {
+			token.Attr[i].Val = rewriteSrcsetValue(attr.Val, pathPrefix)
+			continue
+		}
+
+		if key == "style" && strings.Contains(attr.Val, "url(") {
+			token.Attr[i].Val = rewriteCSSURLsInString(attr.Val, pathPrefix)
+			continue
+		}
+
+		if rewritableAttrs[key] && shouldRewritePath(attr.Val, pathPrefix) {
+			token.Attr[i].Val = pathPrefix + strings.TrimPrefix(attr.Val, "/")
+		}
+
+		// Handle xlink:href for SVG
+		if key == "xlink:href" && shouldRewritePath(attr.Val, pathPrefix) {
+			token.Attr[i].Val = pathPrefix + strings.TrimPrefix(attr.Val, "/")
+		}
+	}
+}
+
+// rewriteSrcsetValue rewrites paths in a srcset attribute value
+func rewriteSrcsetValue(srcset, pathPrefix string) string {
+	entries := strings.Split(srcset, ",")
+	for i, entry := range entries {
+		entry = strings.TrimSpace(entry)
+		parts := strings.Fields(entry)
+		if len(parts) > 0 && shouldRewritePath(parts[0], pathPrefix) {
+			parts[0] = pathPrefix + strings.TrimPrefix(parts[0], "/")
+			entries[i] = strings.Join(parts, " ")
+		}
+	}
+	return strings.Join(entries, ", ")
+}
+
+// rewriteCSSURLsInString rewrites url() paths in a CSS string (e.g., from a style attribute)
+func rewriteCSSURLsInString(css, pathPrefix string) string {
+	return cssURLRegex.ReplaceAllStringFunc(css, func(match string) string {
+		submatches := cssURLRegex.FindStringSubmatch(match)
+		if len(submatches) < 4 {
 			return match
 		}
-
-		whitespace := ""
-		attrName := parts[0]
-		if len(attrName) > 0 && (attrName[0] == ' ' || attrName[0] == '\t') {
-			whitespace = string(attrName[0])
-			attrName = strings.TrimSpace(attrName)
+		openQuote := submatches[1]
+		urlVal := submatches[2]
+		closeQuote := submatches[3]
+		if !shouldRewritePath(urlVal, pathPrefix) {
+			return match
 		}
-
-		attrValue := strings.Trim(parts[1], `"' `)
-		quote := `"`
-		if strings.Contains(parts[1], "'") && !strings.Contains(parts[1], `"`) {
-			quote = "'"
-		}
-
-		// Split by comma and rewrite each URL
-		entries := strings.Split(attrValue, ",")
-		for i, entry := range entries {
-			entry = strings.TrimSpace(entry)
-			// Split by whitespace to separate URL from descriptor
-			entryParts := strings.Fields(entry)
-			if len(entryParts) > 0 {
-				url := entryParts[0]
-				if shouldRewritePath(url, pathPrefix) {
-					entryParts[0] = pathPrefix + strings.TrimPrefix(url, "/")
-				}
-				entries[i] = strings.Join(entryParts, " ")
-			}
-		}
-
-		return whitespace + attrName + "=" + quote + strings.Join(entries, ", ") + quote
+		return "url(" + openQuote + pathPrefix + strings.TrimPrefix(urlVal, "/") + closeQuote + ")"
 	})
+}
+
+// rewriteBaseTag rewrites the href attribute of a <base> tag
+func rewriteBaseTag(token *html.Token, pathPrefix, baseHrefPath string) {
+	for i, attr := range token.Attr {
+		if attr.Key == "href" {
+			if strings.HasPrefix(attr.Val, pathPrefix) {
+				return
+			}
+			if attr.Val == "/" || attr.Val == "" {
+				token.Attr[i].Val = baseHrefPath
+			} else {
+				token.Attr[i].Val = pathPrefix + strings.TrimPrefix(attr.Val, "/")
+			}
+			return
+		}
+	}
+}
+
+// rewriteMetaTag rewrites content attributes on <meta> tags for refresh and CSP
+func rewriteMetaTag(token *html.Token, pathPrefix string) {
+	var httpEquiv string
+	for _, attr := range token.Attr {
+		if strings.EqualFold(attr.Key, "http-equiv") {
+			httpEquiv = strings.ToLower(attr.Val)
+			break
+		}
+	}
+	if httpEquiv == "" {
+		return
+	}
+	for i, attr := range token.Attr {
+		if strings.EqualFold(attr.Key, "content") {
+			switch httpEquiv {
+			case "refresh":
+				lowerContent := strings.ToLower(attr.Val)
+				urlIdx := strings.Index(lowerContent, "url=")
+				if urlIdx == -1 {
+					return
+				}
+				prefix := attr.Val[:urlIdx+4]
+				urlPart := attr.Val[urlIdx+4:]
+				if strings.HasPrefix(urlPart, "/") && !strings.HasPrefix(urlPart, "//") && !strings.HasPrefix(urlPart, pathPrefix) {
+					token.Attr[i].Val = prefix + pathPrefix + strings.TrimPrefix(urlPart, "/")
+				}
+			case "content-security-policy", "content-security-policy-report-only":
+				rw := &HTMLRewritingResponseWriter{pathPrefix: pathPrefix}
+				token.Attr[i].Val = rw.rewriteCSPHeader(attr.Val)
+			}
+			return
+		}
+	}
 }
 
 // rewriteCSSURLs rewrites url() paths in CSS (inline styles and style tags)
@@ -659,28 +805,6 @@ func rewriteCSSURLs(html string, pathPrefix string) string {
 
 		newURL := pathPrefix + strings.TrimPrefix(url, "/")
 		return "url(" + openQuote + newURL + closeQuote + ")"
-	})
-}
-
-// rewriteMetaRefresh rewrites URLs in meta refresh content attributes
-func rewriteMetaRefresh(html string, pathPrefix string) string {
-	return metaRefreshRegex.ReplaceAllStringFunc(html, func(match string) string {
-		submatches := metaRefreshRegex.FindStringSubmatch(match)
-		if len(submatches) < 4 {
-			return match
-		}
-
-		prefix := submatches[1]
-		url := submatches[2]
-		suffix := submatches[3]
-
-		// Only rewrite absolute paths
-		if !shouldRewritePath(url, pathPrefix) {
-			return match
-		}
-
-		newURL := pathPrefix + strings.TrimPrefix(url, "/")
-		return prefix + newURL + suffix
 	})
 }
 
@@ -1139,6 +1263,41 @@ func generateFetchInterceptor(pathPrefix string) string {
     };
   }
 
+  // Intercept ServiceWorker registration
+  if (typeof navigator !== 'undefined' && navigator.serviceWorker) {
+    const origRegister = navigator.serviceWorker.register.bind(navigator.serviceWorker);
+    navigator.serviceWorker.register = function(scriptURL, opts) {
+      opts = opts || {};
+      if (typeof opts.scope === 'string') {
+        opts.scope = rewriteUrl(opts.scope);
+      }
+      return origRegister(rewriteUrl(scriptURL), opts);
+    };
+  }
+
+  // Intercept window.open
+  if (typeof window.open === 'function') {
+    const origWindowOpen = window.open;
+    window.open = function(url, target, features) {
+      if (typeof url === 'string') {
+        url = rewriteUrl(url);
+      }
+      return origWindowOpen.call(this, url, target, features);
+    };
+  }
+
+  // Intercept importScripts (Web Workers)
+  if (typeof importScripts === 'function') {
+    const origImportScripts = importScripts;
+    importScripts = function() {
+      var rewritten = [];
+      for (var i = 0; i < arguments.length; i++) {
+        rewritten.push(rewriteUrl(arguments[i]));
+      }
+      return origImportScripts.apply(this, rewritten);
+    };
+  }
+
   // Override Location.prototype getters to strip the base path prefix.
   // This fixes SPA routers that read window.location for route matching.
   // We must intercept pathname, href, and toString consistently so that
@@ -1241,115 +1400,91 @@ func generateFetchInterceptor(pathPrefix string) string {
 </script>`
 }
 
-// injectBaseTag injects a <base href="..."> tag and fetch interceptor into the HTML
-// This ensures all relative URLs in JavaScript (like fetch("/api/...")) resolve correctly
-// pathPrefix is the route's pathBase (used for JS interceptor)
-// requestPath is the actual request URL path (used for base href)
-func injectBaseTag(html string, pathPrefix string, requestPath string) string {
-	// Ensure pathPrefix has trailing slash
+// rewriteManifestJSON rewrites paths in PWA manifest.json content.
+// Rewrites start_url, scope, and icon src fields.
+func rewriteManifestJSON(content string, pathPrefix string) string {
 	if !strings.HasSuffix(pathPrefix, "/") {
 		pathPrefix = pathPrefix + "/"
 	}
 
-	// Generate the interceptor (always needed for fetch/XHR/WebSocket rewriting)
-	interceptor := generateFetchInterceptor(pathPrefix)
-
-	// Check if there's already a <base> tag
-	hasExistingBase := strings.Contains(strings.ToLower(html), "<base")
-
-	// Find the <head> tag to inject after it
-	headRegex := regexp.MustCompile(`(?i)(<head(?:>|\s[^>]*>))`)
-
-	// Compute baseHrefPath (used for both existing and new base tags)
-	// Use the directory portion of requestPath so relative paths resolve correctly.
-	// e.g., for requestPath="/UI/Dashboard", the directory is "/UI/".
-	// This ensures "../bootstrap/x.css" resolves to "/bootstrap/x.css" (one level up from /UI/),
-	// not "/UI/bootstrap/x.css" (which would happen if we treated "Dashboard" as a directory).
-	baseHrefPath := requestPath
-	if baseHrefPath == "" {
-		baseHrefPath = pathPrefix // Fallback to pathPrefix if no requestPath
+	var manifest map[string]interface{}
+	if err := json.Unmarshal([]byte(content), &manifest); err != nil {
+		return content
 	}
-	if !strings.HasSuffix(baseHrefPath, "/") {
-		// Extract the directory portion (everything up to and including the last slash)
-		if idx := strings.LastIndex(baseHrefPath, "/"); idx >= 0 {
-			baseHrefPath = baseHrefPath[:idx+1]
-		} else {
-			baseHrefPath = "/"
+
+	modified := false
+
+	if startURL, ok := manifest["start_url"].(string); ok {
+		if shouldRewritePath(startURL, pathPrefix) {
+			manifest["start_url"] = pathPrefix + strings.TrimPrefix(startURL, "/")
+			modified = true
 		}
 	}
 
-	if hasExistingBase {
-		// Rewrite existing base tag's href to include the sub-path prefix
-		// This is critical for apps like Sonarr/Radarr that set their own base tag
-		html = baseHrefRegex.ReplaceAllStringFunc(html, func(match string) string {
-			submatches := baseHrefRegex.FindStringSubmatch(match)
-			if len(submatches) < 6 {
-				return match
-			}
-			prefix := submatches[1] // `<base href=`
-			quote := submatches[2]  // opening quote
-			href := submatches[3]   // existing href value
-			_ = submatches[4]       // closing quote (same as opening)
-			suffix := submatches[5] // rest of tag + >
-
-			// Already prefixed — leave alone
-			if strings.HasPrefix(href, pathPrefix) {
-				return match
-			}
-
-			var newHref string
-			if href == "/" || href == "" {
-				newHref = baseHrefPath
-			} else {
-				// Prepend prefix to existing sub-path
-				newHref = pathPrefix + strings.TrimPrefix(href, "/")
-			}
-
-			return prefix + quote + newHref + quote + suffix
-		})
-		// Inject the JS interceptor after <head>
-		return headRegex.ReplaceAllString(html, `$1`+interceptor)
+	if scope, ok := manifest["scope"].(string); ok {
+		if shouldRewritePath(scope, pathPrefix) {
+			manifest["scope"] = pathPrefix + strings.TrimPrefix(scope, "/")
+			modified = true
+		}
 	}
 
-	// No existing base tag - inject both base tag and interceptor
-	// Use requestPath for base href (for relative URL resolution like "./app.js")
-	baseTag := `<base href="` + baseHrefPath + `">`
+	if icons, ok := manifest["icons"].([]interface{}); ok {
+		for _, icon := range icons {
+			if iconMap, ok := icon.(map[string]interface{}); ok {
+				if src, ok := iconMap["src"].(string); ok {
+					if shouldRewritePath(src, pathPrefix) {
+						iconMap["src"] = pathPrefix + strings.TrimPrefix(src, "/")
+						modified = true
+					}
+				}
+			}
+		}
+	}
 
-	return headRegex.ReplaceAllString(html, `$1`+baseTag+interceptor)
+	if !modified {
+		return content
+	}
+
+	result, err := json.Marshal(manifest)
+	if err != nil {
+		return content
+	}
+	return string(result)
 }
 
-// rewriteAttribute rewrites a single HTML attribute value
-func rewriteAttribute(attrMatch string, pathPrefix string) string {
-	// Extract attribute name and value
-	// attrMatch is like: ' src="/app.js"' or ' href="/style.css"'
-	parts := strings.SplitN(attrMatch, "=", 2)
-	if len(parts) != 2 {
-		return attrMatch
+// sourceMapRegex matches sourceMappingURL comments in JS (// style).
+var sourceMapRegex = regexp.MustCompile(`(//[#@]\s*sourceMappingURL\s*=\s*)(/[^\s]+)`)
+
+// cssSourceMapRegex matches sourceMappingURL in CSS block comments.
+var cssSourceMapRegex = regexp.MustCompile(`(/\*[#@]\s*sourceMappingURL\s*=\s*)(/[^\s*]+)(\s*\*/)`)
+
+// rewriteSourceMapReferences rewrites sourceMappingURL references in JS and CSS.
+func rewriteSourceMapReferences(content string, pathPrefix string) string {
+	if !strings.HasSuffix(pathPrefix, "/") {
+		pathPrefix = pathPrefix + "/"
 	}
 
-	// Preserve leading whitespace
-	whitespace := ""
-	attrName := parts[0]
-	if len(attrName) > 0 && (attrName[0] == ' ' || attrName[0] == '\t' || attrName[0] == '\n') {
-		whitespace = string(attrName[0])
-		attrName = strings.TrimSpace(attrName)
-	}
+	content = sourceMapRegex.ReplaceAllStringFunc(content, func(match string) string {
+		sub := sourceMapRegex.FindStringSubmatch(match)
+		if len(sub) < 3 {
+			return match
+		}
+		if !shouldRewritePath(sub[2], pathPrefix) {
+			return match
+		}
+		return sub[1] + pathPrefix + strings.TrimPrefix(sub[2], "/")
+	})
 
-	attrValue := strings.Trim(parts[1], `"' `)
+	content = cssSourceMapRegex.ReplaceAllStringFunc(content, func(match string) string {
+		sub := cssSourceMapRegex.FindStringSubmatch(match)
+		if len(sub) < 4 {
+			return match
+		}
+		if !shouldRewritePath(sub[2], pathPrefix) {
+			return match
+		}
+		return sub[1] + pathPrefix + strings.TrimPrefix(sub[2], "/") + sub[3]
+	})
 
-	// Use centralized path check
-	if !shouldRewritePath(attrValue, pathPrefix) {
-		return attrMatch
-	}
-
-	// Rewrite: prepend pathPrefix
-	newValue := pathPrefix + strings.TrimPrefix(attrValue, "/")
-
-	// Preserve original quote style
-	quote := `"`
-	if strings.Contains(parts[1], "'") && !strings.Contains(parts[1], `"`) {
-		quote = "'"
-	}
-
-	return whitespace + attrName + "=" + quote + newValue + quote
+	return content
 }

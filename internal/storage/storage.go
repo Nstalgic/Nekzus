@@ -108,10 +108,14 @@ func (s *Store) migrate() error {
 			health_check_timeout TEXT DEFAULT '',
 			health_check_interval TEXT DEFAULT '',
 			expected_status_codes TEXT DEFAULT '[]', -- JSON array
+			routing_mode TEXT DEFAULT 'path',
+			subdomain TEXT DEFAULT '',
+			exclude_paths TEXT DEFAULT '[]', -- JSON array
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			FOREIGN KEY (app_id) REFERENCES apps(id) ON DELETE CASCADE
 		)`,
+		`CREATE UNIQUE INDEX IF NOT EXISTS idx_routes_subdomain ON routes(subdomain) WHERE subdomain != ''`,
 		// Proposals table
 		`CREATE TABLE IF NOT EXISTS proposals (
 			id TEXT PRIMARY KEY,
@@ -655,10 +659,15 @@ func (s *Store) SaveRoute(route types.Route) error {
 		return fmt.Errorf("failed to marshal expected_status_codes: %w", err)
 	}
 
+	excludePathsJSON, err := json.Marshal(route.ExcludePaths)
+	if err != nil {
+		return fmt.Errorf("failed to marshal exclude_paths: %w", err)
+	}
+
 	query := `
 		INSERT INTO routes (route_id, app_id, path_base, target_url, container_id, scopes, websocket, strip_prefix, rewrite_html,
-			health_check_path, health_check_timeout, health_check_interval, expected_status_codes, updated_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+			health_check_path, health_check_timeout, health_check_interval, expected_status_codes, routing_mode, subdomain, exclude_paths, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
 		ON CONFLICT(route_id) DO UPDATE SET
 			app_id = excluded.app_id,
 			path_base = excluded.path_base,
@@ -672,6 +681,9 @@ func (s *Store) SaveRoute(route types.Route) error {
 			health_check_timeout = excluded.health_check_timeout,
 			health_check_interval = excluded.health_check_interval,
 			expected_status_codes = excluded.expected_status_codes,
+			routing_mode = excluded.routing_mode,
+			subdomain = excluded.subdomain,
+			exclude_paths = excluded.exclude_paths,
 			updated_at = CURRENT_TIMESTAMP
 	`
 
@@ -690,7 +702,8 @@ func (s *Store) SaveRoute(route types.Route) error {
 
 	_, err = s.db.Exec(query, route.RouteID, route.AppID, route.PathBase, route.To, route.ContainerID, string(scopesJSON),
 		websocket, stripPrefix, rewriteHTML,
-		route.HealthCheckPath, route.HealthCheckTimeout, route.HealthCheckInterval, string(expectedStatusCodesJSON))
+		route.HealthCheckPath, route.HealthCheckTimeout, route.HealthCheckInterval, string(expectedStatusCodesJSON),
+		route.RoutingMode, route.Subdomain, string(excludePathsJSON))
 	if err != nil {
 		return fmt.Errorf("failed to save route: %w", err)
 	}
@@ -701,12 +714,14 @@ func (s *Store) SaveRoute(route types.Route) error {
 // GetRoute retrieves a route by ID.
 func (s *Store) GetRoute(routeID string) (*types.Route, error) {
 	query := `SELECT route_id, app_id, path_base, target_url, COALESCE(container_id, ''), scopes, websocket, strip_prefix, rewrite_html,
-		COALESCE(health_check_path, ''), COALESCE(health_check_timeout, ''), COALESCE(health_check_interval, ''), COALESCE(expected_status_codes, '[]')
+		COALESCE(health_check_path, ''), COALESCE(health_check_timeout, ''), COALESCE(health_check_interval, ''), COALESCE(expected_status_codes, '[]'),
+		COALESCE(routing_mode, 'path'), COALESCE(subdomain, ''), COALESCE(exclude_paths, '[]')
 		FROM routes WHERE route_id = ?`
 
 	var route types.Route
 	var scopesJSON string
 	var expectedStatusCodesJSON string
+	var excludePathsJSON string
 	var websocket, stripPrefix, rewriteHTML int
 
 	err := s.db.QueryRow(query, routeID).Scan(
@@ -723,6 +738,9 @@ func (s *Store) GetRoute(routeID string) (*types.Route, error) {
 		&route.HealthCheckTimeout,
 		&route.HealthCheckInterval,
 		&expectedStatusCodesJSON,
+		&route.RoutingMode,
+		&route.Subdomain,
+		&excludePathsJSON,
 	)
 	if err == sql.ErrNoRows {
 		return nil, nil
@@ -741,6 +759,12 @@ func (s *Store) GetRoute(routeID string) (*types.Route, error) {
 		}
 	}
 
+	if excludePathsJSON != "" && excludePathsJSON != "[]" {
+		if err := json.Unmarshal([]byte(excludePathsJSON), &route.ExcludePaths); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal exclude_paths: %w", err)
+		}
+	}
+
 	route.Websocket = websocket == 1
 	route.StripPrefix = stripPrefix == 1
 	route.RewriteHTML = rewriteHTML == 1
@@ -751,7 +775,8 @@ func (s *Store) GetRoute(routeID string) (*types.Route, error) {
 // ListRoutes retrieves all routes.
 func (s *Store) ListRoutes() ([]types.Route, error) {
 	query := `SELECT route_id, app_id, path_base, target_url, COALESCE(container_id, ''), scopes, websocket, strip_prefix, rewrite_html,
-		COALESCE(health_check_path, ''), COALESCE(health_check_timeout, ''), COALESCE(health_check_interval, ''), COALESCE(expected_status_codes, '[]')
+		COALESCE(health_check_path, ''), COALESCE(health_check_timeout, ''), COALESCE(health_check_interval, ''), COALESCE(expected_status_codes, '[]'),
+		COALESCE(routing_mode, 'path'), COALESCE(subdomain, ''), COALESCE(exclude_paths, '[]')
 		FROM routes ORDER BY path_base`
 
 	rows, err := s.db.Query(query)
@@ -765,10 +790,12 @@ func (s *Store) ListRoutes() ([]types.Route, error) {
 		var route types.Route
 		var scopesJSON string
 		var expectedStatusCodesJSON string
+		var excludePathsJSON string
 		var websocket, stripPrefix, rewriteHTML int
 
 		if err := rows.Scan(&route.RouteID, &route.AppID, &route.PathBase, &route.To, &route.ContainerID, &scopesJSON, &websocket, &stripPrefix, &rewriteHTML,
-			&route.HealthCheckPath, &route.HealthCheckTimeout, &route.HealthCheckInterval, &expectedStatusCodesJSON); err != nil {
+			&route.HealthCheckPath, &route.HealthCheckTimeout, &route.HealthCheckInterval, &expectedStatusCodesJSON,
+			&route.RoutingMode, &route.Subdomain, &excludePathsJSON); err != nil {
 			return nil, fmt.Errorf("failed to scan route: %w", err)
 		}
 
@@ -779,6 +806,12 @@ func (s *Store) ListRoutes() ([]types.Route, error) {
 		if expectedStatusCodesJSON != "" && expectedStatusCodesJSON != "[]" {
 			if err := json.Unmarshal([]byte(expectedStatusCodesJSON), &route.ExpectedStatusCodes); err != nil {
 				return nil, fmt.Errorf("failed to unmarshal expected_status_codes: %w", err)
+			}
+		}
+
+		if excludePathsJSON != "" && excludePathsJSON != "[]" {
+			if err := json.Unmarshal([]byte(excludePathsJSON), &route.ExcludePaths); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal exclude_paths: %w", err)
 			}
 		}
 

@@ -199,7 +199,7 @@ func TestRewriteHTMLPaths(t *testing.T) {
 			name:       "rewrite multiple src attributes with mixed spacing",
 			html:       `<script src="/first.js"></script><img src="/image.png" /><script src="/second.js"></script>`,
 			pathPrefix: "/apps/test/",
-			expected:   `<script src="/apps/test/first.js"></script><img src="/apps/test/image.png" /><script src="/apps/test/second.js"></script>`,
+			expected:   `<script src="/apps/test/first.js"></script><img src="/apps/test/image.png"/><script src="/apps/test/second.js"></script>`,
 		},
 	}
 
@@ -321,7 +321,7 @@ func TestInjectBaseTag(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Use same path for both pathPrefix and requestPath in these tests
-			result := injectBaseTag(tc.html, tc.pathPrefix, tc.pathPrefix)
+			result := rewriteHTMLPaths(tc.html, tc.pathPrefix, tc.pathPrefix)
 
 			// Ensure trailing slash for comparison
 			expectedPrefix := tc.pathPrefix
@@ -678,13 +678,13 @@ func TestCSSURLRewriting(t *testing.T) {
 			name:       "inline style with quotes",
 			html:       `<div style="background-image: url('/assets/logo.png')"></div>`,
 			pathPrefix: "/apps/test/",
-			expected:   `<div style="background-image: url('/apps/test/assets/logo.png')"></div>`,
+			expected:   `<div style="background-image: url(&#39;/apps/test/assets/logo.png&#39;)"></div>`,
 		},
 		{
 			name:       "inline style with double quotes",
 			html:       `<div style='background: url("/icons/icon.svg")'></div>`,
 			pathPrefix: "/apps/test/",
-			expected:   `<div style='background: url("/apps/test/icons/icon.svg")'></div>`,
+			expected:   `<div style="background: url(&#34;/apps/test/icons/icon.svg&#34;)"></div>`,
 		},
 		{
 			name:       "style tag with url",
@@ -768,7 +768,7 @@ func TestBaseTagWithInterceptor(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			result := injectBaseTag(tc.html, tc.pathPrefix, tc.pathPrefix)
+			result := rewriteHTMLPaths(tc.html, tc.pathPrefix, tc.pathPrefix)
 
 			// Check for interceptor (should always be present)
 			hasInterceptor := strings.Contains(result, "window.fetch") &&
@@ -970,7 +970,7 @@ func TestFragmentAndQueryStringHandling(t *testing.T) {
 			name:       "complex query string",
 			html:       `<img src="/image?width=100&height=200&format=webp">`,
 			pathPrefix: "/apps/test/",
-			expected:   `<img src="/apps/test/image?width=100&height=200&format=webp">`,
+			expected:   `<img src="/apps/test/image?width=100&amp;height=200&amp;format=webp">`,
 		},
 		{
 			name:       "fragment with special chars",
@@ -1558,13 +1558,13 @@ func TestInjectBaseTag_RewriteExisting(t *testing.T) {
 			html:         `<html><head><base href='/'></head><body></body></html>`,
 			pathPrefix:   "/apps/test/",
 			requestPath:  "/apps/test/",
-			expectedBase: `<base href='/apps/test/'>`,
+			expectedBase: `<base href="/apps/test/">`,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			result := injectBaseTag(tc.html, tc.pathPrefix, tc.requestPath)
+			result := rewriteHTMLPaths(tc.html, tc.pathPrefix, tc.requestPath)
 
 			if !strings.Contains(result, tc.expectedBase) {
 				t.Errorf("Expected result to contain %q, got: %s", tc.expectedBase, result)
@@ -1765,5 +1765,121 @@ func TestJSInterceptorPathnameStripping(t *testing.T) {
 	// Should be wrapped in try/catch for browser compatibility
 	if !strings.Contains(interceptor, "catch") {
 		t.Error("Expected pathname override to be wrapped in try/catch")
+	}
+}
+
+func TestFetchInterceptor_ServiceWorker(t *testing.T) {
+	interceptor := generateFetchInterceptor("/apps/myapp/")
+	if !strings.Contains(interceptor, "serviceWorker") {
+		t.Error("interceptor should include service worker registration intercept")
+	}
+	if !strings.Contains(interceptor, "origRegister") {
+		t.Error("interceptor should intercept serviceWorker.register")
+	}
+	if !strings.Contains(interceptor, "opts.scope") {
+		t.Error("interceptor should rewrite service worker scope")
+	}
+}
+
+func TestFetchInterceptor_WindowOpen(t *testing.T) {
+	interceptor := generateFetchInterceptor("/apps/myapp/")
+	if !strings.Contains(interceptor, "window.open") {
+		t.Error("interceptor should include window.open intercept")
+	}
+	if !strings.Contains(interceptor, "origWindowOpen") {
+		t.Error("interceptor should save original window.open")
+	}
+}
+
+func TestFetchInterceptor_ImportScripts(t *testing.T) {
+	interceptor := generateFetchInterceptor("/apps/myapp/")
+	if !strings.Contains(interceptor, "importScripts") {
+		t.Error("interceptor should include importScripts intercept")
+	}
+	if !strings.Contains(interceptor, "origImportScripts") {
+		t.Error("interceptor should save original importScripts")
+	}
+}
+
+func TestRewriteManifestJSON(t *testing.T) {
+	input := `{"name":"MyApp","start_url":"/","scope":"/","icons":[{"src":"/icon-192.png","sizes":"192x192"},{"src":"/icon-512.png","sizes":"512x512"}]}`
+	result := rewriteManifestJSON(input, "/apps/myapp/")
+	if !strings.Contains(result, `"/apps/myapp/"`) {
+		t.Errorf("start_url not rewritten: %s", result)
+	}
+	if !strings.Contains(result, `"/apps/myapp/icon-192.png"`) {
+		t.Errorf("icon src not rewritten: %s", result)
+	}
+}
+
+func TestRewriteManifestJSON_AlreadyPrefixed(t *testing.T) {
+	input := `{"start_url":"/apps/myapp/","scope":"/apps/myapp/"}`
+	result := rewriteManifestJSON(input, "/apps/myapp/")
+	if strings.Contains(result, `/apps/myapp/apps/myapp/`) {
+		t.Errorf("start_url double-prefixed: %s", result)
+	}
+}
+
+func TestRewriteManifestJSON_InvalidJSON(t *testing.T) {
+	input := `not json at all`
+	result := rewriteManifestJSON(input, "/apps/myapp/")
+	if result != input {
+		t.Errorf("invalid JSON should be returned as-is, got: %s", result)
+	}
+}
+
+func TestRewriteSourceMaps(t *testing.T) {
+	input := "console.log(\"hello\");\n//# sourceMappingURL=/js/app.js.map"
+	result := rewriteSourceMapReferences(input, "/apps/myapp/")
+	if !strings.Contains(result, `/apps/myapp/js/app.js.map`) {
+		t.Errorf("source map URL not rewritten: %s", result)
+	}
+}
+
+func TestRewriteSourceMaps_CSS(t *testing.T) {
+	input := "body { color: red; }\n/*# sourceMappingURL=/css/style.css.map */"
+	result := rewriteSourceMapReferences(input, "/apps/myapp/")
+	if !strings.Contains(result, `/apps/myapp/css/style.css.map`) {
+		t.Errorf("CSS source map URL not rewritten: %s", result)
+	}
+}
+
+func TestRewriteSourceMaps_AlreadyPrefixed(t *testing.T) {
+	input := "//# sourceMappingURL=/apps/myapp/js/app.js.map"
+	result := rewriteSourceMapReferences(input, "/apps/myapp/")
+	if strings.Contains(result, `/apps/myapp/apps/myapp/`) {
+		t.Errorf("source map double-prefixed: %s", result)
+	}
+}
+
+func TestHTMLRewritingResponseWriter_BufferOverflow(t *testing.T) {
+	recorder := httptest.NewRecorder()
+	rw := NewHTMLRewritingResponseWriter(recorder, "/apps/myapp/", "/apps/myapp/")
+
+	rw.ResponseWriter.Header().Set("Content-Type", "text/html")
+	rw.WriteHeader(http.StatusOK)
+
+	// Write data exceeding MaxHTMLBufferSize (10MB)
+	chunk := make([]byte, 1024*1024) // 1MB chunks
+	for i := range chunk {
+		chunk[i] = 'A'
+	}
+
+	for i := 0; i < 12; i++ { // 12MB > 10MB limit
+		_, err := rw.Write(chunk)
+		if err != nil {
+			t.Fatalf("Write failed at chunk %d: %v", i, err)
+		}
+	}
+
+	// FlushHTML should be a no-op since we switched to passthrough
+	err := rw.FlushHTML()
+	if err != nil {
+		t.Fatalf("FlushHTML failed: %v", err)
+	}
+
+	// Response should have been written in passthrough mode
+	if recorder.Body.Len() == 0 {
+		t.Error("expected response body to be written in passthrough mode")
 	}
 }

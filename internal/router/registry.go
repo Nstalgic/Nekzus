@@ -1,6 +1,7 @@
 package router
 
 import (
+	"fmt"
 	"log/slog"
 	"strings"
 	"sync"
@@ -17,6 +18,7 @@ type Registry struct {
 	routes                 map[string]types.Route               // In-memory cache
 	apps                   map[string]types.App                 // In-memory cache
 	radixIndex             *RadixTree                           // Radix tree for fast path lookup
+	subdomainIndex         map[string]string                    // subdomain -> routeID
 	storage                *storage.Store                       // Persistent storage
 	onAppAddedCallback     func(*types.App)                     // Federation: Called when app is added
 	onAppRemovedCallback   func(string)                         // Federation: Called when app is removed
@@ -27,10 +29,11 @@ type Registry struct {
 // NewRegistry creates a new route registry with storage backend
 func NewRegistry(store *storage.Store) *Registry {
 	registry := &Registry{
-		routes:     make(map[string]types.Route),
-		apps:       make(map[string]types.App),
-		radixIndex: NewRadixTree(),
-		storage:    store,
+		routes:         make(map[string]types.Route),
+		apps:           make(map[string]types.App),
+		radixIndex:     NewRadixTree(),
+		subdomainIndex: make(map[string]string),
+		storage:        store,
 	}
 
 	// Load existing data from storage
@@ -63,6 +66,9 @@ func (r *Registry) loadFromStorage() error {
 	for _, route := range routes {
 		r.routes[route.RouteID] = route
 		r.radixIndex.Insert(route)
+		if route.Subdomain != "" && (route.RoutingMode == "subdomain" || route.RoutingMode == "both") {
+			r.subdomainIndex[route.Subdomain] = route.RouteID
+		}
 	}
 	log.Info("Loaded routes from storage", "count", len(routes))
 
@@ -92,6 +98,37 @@ func (r *Registry) UpsertRoute(rt types.Route) error {
 	r.routes[rt.RouteID] = rt
 	r.radixIndex.Insert(rt)
 
+	// Maintain subdomain index
+	if rt.Subdomain != "" && (rt.RoutingMode == "subdomain" || rt.RoutingMode == "both") {
+		// Check uniqueness: another route must not own this subdomain
+		if existingRouteID, taken := r.subdomainIndex[rt.Subdomain]; taken && existingRouteID != rt.RouteID {
+			// Rollback
+			if exists {
+				r.routes[rt.RouteID] = oldRoute
+				r.radixIndex.Insert(oldRoute)
+			} else {
+				delete(r.routes, rt.RouteID)
+				r.radixIndex.Delete(rt.RouteID)
+			}
+			r.mu.Unlock()
+			return fmt.Errorf("subdomain %q is already used by route %q", rt.Subdomain, existingRouteID)
+		}
+		r.subdomainIndex[rt.Subdomain] = rt.RouteID
+	}
+
+	// Clean up old subdomain if it changed
+	if exists && oldRoute.Subdomain != "" && oldRoute.Subdomain != rt.Subdomain {
+		if r.subdomainIndex[oldRoute.Subdomain] == rt.RouteID {
+			delete(r.subdomainIndex, oldRoute.Subdomain)
+		}
+	}
+	// Also clean up if mode changed away from subdomain
+	if exists && oldRoute.Subdomain != "" && rt.RoutingMode != "subdomain" && rt.RoutingMode != "both" && rt.Subdomain == "" {
+		if r.subdomainIndex[oldRoute.Subdomain] == rt.RouteID {
+			delete(r.subdomainIndex, oldRoute.Subdomain)
+		}
+	}
+
 	callback := r.onRouteUpdatedCallback
 	r.mu.Unlock()
 
@@ -102,6 +139,17 @@ func (r *Registry) UpsertRoute(rt types.Route) error {
 			r.mu.Lock()
 			delete(r.routes, rt.RouteID)
 			r.radixIndex.Delete(rt.RouteID)
+			// Rollback subdomain index
+			if rt.Subdomain != "" {
+				delete(r.subdomainIndex, rt.Subdomain)
+			}
+			if exists {
+				r.routes[rt.RouteID] = oldRoute
+				r.radixIndex.Insert(oldRoute)
+				if oldRoute.Subdomain != "" && (oldRoute.RoutingMode == "subdomain" || oldRoute.RoutingMode == "both") {
+					r.subdomainIndex[oldRoute.Subdomain] = rt.RouteID
+				}
+			}
 			r.mu.Unlock()
 			return err
 		}
@@ -138,8 +186,41 @@ func (r *Registry) UpsertRouteWithValidation(rt types.Route) error {
 		return err
 	}
 
+	// Check old route for subdomain cleanup
+	oldRoute, exists := r.routes[rt.RouteID]
+
 	// Update memory
 	r.routes[rt.RouteID] = rt
+
+	// Maintain subdomain index
+	if rt.Subdomain != "" && (rt.RoutingMode == "subdomain" || rt.RoutingMode == "both") {
+		// Check uniqueness: another route must not own this subdomain
+		if existingRouteID, taken := r.subdomainIndex[rt.Subdomain]; taken && existingRouteID != rt.RouteID {
+			// Rollback
+			if exists {
+				r.routes[rt.RouteID] = oldRoute
+				r.radixIndex.Insert(oldRoute)
+			} else {
+				delete(r.routes, rt.RouteID)
+				r.radixIndex.Delete(rt.RouteID)
+			}
+			return fmt.Errorf("subdomain %q is already used by route %q", rt.Subdomain, existingRouteID)
+		}
+		r.subdomainIndex[rt.Subdomain] = rt.RouteID
+	}
+
+	// Clean up old subdomain if it changed
+	if exists && oldRoute.Subdomain != "" && oldRoute.Subdomain != rt.Subdomain {
+		if r.subdomainIndex[oldRoute.Subdomain] == rt.RouteID {
+			delete(r.subdomainIndex, oldRoute.Subdomain)
+		}
+	}
+	// Also clean up if mode changed away from subdomain
+	if exists && oldRoute.Subdomain != "" && rt.RoutingMode != "subdomain" && rt.RoutingMode != "both" && rt.Subdomain == "" {
+		if r.subdomainIndex[oldRoute.Subdomain] == rt.RouteID {
+			delete(r.subdomainIndex, oldRoute.Subdomain)
+		}
+	}
 
 	// Persist to storage
 	if r.storage != nil {
@@ -147,6 +228,17 @@ func (r *Registry) UpsertRouteWithValidation(rt types.Route) error {
 			// Rollback memory changes on storage failure
 			delete(r.routes, rt.RouteID)
 			r.radixIndex.Delete(rt.RouteID)
+			// Rollback subdomain index
+			if rt.Subdomain != "" {
+				delete(r.subdomainIndex, rt.Subdomain)
+			}
+			if exists {
+				r.routes[rt.RouteID] = oldRoute
+				r.radixIndex.Insert(oldRoute)
+				if oldRoute.Subdomain != "" && (oldRoute.RoutingMode == "subdomain" || oldRoute.RoutingMode == "both") {
+					r.subdomainIndex[oldRoute.Subdomain] = rt.RouteID
+				}
+			}
 			return err
 		}
 	}
@@ -164,6 +256,13 @@ func (r *Registry) RemoveRoute(id string) error {
 	appID := ""
 	if exists {
 		appID = route.AppID
+	}
+
+	// Remove from subdomain index
+	if exists && route.Subdomain != "" {
+		if r.subdomainIndex[route.Subdomain] == id {
+			delete(r.subdomainIndex, route.Subdomain)
+		}
 	}
 
 	// Remove from memory
@@ -214,6 +313,19 @@ func (r *Registry) GetRouteByPath(path string) (types.Route, bool) {
 	// Use radix tree for O(m) lookup where m is path length
 	// (vs O(n) linear search where n is number of routes)
 	return r.radixIndex.Search(path)
+}
+
+// GetRouteBySubdomain looks up a route by its subdomain.
+func (r *Registry) GetRouteBySubdomain(subdomain string) (types.Route, bool) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	routeID, ok := r.subdomainIndex[subdomain]
+	if !ok {
+		return types.Route{}, false
+	}
+	route, ok := r.routes[routeID]
+	return route, ok
 }
 
 // UpsertApp adds or updates an app in the catalog (both memory and storage)

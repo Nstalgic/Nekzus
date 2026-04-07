@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"net"
 	"net/http"
 	"strings"
 
@@ -58,9 +59,25 @@ func (app *Application) handleListApps(w http.ResponseWriter, r *http.Request) {
 		// Add proxy path and full URL from route
 		if route, ok := app.managers.Router.GetRouteByAppID(apps[i].ID); ok {
 			apps[i].ProxyPath = route.PathBase
-			// Construct full URL with protocol from baseURL + proxyPath
+
 			if app.baseURL != "" {
-				apps[i].URL = strings.TrimSuffix(app.baseURL, "/") + route.PathBase
+				effectiveMode := route.GetEffectiveRoutingMode(app.config.Server.RoutingMode)
+
+				if (effectiveMode == "subdomain" || effectiveMode == "both") && route.Subdomain != "" && app.config.Server.BaseDomain != "" {
+					// Construct subdomain URL
+					scheme := "https"
+					baseWithoutScheme := strings.TrimPrefix(strings.TrimPrefix(app.baseURL, "https://"), "http://")
+					if !strings.HasPrefix(app.baseURL, "https://") {
+						scheme = "http"
+					}
+					port := ""
+					if _, p, err := net.SplitHostPort(baseWithoutScheme); err == nil && p != "443" && p != "80" {
+						port = ":" + p
+					}
+					apps[i].URL = scheme + "://" + route.Subdomain + "." + app.config.Server.BaseDomain + port
+				} else {
+					apps[i].URL = strings.TrimSuffix(app.baseURL, "/") + route.PathBase
+				}
 			}
 		}
 
