@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"compress/flate"
 	"compress/gzip"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net"
@@ -158,6 +159,7 @@ func (rw *HTMLRewritingResponseWriter) WriteHeader(statusCode int) {
 	// JS config files like initialize.js contain urlBase that needs patching.
 	// Large JS bundles are skipped (Content-Length > 50KB) to avoid buffering overhead.
 	isJSONType := strings.HasPrefix(contentType, "application/json")
+	isManifestType := strings.HasPrefix(contentType, "application/manifest+json")
 	isJSType := strings.HasPrefix(contentType, "application/javascript") || strings.HasPrefix(contentType, "text/javascript")
 	if isJSType {
 		// Only buffer small JS files (config files are typically < 1KB).
@@ -169,7 +171,7 @@ func (rw *HTMLRewritingResponseWriter) WriteHeader(statusCode int) {
 			isJSType = false
 		}
 	}
-	rw.isJSON = rw.rewriteBody && (isJSONType || isJSType)
+	rw.isJSON = rw.rewriteBody && (isJSONType || isJSType || isManifestType)
 
 	// Capture content encoding for decompression during rewrite
 	rw.contentEncoding = strings.ToLower(rw.ResponseWriter.Header().Get("Content-Encoding"))
@@ -472,8 +474,14 @@ func (rw *HTMLRewritingResponseWriter) FlushHTML() error {
 	var rewritten string
 	if rw.isCSS {
 		rewritten = rewriteCSSContent(content, rw.pathPrefix)
+		rewritten = rewriteSourceMapReferences(rewritten, rw.pathPrefix)
 	} else if rw.isJSON {
-		rewritten = rewriteURLBase(content, rw.pathPrefix)
+		contentType := rw.ResponseWriter.Header().Get("Content-Type")
+		if strings.Contains(contentType, "manifest") {
+			rewritten = rewriteManifestJSON(content, rw.pathPrefix)
+		} else {
+			rewritten = rewriteURLBase(content, rw.pathPrefix)
+		}
 	} else {
 		rewritten = rewriteHTMLPaths(content, rw.pathPrefix, rw.requestPath)
 	}
@@ -1367,5 +1375,94 @@ func generateFetchInterceptor(pathPrefix string) string {
   }
 })();
 </script>`
+}
+
+// rewriteManifestJSON rewrites paths in PWA manifest.json content.
+// Rewrites start_url, scope, and icon src fields.
+func rewriteManifestJSON(content string, pathPrefix string) string {
+	if !strings.HasSuffix(pathPrefix, "/") {
+		pathPrefix = pathPrefix + "/"
+	}
+
+	var manifest map[string]interface{}
+	if err := json.Unmarshal([]byte(content), &manifest); err != nil {
+		return content
+	}
+
+	modified := false
+
+	if startURL, ok := manifest["start_url"].(string); ok {
+		if shouldRewritePath(startURL, pathPrefix) {
+			manifest["start_url"] = pathPrefix + strings.TrimPrefix(startURL, "/")
+			modified = true
+		}
+	}
+
+	if scope, ok := manifest["scope"].(string); ok {
+		if shouldRewritePath(scope, pathPrefix) {
+			manifest["scope"] = pathPrefix + strings.TrimPrefix(scope, "/")
+			modified = true
+		}
+	}
+
+	if icons, ok := manifest["icons"].([]interface{}); ok {
+		for _, icon := range icons {
+			if iconMap, ok := icon.(map[string]interface{}); ok {
+				if src, ok := iconMap["src"].(string); ok {
+					if shouldRewritePath(src, pathPrefix) {
+						iconMap["src"] = pathPrefix + strings.TrimPrefix(src, "/")
+						modified = true
+					}
+				}
+			}
+		}
+	}
+
+	if !modified {
+		return content
+	}
+
+	result, err := json.Marshal(manifest)
+	if err != nil {
+		return content
+	}
+	return string(result)
+}
+
+// sourceMapRegex matches sourceMappingURL comments in JS (// style).
+var sourceMapRegex = regexp.MustCompile(`(//[#@]\s*sourceMappingURL\s*=\s*)(/[^\s]+)`)
+
+// cssSourceMapRegex matches sourceMappingURL in CSS block comments.
+var cssSourceMapRegex = regexp.MustCompile(`(/\*[#@]\s*sourceMappingURL\s*=\s*)(/[^\s*]+)(\s*\*/)`)
+
+// rewriteSourceMapReferences rewrites sourceMappingURL references in JS and CSS.
+func rewriteSourceMapReferences(content string, pathPrefix string) string {
+	if !strings.HasSuffix(pathPrefix, "/") {
+		pathPrefix = pathPrefix + "/"
+	}
+
+	content = sourceMapRegex.ReplaceAllStringFunc(content, func(match string) string {
+		sub := sourceMapRegex.FindStringSubmatch(match)
+		if len(sub) < 3 {
+			return match
+		}
+		if !shouldRewritePath(sub[2], pathPrefix) {
+			return match
+		}
+		return sub[1] + pathPrefix + strings.TrimPrefix(sub[2], "/")
+	})
+
+	content = cssSourceMapRegex.ReplaceAllStringFunc(content, func(match string) string {
+		sub := cssSourceMapRegex.FindStringSubmatch(match)
+		if len(sub) < 4 {
+			return match
+		}
+		if !shouldRewritePath(sub[2], pathPrefix) {
+			return match
+		}
+		return sub[1] + pathPrefix + strings.TrimPrefix(sub[2], "/") + sub[3]
+	})
+
+	return content
 }
 

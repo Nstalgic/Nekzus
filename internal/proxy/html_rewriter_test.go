@@ -1800,3 +1800,54 @@ func TestFetchInterceptor_ImportScripts(t *testing.T) {
 		t.Error("interceptor should save original importScripts")
 	}
 }
+
+func TestRewriteManifestJSON(t *testing.T) {
+	input := `{"name":"MyApp","start_url":"/","scope":"/","icons":[{"src":"/icon-192.png","sizes":"192x192"},{"src":"/icon-512.png","sizes":"512x512"}]}`
+	result := rewriteManifestJSON(input, "/apps/myapp/")
+	if !strings.Contains(result, `"/apps/myapp/"`) {
+		t.Errorf("start_url not rewritten: %s", result)
+	}
+	if !strings.Contains(result, `"/apps/myapp/icon-192.png"`) {
+		t.Errorf("icon src not rewritten: %s", result)
+	}
+}
+
+func TestRewriteManifestJSON_AlreadyPrefixed(t *testing.T) {
+	input := `{"start_url":"/apps/myapp/","scope":"/apps/myapp/"}`
+	result := rewriteManifestJSON(input, "/apps/myapp/")
+	if strings.Contains(result, `/apps/myapp/apps/myapp/`) {
+		t.Errorf("start_url double-prefixed: %s", result)
+	}
+}
+
+func TestRewriteManifestJSON_InvalidJSON(t *testing.T) {
+	input := `not json at all`
+	result := rewriteManifestJSON(input, "/apps/myapp/")
+	if result != input {
+		t.Errorf("invalid JSON should be returned as-is, got: %s", result)
+	}
+}
+
+func TestRewriteSourceMaps(t *testing.T) {
+	input := "console.log(\"hello\");\n//# sourceMappingURL=/js/app.js.map"
+	result := rewriteSourceMapReferences(input, "/apps/myapp/")
+	if !strings.Contains(result, `/apps/myapp/js/app.js.map`) {
+		t.Errorf("source map URL not rewritten: %s", result)
+	}
+}
+
+func TestRewriteSourceMaps_CSS(t *testing.T) {
+	input := "body { color: red; }\n/*# sourceMappingURL=/css/style.css.map */"
+	result := rewriteSourceMapReferences(input, "/apps/myapp/")
+	if !strings.Contains(result, `/apps/myapp/css/style.css.map`) {
+		t.Errorf("CSS source map URL not rewritten: %s", result)
+	}
+}
+
+func TestRewriteSourceMaps_AlreadyPrefixed(t *testing.T) {
+	input := "//# sourceMappingURL=/apps/myapp/js/app.js.map"
+	result := rewriteSourceMapReferences(input, "/apps/myapp/")
+	if strings.Contains(result, `/apps/myapp/apps/myapp/`) {
+		t.Errorf("source map double-prefixed: %s", result)
+	}
+}
