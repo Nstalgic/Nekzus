@@ -1767,3 +1767,36 @@ func TestJSInterceptorPathnameStripping(t *testing.T) {
 		t.Error("Expected pathname override to be wrapped in try/catch")
 	}
 }
+
+func TestFetchInterceptor_ServiceWorker(t *testing.T) {
+	interceptor := generateFetchInterceptor("/apps/myapp/")
+	if !strings.Contains(interceptor, "serviceWorker") {
+		t.Error("interceptor should include service worker registration intercept")
+	}
+	if !strings.Contains(interceptor, "origRegister") {
+		t.Error("interceptor should intercept serviceWorker.register")
+	}
+	if !strings.Contains(interceptor, "opts.scope") {
+		t.Error("interceptor should rewrite service worker scope")
+	}
+}
+
+func TestFetchInterceptor_WindowOpen(t *testing.T) {
+	interceptor := generateFetchInterceptor("/apps/myapp/")
+	if !strings.Contains(interceptor, "window.open") {
+		t.Error("interceptor should include window.open intercept")
+	}
+	if !strings.Contains(interceptor, "origWindowOpen") {
+		t.Error("interceptor should save original window.open")
+	}
+}
+
+func TestFetchInterceptor_ImportScripts(t *testing.T) {
+	interceptor := generateFetchInterceptor("/apps/myapp/")
+	if !strings.Contains(interceptor, "importScripts") {
+		t.Error("interceptor should include importScripts intercept")
+	}
+	if !strings.Contains(interceptor, "origImportScripts") {
+		t.Error("interceptor should save original importScripts")
+	}
+}

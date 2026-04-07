@@ -1232,6 +1232,41 @@ func generateFetchInterceptor(pathPrefix string) string {
     };
   }
 
+  // Intercept ServiceWorker registration
+  if (typeof navigator !== 'undefined' && navigator.serviceWorker) {
+    const origRegister = navigator.serviceWorker.register.bind(navigator.serviceWorker);
+    navigator.serviceWorker.register = function(scriptURL, opts) {
+      opts = opts || {};
+      if (typeof opts.scope === 'string') {
+        opts.scope = rewriteUrl(opts.scope);
+      }
+      return origRegister(rewriteUrl(scriptURL), opts);
+    };
+  }
+
+  // Intercept window.open
+  if (typeof window.open === 'function') {
+    const origWindowOpen = window.open;
+    window.open = function(url, target, features) {
+      if (typeof url === 'string') {
+        url = rewriteUrl(url);
+      }
+      return origWindowOpen.call(this, url, target, features);
+    };
+  }
+
+  // Intercept importScripts (Web Workers)
+  if (typeof importScripts === 'function') {
+    const origImportScripts = importScripts;
+    importScripts = function() {
+      var rewritten = [];
+      for (var i = 0; i < arguments.length; i++) {
+        rewritten.push(rewriteUrl(arguments[i]));
+      }
+      return origImportScripts.apply(this, rewritten);
+    };
+  }
+
   // Override Location.prototype getters to strip the base path prefix.
   // This fixes SPA routers that read window.location for route matching.
   // We must intercept pathname, href, and toString consistently so that
