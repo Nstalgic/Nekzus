@@ -10,6 +10,8 @@ server:
   # http_redirect_addr: ":80"      # Optional: HTTP->HTTPS redirect port
   tls_cert: ""                     # Optional: Path to TLS cert (auto-generated if path set but file missing)
   tls_key: ""                      # Optional: Path to TLS key | Env: NEKZUS_TLS_CERT, NEKZUS_TLS_KEY
+  # routing_mode: "path"           # Global default: "path" or "subdomain"
+  # base_domain: "nekzus.local"    # Required for subdomain routing
 
 # =============================================================================
 # Authentication [REQUIRED for production]
@@ -167,6 +169,9 @@ health_checks:
 #     websockets: false            # Default: false
 #     strip_prefix: false          # Default: false
 #     health_check_path: "/health" # Optional: Override global health check path
+#     # routing_mode: "path"          # "path", "subdomain", or "both" (overrides global)
+#     # subdomain: "myapp"            # Required when routing_mode includes "subdomain"
+#     # exclude_paths: []             # Paths to skip in rewriting (default: ["/api/v1/"])
 
 # =============================================================================
 # Apps (optional - typically auto-created by discovery)

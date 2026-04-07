@@ -22,6 +22,111 @@ import (
 
 var proxyLog = slog.With("package", "proxy_handlers")
 
+// subdomainMiddleware intercepts requests matched by subdomain routing.
+// If the request's Host matches a subdomain route, it proxies directly.
+// Otherwise, it falls through to the wrapped handler (path-based routing).
+func (app *Application) subdomainMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		subdomain, ok := router.ExtractSubdomain(r.Host, app.config.Server.BaseDomain)
+		if !ok {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		route, ok := app.managers.Router.GetRouteBySubdomain(subdomain)
+		if !ok {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		app.handleSubdomainProxy(w, r, route)
+	})
+}
+
+// handleSubdomainProxy handles reverse proxy requests matched by subdomain.
+// Subdomain routes skip all path rewriting — the app owns "/" directly.
+func (app *Application) handleSubdomainProxy(w http.ResponseWriter, r *http.Request, route types.Route) {
+	// Validate Host header for CRLF injection
+	if strings.ContainsAny(r.Host, "\r\n\x00") {
+		apperrors.WriteJSON(w, apperrors.New("INVALID_REQUEST", "Invalid host header", http.StatusBadRequest))
+		return
+	}
+
+	// Normalize path to prevent traversal attacks
+	r.URL.Path = router.NormalizePath(r.URL.Path)
+
+	// Extract JWT if present
+	token := httputil.ExtractBearerToken(r)
+	effectiveScopes := route.GetEffectiveScopes(app.config.Auth.DefaultScopes)
+
+	if token != "" && len(effectiveScopes) > 0 {
+		_, claims, err := app.services.Auth.ParseJWT(token)
+		if err != nil {
+			apperrors.WriteJSON(w, apperrors.ErrInvalidToken)
+			return
+		}
+		if !auth.HasAllScopesFromAny(claims["scopes"], effectiveScopes) {
+			apperrors.WriteJSON(w, apperrors.ErrForbidden)
+			return
+		}
+	}
+
+	// Check service health
+	if app.jobs.ServiceHealth != nil && !app.jobs.ServiceHealth.IsServiceHealthy(route.AppID) {
+		apperrors.WriteJSON(w, apperrors.New("SERVICE_UNHEALTHY", "Service is currently unhealthy", http.StatusServiceUnavailable))
+		if app.metrics != nil {
+			app.metrics.RecordProxyError(route.AppID, "service_unhealthy")
+		}
+		return
+	}
+
+	// Parse target URL
+	target, err := url.Parse(route.To)
+	if err != nil {
+		apperrors.WriteJSON(w, apperrors.ErrBadGateway)
+		return
+	}
+
+	// Set forwarding headers (no path stripping needed)
+	r.Header.Del("Authorization")
+	clientIP := r.RemoteAddr
+	if host, _, err := net.SplitHostPort(clientIP); err == nil {
+		clientIP = host
+	}
+	if r.Header.Get("X-Real-IP") == "" {
+		r.Header.Set("X-Real-IP", clientIP)
+	}
+	if existing := r.Header.Get("X-Forwarded-For"); existing != "" {
+		r.Header.Set("X-Forwarded-For", existing+", "+clientIP)
+	} else {
+		r.Header.Set("X-Forwarded-For", clientIP)
+	}
+	r.Header.Set("X-Forwarded-Host", r.Host)
+	if r.TLS != nil {
+		r.Header.Set("X-Forwarded-Proto", "https")
+	} else {
+		r.Header.Set("X-Forwarded-Proto", "http")
+	}
+
+	// WebSocket handling
+	if route.Websocket && proxy.IsWebSocketUpgrade(r) {
+		app.handleWebSocketProxy(w, r, route, target)
+		return
+	}
+
+	// Proxy directly — no HTML rewriting, no StripPrefix, no JS interceptor
+	httpProxy := app.proxyCache.GetOrCreate(target)
+
+	// Only layer: gRPC headers for compatibility
+	var responseWriter http.ResponseWriter = proxy.NewGRPCHeaderResponseWriter(w)
+
+	ctx, cancel := context.WithTimeout(r.Context(), 60*time.Second)
+	defer cancel()
+	r = r.WithContext(ctx)
+
+	httpProxy.ServeHTTP(responseWriter, r)
+}
+
 // handleProxy handles reverse proxy requests (HTTP and WebSocket)
 func (app *Application) handleProxy(w http.ResponseWriter, r *http.Request) {
 	// Validate Host header for CRLF injection

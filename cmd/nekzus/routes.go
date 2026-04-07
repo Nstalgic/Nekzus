@@ -91,6 +91,11 @@ func (rb *RouteBuilder) Build() http.Handler {
 	handler = metrics.HTTPMiddleware(rb.app.metrics)(handler)
 	handler = logMiddleware(handler)
 
+	// Wrap with subdomain routing if configured
+	if rb.app.config.Server.BaseDomain != "" {
+		handler = rb.app.subdomainMiddleware(handler)
+	}
+
 	return handler
 }
 
