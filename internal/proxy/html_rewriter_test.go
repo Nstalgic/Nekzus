@@ -199,7 +199,7 @@ func TestRewriteHTMLPaths(t *testing.T) {
 			name:       "rewrite multiple src attributes with mixed spacing",
 			html:       `<script src="/first.js"></script><img src="/image.png" /><script src="/second.js"></script>`,
 			pathPrefix: "/apps/test/",
-			expected:   `<script src="/apps/test/first.js"></script><img src="/apps/test/image.png" /><script src="/apps/test/second.js"></script>`,
+			expected:   `<script src="/apps/test/first.js"></script><img src="/apps/test/image.png"/><script src="/apps/test/second.js"></script>`,
 		},
 	}
 
@@ -321,7 +321,7 @@ func TestInjectBaseTag(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Use same path for both pathPrefix and requestPath in these tests
-			result := injectBaseTag(tc.html, tc.pathPrefix, tc.pathPrefix)
+			result := rewriteHTMLPaths(tc.html, tc.pathPrefix, tc.pathPrefix)
 
 			// Ensure trailing slash for comparison
 			expectedPrefix := tc.pathPrefix
@@ -678,13 +678,13 @@ func TestCSSURLRewriting(t *testing.T) {
 			name:       "inline style with quotes",
 			html:       `<div style="background-image: url('/assets/logo.png')"></div>`,
 			pathPrefix: "/apps/test/",
-			expected:   `<div style="background-image: url('/apps/test/assets/logo.png')"></div>`,
+			expected:   `<div style="background-image: url(&#39;/apps/test/assets/logo.png&#39;)"></div>`,
 		},
 		{
 			name:       "inline style with double quotes",
 			html:       `<div style='background: url("/icons/icon.svg")'></div>`,
 			pathPrefix: "/apps/test/",
-			expected:   `<div style='background: url("/apps/test/icons/icon.svg")'></div>`,
+			expected:   `<div style="background: url(&#34;/apps/test/icons/icon.svg&#34;)"></div>`,
 		},
 		{
 			name:       "style tag with url",
@@ -768,7 +768,7 @@ func TestBaseTagWithInterceptor(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			result := injectBaseTag(tc.html, tc.pathPrefix, tc.pathPrefix)
+			result := rewriteHTMLPaths(tc.html, tc.pathPrefix, tc.pathPrefix)
 
 			// Check for interceptor (should always be present)
 			hasInterceptor := strings.Contains(result, "window.fetch") &&
@@ -970,7 +970,7 @@ func TestFragmentAndQueryStringHandling(t *testing.T) {
 			name:       "complex query string",
 			html:       `<img src="/image?width=100&height=200&format=webp">`,
 			pathPrefix: "/apps/test/",
-			expected:   `<img src="/apps/test/image?width=100&height=200&format=webp">`,
+			expected:   `<img src="/apps/test/image?width=100&amp;height=200&amp;format=webp">`,
 		},
 		{
 			name:       "fragment with special chars",
@@ -1558,13 +1558,13 @@ func TestInjectBaseTag_RewriteExisting(t *testing.T) {
 			html:         `<html><head><base href='/'></head><body></body></html>`,
 			pathPrefix:   "/apps/test/",
 			requestPath:  "/apps/test/",
-			expectedBase: `<base href='/apps/test/'>`,
+			expectedBase: `<base href="/apps/test/">`,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			result := injectBaseTag(tc.html, tc.pathPrefix, tc.requestPath)
+			result := rewriteHTMLPaths(tc.html, tc.pathPrefix, tc.requestPath)
 
 			if !strings.Contains(result, tc.expectedBase) {
 				t.Errorf("Expected result to contain %q, got: %s", tc.expectedBase, result)
