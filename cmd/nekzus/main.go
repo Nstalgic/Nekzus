@@ -10,6 +10,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -1324,6 +1325,78 @@ func (app *Application) HasRouteForApp(appID string) bool {
 	}
 	_, exists := app.managers.Router.GetRouteByAppID(appID)
 	return exists
+}
+
+// ReconcileRouteTarget implements discovery.RouteChecker interface.
+// When discovery re-sees a container that already has a route, the container's
+// IP may have changed (docker restart, NAS reboot, network recreation). Without
+// this reconciliation the route.To keeps pointing at the stale IP, so the
+// proxy and health checker fail even though the service itself is reachable.
+//
+// Only reconciles when both sides carry a ContainerID and they match — this
+// leaves manually-configured routes alone and avoids clobbering a route when a
+// different container reuses the same app ID.
+//
+// Preserves the port from the existing route.To (users may have selected a
+// non-default port) and only swaps the host portion.
+func (app *Application) ReconcileRouteTarget(p *types.Proposal) {
+	if app.managers.Router == nil || p == nil {
+		return
+	}
+
+	existing, ok := app.managers.Router.GetRouteByAppID(p.SuggestedApp.ID)
+	if !ok {
+		return
+	}
+
+	if existing.ContainerID == "" || p.SuggestedRoute.ContainerID == "" {
+		return
+	}
+	if existing.ContainerID != p.SuggestedRoute.ContainerID {
+		return
+	}
+
+	existingURL, err := url.Parse(existing.To)
+	if err != nil {
+		return
+	}
+	proposedURL, err := url.Parse(p.SuggestedRoute.To)
+	if err != nil {
+		return
+	}
+
+	if existingURL.Hostname() == proposedURL.Hostname() {
+		return
+	}
+
+	port := existingURL.Port()
+	if port == "" {
+		port = proposedURL.Port()
+	}
+	newHost := proposedURL.Hostname()
+	if port != "" {
+		existingURL.Host = newHost + ":" + port
+	} else {
+		existingURL.Host = newHost
+	}
+
+	updated := *existing
+	oldTo := updated.To
+	updated.To = existingURL.String()
+
+	if err := app.managers.Router.UpsertRoute(updated); err != nil {
+		log.Warn("failed to reconcile route target",
+			"appID", p.SuggestedApp.ID,
+			"containerID", updated.ContainerID,
+			"error", err)
+		return
+	}
+
+	log.Info("reconciled route target after container address change",
+		"appID", p.SuggestedApp.ID,
+		"containerID", updated.ContainerID,
+		"from", oldTo,
+		"to", updated.To)
 }
 
 // updateSystemMetrics updates system-level metrics

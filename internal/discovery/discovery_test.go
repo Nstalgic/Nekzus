@@ -556,8 +556,9 @@ func TestDismissedProposalsPersistAcrossScans(t *testing.T) {
 
 // Mock RouteChecker implementation for testing
 type mockRouteChecker struct {
-	mu         sync.Mutex
-	routedApps map[string]bool
+	mu             sync.Mutex
+	routedApps     map[string]bool
+	reconcileCalls []*types.Proposal
 }
 
 func newMockRouteChecker() *mockRouteChecker {
@@ -570,6 +571,20 @@ func (m *mockRouteChecker) HasRouteForApp(appID string) bool {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	return m.routedApps[appID]
+}
+
+func (m *mockRouteChecker) ReconcileRouteTarget(p *types.Proposal) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.reconcileCalls = append(m.reconcileCalls, p)
+}
+
+func (m *mockRouteChecker) ReconcileCalls() []*types.Proposal {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	out := make([]*types.Proposal, len(m.reconcileCalls))
+	copy(out, m.reconcileCalls)
+	return out
 }
 
 func (m *mockRouteChecker) AddRoute(appID string) {
@@ -629,6 +644,58 @@ func TestRouteCheckerFiltering(t *testing.T) {
 	events := bus.GetEvents()
 	if len(events) != 0 {
 		t.Errorf("Expected 0 events (filtered proposal), got %d", len(events))
+	}
+}
+
+// TestRouteCheckerReconcilesExistingRoute tests that when a proposal arrives
+// for an app that already has a route, the manager calls ReconcileRouteTarget
+// on the route checker so stale container IPs can be refreshed.
+func TestRouteCheckerReconcilesExistingRoute(t *testing.T) {
+	store := &mockProposalStore{}
+	bus := &mockEventBus{}
+	routeChecker := newMockRouteChecker()
+
+	routeChecker.AddRoute("sonarr")
+
+	dm := NewDiscoveryManager(store, bus, routeChecker)
+
+	if err := dm.Start(); err != nil {
+		t.Fatalf("Failed to start discovery: %v", err)
+	}
+	defer dm.Stop()
+
+	proposal := &types.Proposal{
+		ID:             "reconcile-test-1",
+		Source:         "docker",
+		DetectedScheme: "http",
+		DetectedHost:   "172.18.0.7",
+		DetectedPort:   8989,
+		Confidence:     0.9,
+		SuggestedApp: types.App{
+			ID:   "sonarr",
+			Name: "Sonarr",
+		},
+		SuggestedRoute: types.Route{
+			AppID:       "sonarr",
+			To:          "http://172.18.0.7:8989",
+			ContainerID: "abc123def456",
+		},
+	}
+
+	dm.SubmitProposal(proposal)
+	time.Sleep(50 * time.Millisecond)
+
+	calls := routeChecker.ReconcileCalls()
+	if len(calls) != 1 {
+		t.Fatalf("Expected 1 ReconcileRouteTarget call, got %d", len(calls))
+	}
+	if calls[0].SuggestedApp.ID != "sonarr" {
+		t.Errorf("Expected reconcile for sonarr, got %q", calls[0].SuggestedApp.ID)
+	}
+
+	// Proposal should still be filtered out (not added as a new proposal)
+	if len(dm.GetProposals()) != 0 {
+		t.Errorf("Expected 0 pending proposals, got %d", len(dm.GetProposals()))
 	}
 }
 

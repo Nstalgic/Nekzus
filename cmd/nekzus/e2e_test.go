@@ -19,9 +19,7 @@ import (
 //
 // Requires manually starting Docker Compose services first.
 func TestEndToEnd(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Skipping E2E test in short mode")
-	}
+	requireE2EEnvironment(t, "localhost:8443")
 
 	// Configuration
 	nexusURL := "https://localhost:8443"

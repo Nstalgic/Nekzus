@@ -55,6 +55,13 @@ type WSNotifier interface {
 type RouteChecker interface {
 	// HasRouteForApp returns true if the app already has a route configured.
 	HasRouteForApp(appID string) bool
+
+	// ReconcileRouteTarget is called when discovery re-sees an app that
+	// already has a route. Implementations should update the existing route's
+	// target address if the proposal indicates the container moved to a new
+	// host (e.g., after a Docker or NAS restart). A no-op is expected when
+	// the container cannot be positively matched to the existing route.
+	ReconcileRouteTarget(p *types.Proposal)
 }
 
 // DiscoveryWorker represents a service discovery implementation.
@@ -243,6 +250,9 @@ func (dm *DiscoveryManager) processProposals() {
 		if dm.routeChecker != nil && p.SuggestedApp.ID != "" {
 			if dm.routeChecker.HasRouteForApp(p.SuggestedApp.ID) {
 				dm.mu.Unlock()
+				// Give the route checker a chance to refresh the existing
+				// route's target when the container's address has changed.
+				dm.routeChecker.ReconcileRouteTarget(p)
 				log.Debug("ignoring proposal - app already has route", "proposal_id", p.ID, "app_id", p.SuggestedApp.ID)
 				continue
 			}

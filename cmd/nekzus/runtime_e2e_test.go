@@ -27,9 +27,7 @@ import (
 // - Docker: docker compose up -d
 // - Kubernetes: kind create cluster / k3s / Docker Desktop K8s
 func TestRuntimeEndToEnd(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Skipping E2E test in short mode")
-	}
+	requireE2EEnvironment(t, "localhost:8443")
 
 	// Configuration
 	nexusURL := "https://localhost:8443"
@@ -530,9 +528,7 @@ func containerAction(client *http.Client, baseURL, jwt, containerID, action, run
 
 // TestDockerOnly runs E2E tests in Docker-only mode
 func TestDockerOnly(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Skipping E2E test in short mode")
-	}
+	requireE2EEnvironment(t, "localhost:8443")
 
 	nexusURL := "https://localhost:8443"
 	bootstrapToken := "dev-bootstrap"
@@ -590,9 +586,7 @@ func TestDockerOnly(t *testing.T) {
 
 // TestKubernetesOnly runs E2E tests in Kubernetes-only mode
 func TestKubernetesOnly(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Skipping E2E test in short mode")
-	}
+	requireE2EEnvironment(t, "localhost:8443")
 
 	nexusURL := "https://localhost:8443"
 	bootstrapToken := "dev-bootstrap"
