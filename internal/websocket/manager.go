@@ -439,7 +439,12 @@ func (wm *Manager) HasDeviceConnection(deviceID string) bool {
 	return false
 }
 
-// PublishDiscoveryEvent publishes a discovery event to all connected clients
+// PublishDiscoveryEvent publishes a discovery event to all connected clients.
+//
+// Deprecated: discovery events now flow through notificationService.SendToAll
+// in Application.Publish so they can be queued and replayed on reconnect.
+// This function is retained because it is still part of the WebSocket manager
+// surface but has no remaining callers.
 func (wm *Manager) PublishDiscoveryEvent(eventData interface{}) {
 	// Extract proposal directly from discovery.Event
 	// Mobile app expects Data to be the Proposal object directly

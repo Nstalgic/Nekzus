@@ -1310,10 +1310,17 @@ func (app *Application) AddProposal(p *types.Proposal) {
 		"component", logger.CompDiscovery)
 }
 
-// Publish implements discovery.EventBus interface
+// Publish implements discovery.EventBus interface.
+// Uses the queue path so paired devices reliably receive proposals on
+// reconnect after being offline or backgrounded. The mobile dedup keyed
+// on notificationId handles the case where an ACK is lost in transit
+// and the backend replays.
 func (app *Application) Publish(ev discovery.Event) {
-	if app.managers.WebSocket != nil {
-		app.managers.WebSocket.PublishDiscoveryEvent(ev)
+	if app.notificationService == nil {
+		return
+	}
+	if err := app.notificationService.SendToAll(types.WSMsgTypeDiscovery, ev.GetData()); err != nil {
+		log.Warn("failed to enqueue discovery event", "error", err)
 	}
 }
 
