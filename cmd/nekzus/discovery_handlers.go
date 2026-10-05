@@ -263,7 +263,9 @@ func (app *Application) checkAndNotifyPortExposure(proposal *types.Proposal) {
 			analysis.Recommendations,
 		)
 
-		// Enqueue notification for offline devices
+		// Enqueue an ACK-tracked copy for every device, online or not. The live
+		// broadcast above is fire-and-forget, so this is the copy that is retried
+		// if it is lost. The app only displays this queued copy.
 		if app.notificationQueue != nil && app.storage != nil {
 			go app.enqueuePortExposureNotification(
 				proposal.SuggestedApp.ID,

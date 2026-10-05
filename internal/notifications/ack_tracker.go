@@ -24,7 +24,7 @@ type PendingNotification struct {
 type ACKTrackerConfig struct {
 	ACKTimeout    time.Duration                                                    // How long to wait for ACK before timeout
 	CheckInterval time.Duration                                                    // How often to check for timeouts
-	OnACK         func(storageID int64)                                            // Callback when notification is acknowledged
+	OnACK         func(storageID int64, msgType, deviceID string)                  // Callback when notification is acknowledged
 	OnTimeout     func(notifID, deviceID, msgType string, payload json.RawMessage) // Callback when notification times out
 }
 
@@ -89,15 +89,18 @@ func (t *ACKTracker) ACK(notifID string) {
 	t.mu.Lock()
 	notif, exists := t.pending[notifID]
 	var storageID int64
+	var msgType, deviceID string
 	if exists {
 		storageID = notif.StorageID
+		msgType = notif.Type
+		deviceID = notif.DeviceID
 		delete(t.pending, notifID)
 	}
 	t.mu.Unlock()
 
 	// Call OnACK callback outside of lock if we have a storage ID
 	if exists && storageID > 0 && t.config.OnACK != nil {
-		t.config.OnACK(storageID)
+		t.config.OnACK(storageID, msgType, deviceID)
 	}
 }
 

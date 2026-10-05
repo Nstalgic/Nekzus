@@ -125,9 +125,10 @@ func (m *mockNotificationQueue) getEnqueued() []queuedNotification {
 	return result
 }
 
-// TestNotifier_SendsToOnlineDevice tests that notifications are sent via WebSocket
-// when the device is online.
-func TestNotifier_SendsToOnlineDevice(t *testing.T) {
+// TestNotifier_QueuesForOnlineDevice tests that completion notifications go
+// through the ACK-tracked queue even when the device is online, with no live
+// copy. The queue delivers to online devices immediately.
+func TestNotifier_QueuesForOnlineDevice(t *testing.T) {
 	ws := newMockWebSocketSender()
 	queue := newMockNotificationQueue()
 
@@ -148,25 +149,97 @@ func TestNotifier_SendsToOnlineDevice(t *testing.T) {
 
 	notifier.NotifyExecutionCompleted("device-123", execution)
 
-	// Should have sent via WebSocket
+	queued := queue.getEnqueued()
+	if len(queued) != 1 {
+		t.Fatalf("expected 1 queued notification, got %d", len(queued))
+	}
+	if queued[0].DeviceID != "device-123" {
+		t.Errorf("expected device-123, got %s", queued[0].DeviceID)
+	}
+	if queued[0].MsgType != types.WSMsgTypeExecutionCompleted {
+		t.Errorf("expected %s, got %s", types.WSMsgTypeExecutionCompleted, queued[0].MsgType)
+	}
+
+	// No live copy, which would duplicate the queued one on the device
+	if msgs := ws.getSentMessages(); len(msgs) != 0 {
+		t.Errorf("expected 0 WebSocket messages, got %d", len(msgs))
+	}
+}
+
+// TestNotifier_StartedNotQueuedForOfflineDevice tests that the transient
+// started status is live-only and never queued for replay.
+func TestNotifier_StartedNotQueuedForOfflineDevice(t *testing.T) {
+	ws := newMockWebSocketSender()
+	queue := newMockNotificationQueue()
+
+	ws.setOnline("device-offline", false)
+
+	notifier := NewWebSocketNotifier(ws, queue, NotifierConfig{
+		TTL:        24 * time.Hour,
+		MaxRetries: 3,
+	})
+
+	notifier.NotifyExecutionStarted("device-offline", "exec-1", "script-abc", "My Script")
+
+	if queued := queue.getEnqueued(); len(queued) != 0 {
+		t.Errorf("expected 0 queued notifications, got %d", len(queued))
+	}
+}
+
+// TestNotifier_EnqueueErrorFallsBackToLive tests that a queue failure still
+// attempts a live send rather than dropping the notification.
+func TestNotifier_EnqueueErrorFallsBackToLive(t *testing.T) {
+	ws := newMockWebSocketSender()
+	queue := newMockNotificationQueue()
+	queue.enqErr = errors.New("storage unavailable")
+
+	ws.setOnline("device-123", true)
+
+	notifier := NewWebSocketNotifier(ws, queue, NotifierConfig{
+		TTL:        24 * time.Hour,
+		MaxRetries: 3,
+	})
+
+	execution := &Execution{
+		ID:       "exec-err",
+		ScriptID: "script-abc",
+		Status:   ExecutionStatusCompleted,
+		ExitCode: intPtr(0),
+	}
+
+	notifier.NotifyExecutionCompleted("device-123", execution)
+
 	msgs := ws.getSentMessages()
 	if len(msgs) != 1 {
+		t.Fatalf("expected 1 live fallback message, got %d", len(msgs))
+	}
+	if msgs[0].MsgType != types.WSMsgTypeExecutionCompleted {
+		t.Errorf("expected %s, got %s", types.WSMsgTypeExecutionCompleted, msgs[0].MsgType)
+	}
+}
+
+// TestNotifier_NilQueueSendsLive tests that without a queue, completion
+// notifications are sent live to an online device.
+func TestNotifier_NilQueueSendsLive(t *testing.T) {
+	ws := newMockWebSocketSender()
+	ws.setOnline("device-123", true)
+
+	notifier := NewWebSocketNotifier(ws, nil, NotifierConfig{
+		TTL:        24 * time.Hour,
+		MaxRetries: 3,
+	})
+
+	execution := &Execution{
+		ID:       "exec-live",
+		ScriptID: "script-abc",
+		Status:   ExecutionStatusCompleted,
+		ExitCode: intPtr(0),
+	}
+
+	notifier.NotifyExecutionCompleted("device-123", execution)
+
+	if msgs := ws.getSentMessages(); len(msgs) != 1 {
 		t.Errorf("expected 1 WebSocket message, got %d", len(msgs))
-	}
-
-	if len(msgs) > 0 {
-		if msgs[0].DeviceID != "device-123" {
-			t.Errorf("expected device-123, got %s", msgs[0].DeviceID)
-		}
-		if msgs[0].MsgType != types.WSMsgTypeExecutionCompleted {
-			t.Errorf("expected %s, got %s", types.WSMsgTypeExecutionCompleted, msgs[0].MsgType)
-		}
-	}
-
-	// Should NOT have queued (device was online)
-	queued := queue.getEnqueued()
-	if len(queued) != 0 {
-		t.Errorf("expected 0 queued notifications, got %d", len(queued))
 	}
 }
 
@@ -284,7 +357,8 @@ func TestNotifier_NotifyExecutionFailed(t *testing.T) {
 
 	notifier.NotifyExecutionFailed("device-fail", execution, "Script exited with code 1")
 
-	msgs := ws.getSentMessages()
+	// Delivered through the ACK-tracked queue
+	msgs := queue.getEnqueued()
 	if len(msgs) != 1 {
 		t.Errorf("expected 1 message, got %d", len(msgs))
 	}
@@ -329,7 +403,8 @@ func TestNotifier_NotifyExecutionTimeout(t *testing.T) {
 
 	notifier.NotifyExecutionFailed("device-timeout", execution, "Script timed out after 30s")
 
-	msgs := ws.getSentMessages()
+	// Delivered through the ACK-tracked queue
+	msgs := queue.getEnqueued()
 	if len(msgs) != 1 {
 		t.Errorf("expected 1 message, got %d", len(msgs))
 	}
@@ -371,7 +446,8 @@ func TestNotifier_PayloadTruncation(t *testing.T) {
 
 	notifier.NotifyExecutionCompleted("device-large", execution)
 
-	msgs := ws.getSentMessages()
+	// Delivered through the ACK-tracked queue
+	msgs := queue.getEnqueued()
 	if len(msgs) != 1 {
 		t.Fatalf("expected 1 message, got %d", len(msgs))
 	}

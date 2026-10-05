@@ -1113,7 +1113,7 @@ func TestWebhookNotification_QueueDrainWithRealQueue(t *testing.T) {
 	ackTracker := notifications.NewACKTracker(notifications.ACKTrackerConfig{
 		ACKTimeout:    30 * time.Second,
 		CheckInterval: 100 * time.Millisecond,
-		OnACK: func(storageID int64) {
+		OnACK: func(storageID int64, _, _ string) {
 			if storageID > 0 {
 				if err := store.MarkNotificationDelivered(storageID); err != nil {
 					t.Logf("Failed to mark notification delivered: %v", err)
@@ -1264,5 +1264,186 @@ func TestWebhookNotification_QueueDrainWithRealQueue(t *testing.T) {
 	}
 	if !found {
 		t.Error("Could not find the queued notification in results")
+	}
+}
+
+// newQueuedWebhookTestServer builds an Application wired like production:
+// real storage, ACK tracker that marks rows delivered, and a running queue.
+func newQueuedWebhookTestServer(t *testing.T) (*Application, *storage.Store, string) {
+	t.Helper()
+
+	tmpFile, err := os.CreateTemp("", "nekzus-webhook-queued-*.db")
+	if err != nil {
+		t.Fatal(err)
+	}
+	tmpFile.Close()
+	t.Cleanup(func() { os.Remove(tmpFile.Name()) })
+
+	store, err := storage.NewStore(storage.Config{DatabasePath: tmpFile.Name()})
+	if err != nil {
+		t.Fatalf("Failed to create storage: %v", err)
+	}
+	t.Cleanup(func() { store.Close() })
+
+	testApp := newTestApplication(t)
+	wsManager := wsmanager.NewManager(testMetrics, store)
+	wsAdapter := wsmanager.NewManagerAdapter(wsManager)
+
+	ackTracker := notifications.NewACKTracker(notifications.ACKTrackerConfig{
+		ACKTimeout:    30 * time.Second,
+		CheckInterval: 100 * time.Millisecond,
+		OnACK: func(storageID int64, _, _ string) {
+			if err := store.MarkNotificationDelivered(storageID); err != nil {
+				t.Logf("Failed to mark notification delivered: %v", err)
+			}
+		},
+	})
+	t.Cleanup(ackTracker.Stop)
+
+	deliverer := notifications.NewWebSocketDelivererWithACK(wsAdapter, ackTracker)
+	notifQueue := notifications.NewQueue(notifications.QueueConfig{WorkerCount: 2, BufferSize: 100}, store, deliverer)
+	notifQueue.SetConnectivityChecker(wsAdapter)
+	if err := notifQueue.Start(context.Background()); err != nil {
+		t.Fatalf("Failed to start notification queue: %v", err)
+	}
+	t.Cleanup(notifQueue.Stop)
+
+	app := &Application{
+		storage:           store,
+		metrics:           testMetrics,
+		notificationQueue: notifQueue,
+		wsDeliverer:       deliverer,
+		services:          &ServiceRegistry{Auth: testApp.services.Auth},
+		managers: &ManagerRegistry{
+			WebSocket: wsManager,
+			Activity:  activity.NewTracker(store),
+		},
+		jobs: &JobRegistry{},
+	}
+
+	mux := http.NewServeMux()
+	mux.Handle("/api/v1/ws", http.HandlerFunc(app.handleWebSocket))
+	mux.Handle("/api/v1/webhooks/notify", http.HandlerFunc(app.handleWebhookNotify))
+	mux.Handle("/api/v1/webhooks/activity", http.HandlerFunc(app.handleWebhookActivity))
+	server := httptest.NewServer(mux)
+	t.Cleanup(server.Close)
+
+	return app, store, server.URL
+}
+
+// ackAndExpectDelivered ACKs a queued message and checks the device's single
+// row was marked delivered.
+func ackAndExpectDelivered(t *testing.T, client *websocket.Conn, store *storage.Store, deviceID string, msg types.WebSocketMessage) {
+	t.Helper()
+
+	if err := client.WriteJSON(types.WebSocketMessage{
+		Type:           types.WSMsgTypeNotificationACK,
+		NotificationID: msg.NotificationID,
+	}); err != nil {
+		t.Fatalf("Failed to send notification ACK: %v", err)
+	}
+
+	time.Sleep(200 * time.Millisecond)
+	result, err := store.ListNotifications(storage.NotificationListFilter{DeviceID: deviceID}, 24*time.Hour)
+	if err != nil {
+		t.Fatalf("Failed to list notifications: %v", err)
+	}
+	if len(result.Notifications) != 1 {
+		t.Fatalf("Expected 1 notification row for %s, got %d", deviceID, len(result.Notifications))
+	}
+	if result.Notifications[0].Status != "delivered" {
+		t.Errorf("Expected status 'delivered', got '%s'", result.Notifications[0].Status)
+	}
+}
+
+// TestWebhookNotification_TargetedOnlineDeviceUsesQueue tests that a targeted
+// webhook to an online device is delivered once, through the ACK-tracked queue
+// (it carries a notificationId), and that the ACK marks the row delivered.
+func TestWebhookNotification_TargetedOnlineDeviceUsesQueue(t *testing.T) {
+	app, store, serverURL := newQueuedWebhookTestServer(t)
+	wsURL := "ws" + strings.TrimPrefix(serverURL, "http") + "/api/v1/ws"
+
+	deviceID := "device-targeted-queue"
+	client := connectAndAuthenticateClient(t, wsURL, deviceID, app)
+	defer client.Close()
+
+	resp := sendWebhookNotify(t, serverURL, WebhookNotifyPayload{
+		DeviceIDs: []string{deviceID},
+		Type:      "targeted_update",
+		Data:      map[string]interface{}{"title": "Hello", "message": "World"},
+	})
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("Expected status 200, got %d", resp.StatusCode)
+	}
+
+	msg := expectWebSocketMessage(t, client, types.WSMsgTypeWebhook, 2*time.Second)
+	if msg.NotificationID == "" {
+		t.Fatal("Expected queued delivery with a notificationId, got a live message")
+	}
+
+	// Exactly one copy: no live duplicate alongside the queued one
+	expectNoWebSocketMessage(t, client, 500*time.Millisecond)
+
+	ackAndExpectDelivered(t, client, store, deviceID, msg)
+}
+
+// TestWebhookNotification_UntargetedUsesQueueForPairedDevices tests that an
+// untargeted webhook reaches each paired device once through the queue, still
+// reaches non-device clients (web UI) live, and is queued for paired devices
+// that are offline.
+func TestWebhookNotification_UntargetedUsesQueueForPairedDevices(t *testing.T) {
+	app, store, serverURL := newQueuedWebhookTestServer(t)
+	wsURL := "ws" + strings.TrimPrefix(serverURL, "http") + "/api/v1/ws"
+
+	onlineID := "device-untargeted-online"
+	client := connectAndAuthenticateClient(t, wsURL, onlineID, app)
+	defer client.Close()
+
+	offlineID := "device-untargeted-offline"
+	if err := store.SaveDevice(offlineID, offlineID, "test", "1.0", []string{"read:events"}); err != nil {
+		t.Fatalf("Failed to register offline device: %v", err)
+	}
+
+	// Web UI style connection: local, no token, connects as "admin"
+	dialer := websocket.Dialer{HandshakeTimeout: 5 * time.Second}
+	webUI, _, err := dialer.Dial(wsURL, nil)
+	if err != nil {
+		t.Fatalf("Failed to connect web UI client: %v", err)
+	}
+	defer webUI.Close()
+	authenticateWebSocket(t, webUI, "")
+
+	resp := sendWebhookActivity(t, serverURL, WebhookActivityPayload{Message: "Backup finished"})
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("Expected status 200, got %d", resp.StatusCode)
+	}
+
+	// Paired, online device: one queued copy, no live duplicate
+	msg := expectWebSocketMessage(t, client, types.WSMsgTypeWebhook, 2*time.Second)
+	if msg.NotificationID == "" {
+		t.Fatal("Expected queued delivery with a notificationId, got a live message")
+	}
+	expectNoWebSocketMessage(t, client, 500*time.Millisecond)
+
+	// Web UI: live copy, no notificationId
+	webMsg := expectWebSocketMessage(t, webUI, types.WSMsgTypeWebhook, 2*time.Second)
+	if webMsg.NotificationID != "" {
+		t.Errorf("Expected live message for web UI, got notificationId %s", webMsg.NotificationID)
+	}
+
+	ackAndExpectDelivered(t, client, store, onlineID, msg)
+
+	// Paired, offline device: row waits for reconnect
+	result, err := store.ListNotifications(storage.NotificationListFilter{DeviceID: offlineID}, 24*time.Hour)
+	if err != nil {
+		t.Fatalf("Failed to list notifications: %v", err)
+	}
+	if len(result.Notifications) != 1 {
+		t.Fatalf("Expected 1 queued row for offline device, got %d", len(result.Notifications))
+	}
+	if result.Notifications[0].Status != "pending" {
+		t.Errorf("Expected status 'pending', got '%s'", result.Notifications[0].Status)
 	}
 }

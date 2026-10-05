@@ -447,7 +447,9 @@ func (c *ServiceHealthChecker) updateHealthStatus(appID, status, errorMsg string
 
 		go c.wsManager.PublishHealthChange(notifyAppID, notifyAppName, notifyProxyPath, notifyStatus, notifyMsg)
 
-		// Enqueue notification for offline devices
+		// Enqueue an ACK-tracked copy for every device, online or not. The live
+		// broadcast above is fire-and-forget, so this is the copy that is retried
+		// if it is lost. The app de-duplicates against the live event.
 		if c.notificationQueue != nil && c.storage != nil {
 			go c.enqueueHealthNotification(notifyAppID, notifyStatus, notifyMsg)
 		}
@@ -670,7 +672,9 @@ func (c *ServiceHealthChecker) MarkAppUnhealthy(appID, reason string) {
 			go c.wsManager.PublishHealthChange(appID, appName, proxyPath, "unhealthy", reason)
 		}
 
-		// Enqueue notification for offline devices
+		// Enqueue an ACK-tracked copy for every device, online or not. The live
+		// broadcast above is fire-and-forget, so this is the copy that is retried
+		// if it is lost. The app de-duplicates against the live event.
 		if c.notificationQueue != nil && c.storage != nil {
 			go c.enqueueHealthNotification(appID, "unhealthy", reason)
 		}

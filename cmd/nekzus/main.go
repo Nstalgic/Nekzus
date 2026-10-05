@@ -416,16 +416,20 @@ func NewApplication(cfg types.ServerConfig, configPath string) (*Application, er
 		app.ackTracker = notifications.NewACKTracker(notifications.ACKTrackerConfig{
 			ACKTimeout:    ackTimeout,
 			CheckInterval: 5 * time.Second,
-			OnACK: func(storageID int64) {
+			OnACK: func(storageID int64, msgType, deviceID string) {
 				// Mark notification as delivered when client ACKs
 				if store != nil && storageID > 0 {
 					if err := store.MarkNotificationDelivered(storageID); err != nil {
 						log.Error("failed to mark notification delivered on ACK",
 							"storage_id", storageID,
+							"msg_type", msgType,
+							"device_id", deviceID,
 							"error", err)
 					} else {
 						log.Info("notification marked delivered on client ACK",
-							"storage_id", storageID)
+							"storage_id", storageID,
+							"msg_type", msgType,
+							"device_id", deviceID)
 					}
 				}
 			},

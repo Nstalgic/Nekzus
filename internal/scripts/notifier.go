@@ -17,7 +17,7 @@ type WebSocketSender interface {
 	Broadcast(msgType string, payload json.RawMessage)
 }
 
-// NotificationQueue interface for queueing notifications for offline devices.
+// NotificationQueue interface for ACK-tracked notification delivery.
 type NotificationQueue interface {
 	Enqueue(deviceID string, msgType string, payload json.RawMessage, ttl time.Duration, maxRetries int) error
 }
@@ -69,7 +69,7 @@ func (n *WebSocketNotifier) NotifyExecutionStarted(deviceID, executionID, script
 		"timestamp":   time.Now().Unix(),
 	}
 
-	n.send(deviceID, types.WSMsgTypeExecutionStarted, payload)
+	n.send(deviceID, types.WSMsgTypeExecutionStarted, payload, false)
 }
 
 // NotifyExecutionCompleted sends a notification when execution completes successfully.
@@ -101,7 +101,7 @@ func (n *WebSocketNotifier) NotifyExecutionCompleted(deviceID string, execution 
 		payload["exitCode"] = *execution.ExitCode
 	}
 
-	n.send(deviceID, types.WSMsgTypeExecutionCompleted, payload)
+	n.send(deviceID, types.WSMsgTypeExecutionCompleted, payload, true)
 }
 
 // NotifyExecutionFailed sends a notification when execution fails.
@@ -134,11 +134,20 @@ func (n *WebSocketNotifier) NotifyExecutionFailed(deviceID string, execution *Ex
 		payload["exitCode"] = *execution.ExitCode
 	}
 
-	n.send(deviceID, types.WSMsgTypeExecutionFailed, payload)
+	n.send(deviceID, types.WSMsgTypeExecutionFailed, payload, true)
 }
 
-// send attempts to send via WebSocket, falling back to queue if offline.
-func (n *WebSocketNotifier) send(deviceID, msgType string, payload map[string]interface{}) {
+// send delivers a notification to the device that triggered the execution.
+//
+// Reliable notifications (completed/failed) go through the queue whenever one
+// is configured, with no live send. The queue delivers immediately to online
+// devices and tracks the ACK, so a live send that is silently lost (stale
+// socket, suspended app, full send buffer) is still retried on reconnect. A
+// live copy alongside it would only duplicate the notification on the device.
+//
+// Non-reliable notifications (started) are a transient status and are sent
+// live only; replaying a stale "running" status on reconnect is not useful.
+func (n *WebSocketNotifier) send(deviceID, msgType string, payload map[string]interface{}, reliable bool) {
 	payloadBytes, err := json.Marshal(payload)
 	if err != nil {
 		notifierLog.Error("failed to marshal notification payload",
@@ -159,33 +168,34 @@ func (n *WebSocketNotifier) send(deviceID, msgType string, payload map[string]in
 		return
 	}
 
-	// Try WebSocket first for device-specific notifications
-	if n.ws != nil {
-		err = n.ws.SendToDevice(deviceID, msgType, payloadBytes)
+	if reliable && n.queue != nil {
+		err := n.queue.Enqueue(deviceID, msgType, payloadBytes, n.config.TTL, n.config.MaxRetries)
 		if err == nil {
-			notifierLog.Debug("notification sent via WebSocket",
+			notifierLog.Debug("notification queued for ACK-tracked delivery",
 				"device_id", deviceID,
 				"msg_type", msgType)
 			return
 		}
-
-		notifierLog.Debug("WebSocket send failed, will queue",
+		// Fall through to a best-effort live send. If the error was a full
+		// buffer the row was still persisted, so the device may see it twice,
+		// which is preferable to not at all.
+		notifierLog.Warn("failed to queue notification, trying live send",
 			"device_id", deviceID,
 			"msg_type", msgType,
 			"error", err)
 	}
 
-	// Fall back to queue for offline devices
-	if n.queue != nil {
-		if err := n.queue.Enqueue(deviceID, msgType, payloadBytes, n.config.TTL, n.config.MaxRetries); err != nil {
-			notifierLog.Error("failed to queue notification",
-				"device_id", deviceID,
-				"msg_type", msgType,
-				"error", err)
-		} else {
-			notifierLog.Debug("notification queued for later delivery",
-				"device_id", deviceID,
-				"msg_type", msgType)
-		}
+	if n.ws == nil {
+		return
 	}
+	if err := n.ws.SendToDevice(deviceID, msgType, payloadBytes); err != nil {
+		notifierLog.Debug("WebSocket send failed",
+			"device_id", deviceID,
+			"msg_type", msgType,
+			"error", err)
+		return
+	}
+	notifierLog.Debug("notification sent via WebSocket",
+		"device_id", deviceID,
+		"msg_type", msgType)
 }
