@@ -1,6 +1,7 @@
 package health
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"sync"
@@ -915,5 +916,81 @@ func TestServiceHealthChecker_MarkAppUnhealthy_NoSpam(t *testing.T) {
 	notifications := wsManager.GetNotifications()
 	if len(notifications) != 1 {
 		t.Errorf("expected exactly 1 notification (no spam), got %d", len(notifications))
+	}
+}
+
+// Mock notification queue for testing queued health alerts
+type mockNotificationQueue struct {
+	mu       sync.Mutex
+	enqueued []queuedNotification
+}
+
+type queuedNotification struct {
+	deviceID string
+	msgType  string
+	payload  map[string]interface{}
+}
+
+func (q *mockNotificationQueue) Enqueue(deviceID string, msgType string, payload json.RawMessage, ttl time.Duration, maxRetries int) error {
+	var data map[string]interface{}
+	if err := json.Unmarshal(payload, &data); err != nil {
+		return err
+	}
+	q.mu.Lock()
+	defer q.mu.Unlock()
+	q.enqueued = append(q.enqueued, queuedNotification{deviceID: deviceID, msgType: msgType, payload: data})
+	return nil
+}
+
+func (q *mockNotificationQueue) Get() []queuedNotification {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+	result := make([]queuedNotification, len(q.enqueued))
+	copy(result, q.enqueued)
+	return result
+}
+
+// A device that misses the live recovery broadcast must still receive the
+// recovery from the queue, otherwise the queued outage leaves it stuck offline.
+func TestServiceHealthChecker_EnqueueHealthNotification_IncludesRecovery(t *testing.T) {
+	store, err := storage.NewStore(storage.Config{DatabasePath: ":memory:"})
+	if err != nil {
+		t.Fatalf("failed to create store: %v", err)
+	}
+	defer store.Close()
+
+	for _, id := range []string{"device-a", "device-b"} {
+		if err := store.SaveDevice(id, id, "ios", "18", []string{"read:catalog"}); err != nil {
+			t.Fatalf("failed to save device: %v", err)
+		}
+	}
+
+	registry := &mockRouteRegistry{apps: []types.App{{ID: "app1", Name: "Test App"}}}
+	checker := NewServiceHealthChecker(types.HealthChecksConfig{}, registry, store, nil)
+	queue := &mockNotificationQueue{}
+	checker.SetNotificationQueue(queue)
+
+	checker.enqueueHealthNotification("app1", "unhealthy", "down")
+	checker.enqueueHealthNotification("app1", "healthy", "Service recovered")
+
+	got := queue.Get()
+	if len(got) != 4 {
+		t.Fatalf("expected 4 queued alerts (2 devices x outage+recovery), got %d", len(got))
+	}
+
+	recoveries := 0
+	for _, n := range got {
+		if n.msgType != types.WSMsgTypeHealthAlert {
+			t.Errorf("expected msgType %s, got %s", types.WSMsgTypeHealthAlert, n.msgType)
+		}
+		if n.payload["status"] == "healthy" {
+			recoveries++
+			if n.payload["appId"] != "app1" {
+				t.Errorf("expected appId app1, got %v", n.payload["appId"])
+			}
+		}
+	}
+	if recoveries != 2 {
+		t.Errorf("expected a recovery queued for each device, got %d", recoveries)
 	}
 }

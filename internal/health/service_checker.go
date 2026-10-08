@@ -745,15 +745,12 @@ func (c *ServiceHealthChecker) enqueueHealthNotification(appID, status, message 
 		return
 	}
 
-	// Enqueue notification for each device
+	// Enqueue notification for each device. Recoveries are queued too: callers
+	// only invoke this on a real status transition, and a device that missed the
+	// live recovery would otherwise be left showing the queued outage. The app
+	// shows no notification for a recovery, it only clears the offline state.
 	successCount := 0
 	for _, device := range devices {
-		// Only notify unhealthy status (not every healthy check)
-		// This reduces notification spam
-		if status != "unhealthy" {
-			continue
-		}
-
 		err := c.notificationQueue.Enqueue(
 			device.ID,
 			types.WSMsgTypeHealthAlert,
